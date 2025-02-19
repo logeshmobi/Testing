@@ -2,6 +2,9 @@ package com.mobiversa.payment.service;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -60,6 +64,7 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
@@ -130,8 +135,13 @@ import com.mobiversa.payment.util.UMEzyway;
 import com.mobiversa.payment.util.Utils;
 import com.mobiversa.payment.util.forsettlement;
 
+
 @Service
+@DependsOn("shutdownHandler")
 public class TransactionService {
+	
+	
+	
 
 	@Autowired
 	private TransactionDao transactionDAO;
@@ -142,8 +152,8 @@ public class TransactionService {
 	@Autowired
 	private MerchantService merchantService;
 
-    @Autowired
-    private  AccountEnquiryDao accountEnquiryDao;
+	@Autowired
+	private AccountEnquiryDao accountEnquiryDao;
 
 	@Autowired
 	private MobileUserDao mobileuserDAO;
@@ -154,6 +164,11 @@ public class TransactionService {
 	@Autowired
 	private UserDao userDao;
 
+//	@Value("${ipn.retrigger.count}")
+//	private String defaultCount;
+
+	private Map<String, Integer> triggerCountPerIpn = new HashMap<String, Integer>();
+
 	private static final Logger logger = Logger.getLogger(TransactionService.class);
 
 	/*
@@ -161,6 +176,61 @@ public class TransactionService {
 	 */
 
 	// load transactions by pk
+
+	//load the data from local file and assign it to the variable (triggerCountPerIpn) while starting the application
+	@SuppressWarnings("resource")
+	@PostConstruct
+	private void assignTriggerCountValueFromFile() {
+		String ipnExcelFilePath = PropertyLoad.getFile().getProperty("IPN_TRIGGER_FILE_PATH");		
+		String sheetName = "ipn trigger count";
+		File file = new File(ipnExcelFilePath);
+
+		HSSFWorkbook workbook;
+		HSSFSheet sheet;
+
+		try {
+			// Check if file exists, create a new workbook if necessary
+			if (!file.exists()) {
+				workbook = new HSSFWorkbook();
+				sheet = workbook.createSheet(sheetName);
+				try (FileOutputStream fos = new FileOutputStream(file)) {
+					workbook.write(fos);
+				}
+				workbook.close();
+				logger.info("New Excel file created.");
+				return;
+			}
+
+			// Load existing workbook
+			try (FileInputStream fis = new FileInputStream(file)) {
+				workbook = new HSSFWorkbook(fis);
+			}
+
+			// Get or create sheet
+			sheet = workbook.getSheet(sheetName);
+			if (sheet == null) {
+				sheet = workbook.createSheet(sheetName);
+			}
+					
+			
+			sheet.forEach(row-> {
+								if(row != null || row.getPhysicalNumberOfCells() == 2) {
+									String key = row.getCell(0).getStringCellValue();
+									int value = (int) row.getCell(1).getNumericCellValue();
+									this.triggerCountPerIpn.put(key, value);
+								}							
+							});
+
+			workbook.close();
+			logger.info("Excel data loaded successfully!"); //$NON-NLS-1$
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error("Error while reading Excel file: " + e.getMessage()); //$NON-NLS-1$
+		}
+	}
+
+	
 
 	public Transaction loadTransactionByPk(final Long id) {
 		Transaction transaction = transactionDAO.loadEntityByKey(Transaction.class, id);
@@ -2645,9 +2715,9 @@ public class TransactionService {
 	}
 
 	public void listUMMotoTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
-			String umMotoMid, String fiuuMid, String txnType, Merchant currentMerchant) {
+			String umMotoMid, String txnType, Merchant currentMerchant) {
 		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
-		transactionDAO.listUMMotoTransaction(paginationBean, criterionList, data, date1, umMotoMid,fiuuMid, txnType,
+		transactionDAO.listUMMotoTransaction(paginationBean, criterionList, data, date1, umMotoMid, txnType,
 				currentMerchant);
 
 	}
@@ -2779,9 +2849,9 @@ public class TransactionService {
 	}
 
 	public void exportUMMotoTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
-			String umMotoMid,String fiuuMid, String txnType, Merchant currentMerchant) {
+			String umMotoMid, String txnType, Merchant currentMerchant) {
 		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
-		transactionDAO.exportUMMotoTransaction(paginationBean, criterionList, data, date1, umMotoMid,fiuuMid, txnType,
+		transactionDAO.exportUMMotoTransaction(paginationBean, criterionList, data, date1, umMotoMid, txnType,
 				currentMerchant);
 
 	}
@@ -4287,25 +4357,23 @@ public class TransactionService {
 
 		} else if (merchant.getMid().getTngMid() != null) {
 			Mid = merchant.getMid().getTngMid();
-		}
-		else if (merchant.getMid().getShoppyMid() != null) {
+		} else if (merchant.getMid().getShoppyMid() != null) {
 			Mid = merchant.getMid().getShoppyMid();
-		}
-		else if (merchant.getMid().getFpxMid() != null) {
+		} else if (merchant.getMid().getFpxMid() != null) {
 			Mid = merchant.getMid().getFpxMid();
 		}
-		
-		//fiuuMid
-		
+
+		// fiuuMid
+
 		else if (merchant.getMid().getFiuuMid() != null) {
 			Mid = merchant.getMid().getFiuuMid();
 		}
-		
+
 // Load Tid by Mid
 		try {
 			data = merchantService.loadTerminalDetailsByMid(Mid);
 
-			if(data!= null) {
+			if (data != null) {
 				Tid = data.getTid();
 			}
 
@@ -4364,8 +4432,8 @@ public class TransactionService {
 
 		// Card
 		List<SettlementMDR> cardTrx = transactionDAO.loadNetAmountbyCard(formatsettledate, ezysettleFee, merchant);
-		int updatecountForCard = this.updateCardFinalStatus(cardTrx, umMid, umEzywayMid, umMotoMid,fiuuMid, formatsettledate);
-
+		int updatecountForCard = this.updateCardFinalStatus(cardTrx, umMid, umEzywayMid, umMotoMid, fiuuMid,
+				formatsettledate);
 
 		// Boost
 		String formatsettledateForBoost = null;
@@ -4383,7 +4451,7 @@ public class TransactionService {
 		long currentMerchantid = merchant.getId();
 		logger.info(" currentMerchantid " + currentMerchantid);
 		List<GrabPayFile> grabTrx = transactionDAO.loadNetAmountbyGrabpay(formatsettledate, ezysettleFee, merchant);
-		int updatecountForGrab = this.updateGrabPayFinalStatus(grabTrx, currentMerchantid,formatsettledate);
+		int updatecountForGrab = this.updateGrabPayFinalStatus(grabTrx, currentMerchantid, formatsettledate);
 
 		// Fpx
 		List<FpxTransaction> fpxTrx = transactionDAO.loadNetAmountbyFpx(settledate, ezysettleFee, merchant);
@@ -4393,7 +4461,8 @@ public class TransactionService {
 		// M1pay
 		List<EwalletTxnDetails> m1payTrx = transactionDAO.loadNetAmountbym1Pay(formatsettledate, ezysettleFee,
 				merchant);
-		int updatecountForM1pay = this.updateM1payFinalStatus(m1payTrx, tngMid, shoppyMid, formatsettledate, umEzywayMid, umMotoMid, ezysettleDao);
+		int updatecountForM1pay = this.updateM1payFinalStatus(m1payTrx, tngMid, shoppyMid, formatsettledate,
+				umEzywayMid, umMotoMid, ezysettleDao);
 
 		logger.info(String.format("Update Data List Counts - Card: %d, Boost: %d, Grab: %d, FPX: %d, M1Pay: %d",
 				updatecountForCard, updatecountForBoost, updatecountForGrab, updatecountForfpx, updatecountForM1pay));
@@ -4406,7 +4475,7 @@ public class TransactionService {
 
 		/* If each transaction is not updated properly, revert the changes */
 		if (totalDataList != updateDataList) {
-			this.revertEzysettleStatusUpdateforCard(cardTrx, umMid, umEzywayMid, umMotoMid,fiuuMid, formatsettledate);
+			this.revertEzysettleStatusUpdateforCard(cardTrx, umMid, umEzywayMid, umMotoMid, fiuuMid, formatsettledate);
 			this.revertEzysettleStatusUpdateforBoost(boostTrx, umMid, umEzywayMid, umMotoMid, boostmid,
 					formatsettledate);
 			this.revertEzySettleStatusForGrab(grabTrx, currentMerchantid, formatsettledate);
@@ -4418,8 +4487,8 @@ public class TransactionService {
 		return true;
 	}
 
-	public int updateCardFinalStatus(List<SettlementMDR> cardTrx, String umMid, String umEzywayMid, String umMotoMid, String fiuuMid,
-			String formatsettledate) throws MobileApiException {
+	public int updateCardFinalStatus(List<SettlementMDR> cardTrx, String umMid, String umEzywayMid, String umMotoMid,
+			String fiuuMid, String formatsettledate) throws MobileApiException {
 		int updateCountForCard = 0;
 
 		for (SettlementMDR settlementMDR : cardTrx) {
@@ -4460,7 +4529,8 @@ public class TransactionService {
 		return updatecountForBoost;
 	}
 
-	public int updateGrabPayFinalStatus(List<GrabPayFile> grabTrx, Long currentMerchantid,String formatsettledate) throws MobileApiException {
+	public int updateGrabPayFinalStatus(List<GrabPayFile> grabTrx, Long currentMerchantid, String formatsettledate)
+			throws MobileApiException {
 		int updateCountForGrab = 0;
 		for (GrabPayFile grabPayFile : grabTrx) {
 //			String txnDate = grabPayFile.getPaymentDate();
@@ -4526,7 +4596,8 @@ public class TransactionService {
 	}
 
 	public int updateM1payFinalStatus(List<EwalletTxnDetails> m1payTrx, String tngMid, String shoppyMid,
-			String formatsettledate, String umEzywayMid, String umMotoMid, EzysettleDao ezysettleDao) throws MobileApiException {
+			String formatsettledate, String umEzywayMid, String umMotoMid, EzysettleDao ezysettleDao)
+			throws MobileApiException {
 		int updateCountForM1pay = 0;
 
 		for (EwalletTxnDetails ewalletTxnDetails : m1payTrx) {
@@ -4556,7 +4627,7 @@ public class TransactionService {
 //		return true;
 //	}
 	private void revertEzysettleStatusUpdateforCard(List<SettlementMDR> cardTrx, String umMid, String umEzywayMid,
-			String umMotoMid,String fiuuMid, String formatsettledate) throws MobileApiException {
+			String umMotoMid, String fiuuMid, String formatsettledate) throws MobileApiException {
 		for (SettlementMDR settlementMDR : cardTrx) {
 
 			PayoutSettleBean payoutSettleBean = new PayoutSettleBean();
@@ -6160,7 +6231,8 @@ public class TransactionService {
 			String bnplMid, String boostmid, String tngMid, String shoppyMid, String grabmid, String fiuuMid,
 			Merchant currentMerchant) {
 		return transactionDAO.getPayinTxnDetailsBetweenDates(fromDate, toDate, umEzywayMid, fpxmid, ummotomid, mid,
-				ummid, paydeeEzywaymid, ezyrecmid, bnplMid, boostmid, tngMid, shoppyMid, grabmid, fiuuMid, currentMerchant);
+				ummid, paydeeEzywaymid, ezyrecmid, bnplMid, boostmid, tngMid, shoppyMid, grabmid, fiuuMid,
+				currentMerchant);
 	}
 
 	public List<FinanceReport> getPayoutTxnDetailsBetweenDates(String fromDate, String toDate, Long Merchant,
@@ -6247,28 +6319,26 @@ public class TransactionService {
 			HSSFRow toNetAmtRow = sheet.createRow(metaRowIndex++);
 			toNetAmtRow.createCell(0).setCellValue("Total NetAmount");
 			toNetAmtRow.createCell(1).setCellValue(totalNetAmount);
-			
 
 			// Total HOST MDR Amount (sum of all HOST MDR amounts)
 			double totalHostMDRAmount = financeReport.stream()
-			.filter(report -> report.getHostMdrAmt() != null && !report.getHostMdrAmt().isEmpty()
-			&& !report.getHostMdrAmt().equalsIgnoreCase("null"))
-			.mapToDouble(report -> Double.parseDouble(report.getHostMdrAmt())).sum();
-			
+					.filter(report -> report.getHostMdrAmt() != null && !report.getHostMdrAmt().isEmpty()
+							&& !report.getHostMdrAmt().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getHostMdrAmt())).sum();
+
 			HSSFRow totalHostMDRAmountRow = sheet.createRow(metaRowIndex++);
 			totalHostMDRAmountRow.createCell(0).setCellValue("Total Host MDR Amount");
 			totalHostMDRAmountRow.createCell(1).setCellValue(totalHostMDRAmount);
-						
+
 			// Total Mobi MDR Amount (sum of all MOBI MDR amounts)
 			double totalMobiMDRAmount = financeReport.stream()
-			.filter(report -> report.getMobiMdrAmt() != null && !report.getMobiMdrAmt().isEmpty()
-			&& !report.getMobiMdrAmt().equalsIgnoreCase("null"))
-			.mapToDouble(report -> Double.parseDouble(report.getMobiMdrAmt())).sum();
+					.filter(report -> report.getMobiMdrAmt() != null && !report.getMobiMdrAmt().isEmpty()
+							&& !report.getMobiMdrAmt().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getMobiMdrAmt())).sum();
 
 			HSSFRow totalMobiMDRAmountRow = sheet.createRow(metaRowIndex++);
 			totalMobiMDRAmountRow.createCell(0).setCellValue("Total Mobi MDR Amount");
 			totalMobiMDRAmountRow.createCell(1).setCellValue(totalMobiMDRAmount);
-
 
 			// Total MDR Amount (sum of all MDR amounts)
 			double totalMDRAmount = financeReport.stream()
@@ -6312,7 +6382,7 @@ public class TransactionService {
 				row.createCell(14).setCellValue(report.getPaymentdate());
 				row.createCell(15).setCellValue(report.getEzysettleamount());
 				row.createCell(16).setCellValue(report.getSubmerchantid());
-				
+
 			}
 
 			logger.info("Payin Transaction Report--Completed");
@@ -6406,7 +6476,7 @@ public class TransactionService {
 			HSSFRow totalPayoutAmtRow = sheet.createRow(metaRowIndex++);
 			totalPayoutAmtRow.createCell(0).setCellValue("Total Payout Amount");
 			totalPayoutAmtRow.createCell(1).setCellValue(totalPayoutAmt);
-			
+
 			// Calculate Total host MDR Amount
 			double totalHostMdrAmt = financeReport.stream()
 					.filter(report -> report.getHostMdrAmt() != null && !report.getHostMdrAmt().isEmpty()
@@ -6418,7 +6488,7 @@ public class TransactionService {
 			HSSFRow totalHostMdrRow = sheet.createRow(metaRowIndex++);
 			totalHostMdrRow.createCell(0).setCellValue("Total Host MDR Amount");
 			totalHostMdrRow.createCell(1).setCellValue(totalHostMdrAmt);
-			
+
 			// Calculate Total Mobi MDR Amount
 			double totalMobiMdrAmt = financeReport.stream()
 					.filter(report -> report.getMobiMdrAmt() != null && !report.getMobiMdrAmt().isEmpty()
@@ -6430,7 +6500,6 @@ public class TransactionService {
 			HSSFRow totalMobiMdrAmtRow = sheet.createRow(metaRowIndex++);
 			totalMobiMdrAmtRow.createCell(0).setCellValue("Total Mobi MDR Amount");
 			totalMobiMdrAmtRow.createCell(1).setCellValue(totalMobiMdrAmt);
-
 
 			// Leave an empty row between metadata and headers
 			metaRowIndex++;
@@ -6890,7 +6959,6 @@ public class TransactionService {
 		return transactionDAO.getAllPayoutTxnDetailsBetweenDates(fromDate, toDate);
 	}
 
-
 	public static byte[] generateAllPayoutReportXLSContentForEmail(List<FinanceReport> financeReport, String fromDate,
 			String toDate) {
 		try (HSSFWorkbook workbook = new HSSFWorkbook()) {
@@ -6970,7 +7038,6 @@ public class TransactionService {
 			HSSFRow totalPayoutAmtRow = sheet.createRow(metaRowIndex++);
 			totalPayoutAmtRow.createCell(0).setCellValue("Total Payout Amount");
 			totalPayoutAmtRow.createCell(1).setCellValue(totalPayoutAmt);
-			
 
 			// Calculate Total host MDR Amount
 			double totalHostMdrAmt = financeReport.stream()
@@ -6983,7 +7050,7 @@ public class TransactionService {
 			HSSFRow totalHostMdrRow = sheet.createRow(metaRowIndex++);
 			totalHostMdrRow.createCell(0).setCellValue("Total Host MDR Amount");
 			totalHostMdrRow.createCell(1).setCellValue(totalHostMdrAmt);
-						
+
 			// Calculate Total Mobi MDR Amount
 			double totalMobiMdrAmt = financeReport.stream()
 					.filter(report -> report.getMobiMdrAmt() != null && !report.getMobiMdrAmt().isEmpty()
@@ -6995,7 +7062,6 @@ public class TransactionService {
 			HSSFRow totalMobiMdrAmtRow = sheet.createRow(metaRowIndex++);
 			totalMobiMdrAmtRow.createCell(0).setCellValue("Total Mobi MDR Amount");
 			totalMobiMdrAmtRow.createCell(1).setCellValue(totalMobiMdrAmt);
-
 
 			// Leave an empty row between metadata and headers
 			metaRowIndex++;
@@ -7062,17 +7128,19 @@ public class TransactionService {
 
 	// Get the pagination count from properties, default to 20 if null or empty
 	private static int getTransactionsPerPage() {
-	    String paginationCountProperty = PropertyLoad.getFile().getProperty("paginationCount");
-	    return (paginationCountProperty != null && !paginationCountProperty.isEmpty()) ?
-	            Integer.parseInt(paginationCountProperty) : 20; // Default value
+		String paginationCountProperty = PropertyLoad.getFile().getProperty("paginationCount");
+		return (paginationCountProperty != null && !paginationCountProperty.isEmpty())
+				? Integer.parseInt(paginationCountProperty)
+				: 20; // Default value
 	}
 
-	private static void handleNoTransactions(Model model, PageBean pageBean, PaginationBean<PayoutAccountEnquiryDto> paginationBean, int currentPage) {
-	    paginationBean.setQuerySize("0");
-	    model.addAttribute("responseData", "No Records Found");
-	    model.addAttribute("pageBean", pageBean);
-	    model.addAttribute("paginationBean", paginationBean);
-	    model.addAttribute("currentPageNumber", currentPage);
+	private static void handleNoTransactions(Model model, PageBean pageBean,
+			PaginationBean<PayoutAccountEnquiryDto> paginationBean, int currentPage) {
+		paginationBean.setQuerySize("0");
+		model.addAttribute("responseData", "No Records Found");
+		model.addAttribute("pageBean", pageBean);
+		model.addAttribute("paginationBean", paginationBean);
+		model.addAttribute("currentPageNumber", currentPage);
 	}
 
 	public void fetchMaxPayoutExceededTransactions(int currentPage, Model model, PageBean pageBean) {
@@ -7082,17 +7150,18 @@ public class TransactionService {
 		try {
 			String[] dateRange = getPast10Days();
 
-			int totalTransactionSize = accountEnquiryDao.fetchMaxPayoutLimitExceededTransactionCount("ExceededMaxLimit", dateRange[0], dateRange[1]);
+			int totalTransactionSize = accountEnquiryDao.fetchMaxPayoutLimitExceededTransactionCount("ExceededMaxLimit",
+					dateRange[0], dateRange[1]);
 
-		    // Handle case when there are no transactions
-	        if (totalTransactionSize == 0) {
-	            handleNoTransactions(model, pageBean, paginationBean, currentPage);
-	            return; // return to avoid further processing
-	        }
+			// Handle case when there are no transactions
+			if (totalTransactionSize == 0) {
+				handleNoTransactions(model, pageBean, paginationBean, currentPage);
+				return; // return to avoid further processing
+			}
 
 			int transactionsPerPage = getTransactionsPerPage();
 
-	        // Calculate first record & No. of pages required for this summary.
+			// Calculate first record & No. of pages required for this summary.
 			int requiredPages = (int) Math.ceil((double) totalTransactionSize / transactionsPerPage);
 			int firstRecord = (currentPage - 1) * transactionsPerPage;
 
@@ -7112,7 +7181,8 @@ public class TransactionService {
 
 			paginationBean.setQuerySize(Integer.toString(requiredPages));
 		} catch (Exception e) {
-			logger.error("Error in obtaining 'Transaction Approval' details list (MaxPayoutExceededTransactions): " + e.getMessage(), e);
+			logger.error("Error in obtaining 'Transaction Approval' details list (MaxPayoutExceededTransactions): "
+					+ e.getMessage(), e);
 		} finally {
 			model.addAttribute("pageBean", pageBean);
 			model.addAttribute("paginationBean", paginationBean);
@@ -7124,28 +7194,29 @@ public class TransactionService {
 
 		if (searchValue == null || searchValue.trim().isEmpty()) {
 			logger.warn("isEmpty");
-	        return Collections.emptyList();
-	    }
+			return Collections.emptyList();
+		}
 
-	    // Remove any trailing comma if present
-	    searchValue = searchValue.trim();
-	    if (searchValue.endsWith(",")) {
+		// Remove any trailing comma if present
+		searchValue = searchValue.trim();
+		if (searchValue.endsWith(",")) {
 			logger.warn("endsWith");
-	        searchValue = searchValue.substring(0, searchValue.length() - 1);
-	    }
+			searchValue = searchValue.substring(0, searchValue.length() - 1);
+		}
 
-	    List<String> searchValuesList = Arrays.asList(searchValue.split(","));
+		List<String> searchValuesList = Arrays.asList(searchValue.split(","));
 
-	    // Limit the list to a maximum of 20 values
-	    if (searchValuesList.size() > 20) {
+		// Limit the list to a maximum of 20 values
+		if (searchValuesList.size() > 20) {
 			logger.warn("searchValuesList.size() > 20");
-	        searchValuesList = searchValuesList.subList(0, 20);  // Keep only the first 20 elements
-	    }
+			searchValuesList = searchValuesList.subList(0, 20); // Keep only the first 20 elements
+		}
 
-	    return searchValuesList;
+		return searchValuesList;
 	}
 
-	public void searchExceededLimitPayoutTransactions(Model model, PageBean pageBean, String searchType, String searchValue, int currentPageNo) {
+	public void searchExceededLimitPayoutTransactions(Model model, PageBean pageBean, String searchType,
+			String searchValue, int currentPageNo) {
 
 		PaginationBean<PayoutAccountEnquiryDto> paginationBean = new PaginationBean<>();
 
@@ -7157,7 +7228,8 @@ public class TransactionService {
 				List<PayoutAccountEnquiryDto> enquiryDtos = accountEnquiryDao.searchMaxPayoutLimitExceededTransactions(
 						"ExceededMaxLimit", dateRange[0], dateRange[1], searchValues, searchType);
 
-				paginationBean.setItemList(enquiryDtos != null && !enquiryDtos.isEmpty() ? enquiryDtos : new ArrayList<>());
+				paginationBean
+						.setItemList(enquiryDtos != null && !enquiryDtos.isEmpty() ? enquiryDtos : new ArrayList<>());
 			} else {
 				model.addAttribute("responseData", "No Records Found");
 			}
@@ -7166,11 +7238,11 @@ public class TransactionService {
 					+ e.getMessage(), e);
 		} finally {
 			if (paginationBean.getItemList().isEmpty()) {
-	            model.addAttribute("responseData", "No Records Found");
-	        }
+				model.addAttribute("responseData", "No Records Found");
+			}
 			paginationBean.setQuerySize("1");
 			model.addAttribute("pageBean", pageBean);
-			model.addAttribute("currentPageNumber",currentPageNo);
+			model.addAttribute("currentPageNumber", currentPageNo);
 			model.addAttribute("paginationBean", paginationBean);
 		}
 	}
@@ -7191,7 +7263,8 @@ public class TransactionService {
 		}
 	}
 
-	private static Map<String, String> maxPayoutApprovalRequestData(PayoutHoldTxn payoutHoldTxn,String rejectReason) throws MobiException {
+	private static Map<String, String> maxPayoutApprovalRequestData(PayoutHoldTxn payoutHoldTxn, String rejectReason)
+			throws MobiException {
 
 		Map<String, String> requestData = new HashMap<>();
 
@@ -7200,8 +7273,9 @@ public class TransactionService {
 		addIfValid(requestData, "businessRegNo", payoutHoldTxn.getBusinessRegNo());
 		addIfValid(requestData, "bankName", payoutHoldTxn.getBankName());
 		addIfValid(requestData, "bankAccNo", payoutHoldTxn.getBankAccNo());
-		if(payoutHoldTxn.getPayoutType()!=null)
-			addIfValid(requestData, "payoutType", payoutHoldTxn.getPayoutType().toUpperCase().equals("NORMAL") ? null : payoutHoldTxn.getPayoutType());
+		if (payoutHoldTxn.getPayoutType() != null)
+			addIfValid(requestData, "payoutType", payoutHoldTxn.getPayoutType().toUpperCase().equals("NORMAL") ? null
+					: payoutHoldTxn.getPayoutType());
 		addIfValid(requestData, "customerName", payoutHoldTxn.getCustomerName());
 		addIfValid(requestData, "amount", payoutHoldTxn.getAmount());
 		addIfValid(requestData, "subMID", payoutHoldTxn.getSubMID());
@@ -7227,50 +7301,55 @@ public class TransactionService {
 	}
 
 	private static String getPropertyValue(String propertyKey) throws Exception {
-	    String propertyValue = PropertyLoader.getFileData().getProperty(propertyKey);
+		String propertyValue = PropertyLoader.getFileData().getProperty(propertyKey);
 
 		if (propertyValue == null || propertyValue.trim().isEmpty()) {
-			String errorMessage = String.format("Property '%s' is missing or not found in the properties file.", propertyKey);
+			String errorMessage = String.format("Property '%s' is missing or not found in the properties file.",
+					propertyKey);
 			logger.error(
 					"Error retrieving property value: {" + errorMessage + "}. Key: {" + propertyKey + "}, Value: null");
 
 			throw new Exception("Property '" + propertyKey + "' is missing or not found in the properties file.");
 		}
 
-	    return propertyValue;
+		return propertyValue;
 	}
 
 	public void handlePayoutTransactionApproval(String invoiceID, PayoutHoldTxn payoutHoldTxn, String actionTakenBy) {
 		try {
-			final String approvalUrl =  getPropertyValue("MAX_LIMIT_PAYOUT_APPROVAL_ENDPOINT") ;
-			contactExternalApi(invoiceID,payoutHoldTxn,actionTakenBy,approvalUrl,null);
+			final String approvalUrl = getPropertyValue("MAX_LIMIT_PAYOUT_APPROVAL_ENDPOINT");
+			contactExternalApi(invoiceID, payoutHoldTxn, actionTakenBy, approvalUrl, null);
 			final String merchantId = payoutHoldTxn.getMerchantId();
-			// Trigger Acknowledgment email to Opration regarding the payout has been approved.
+			// Trigger Acknowledgment email to Opration regarding the payout has been
+			// approved.
 			sendMaxLimitPayoutTransactionApprovalEmailToOperation(invoiceID, payoutHoldTxn,
-					getMerchantDetailsByID(merchantId), getMobileUserByID(merchantId),actionTakenBy);
+					getMerchantDetailsByID(merchantId), getMobileUserByID(merchantId), actionTakenBy);
 		} catch (Exception e) {
 			logger.error("Exception while accepting " + e.getMessage(), e);
 		}
 	}
 
-	public void handlePayoutTransactionReject(String invoiceID, PayoutHoldTxn payoutHoldTxn, String actionTakenBy,String rejectReason) {
+	public void handlePayoutTransactionReject(String invoiceID, PayoutHoldTxn payoutHoldTxn, String actionTakenBy,
+			String rejectReason) {
 		try {
 			final String rejectUrl = getPropertyValue("MAX_LIMIT_PAYOUT_REJECT_ENDPOINT");
-			contactExternalApi(invoiceID,payoutHoldTxn,actionTakenBy,rejectUrl,rejectReason);
+			contactExternalApi(invoiceID, payoutHoldTxn, actionTakenBy, rejectUrl, rejectReason);
 			final String merchantId = payoutHoldTxn.getMerchantId();
-			// Trigger Acknowledgment email to Opration regarding the payout has been approved.
+			// Trigger Acknowledgment email to Opration regarding the payout has been
+			// approved.
 			sendMaxLimitPayoutTransactionRejectionEmailToOperation(invoiceID, payoutHoldTxn,
-					getMerchantDetailsByID(merchantId), getMobileUserByID(merchantId),actionTakenBy);
+					getMerchantDetailsByID(merchantId), getMobileUserByID(merchantId), actionTakenBy);
 		} catch (Exception e) {
 			logger.error("Exception while rejecting  " + e.getMessage(), e);
 		}
 	}
 
-	private void contactExternalApi(String invoiceID, PayoutHoldTxn payoutHoldTxn, String actionTakenBy,String approveOrRejectUrl,String rejectReason) throws Exception {
-		String action = rejectReason==null ? "Approval " : "Rejection ";
+	private void contactExternalApi(String invoiceID, PayoutHoldTxn payoutHoldTxn, String actionTakenBy,
+			String approveOrRejectUrl, String rejectReason) throws Exception {
+		String action = rejectReason == null ? "Approval " : "Rejection ";
 		try {
 
-			Map<String, String> requestData = maxPayoutApprovalRequestData(payoutHoldTxn,rejectReason);
+			Map<String, String> requestData = maxPayoutApprovalRequestData(payoutHoldTxn, rejectReason);
 			String requestBody = new ObjectMapper().writeValueAsString(requestData);
 
 			// Encrypt request data
@@ -7279,7 +7358,6 @@ public class TransactionService {
 			jsonObject.put("encryptedRequest", encryptedMaxPayoutApprovalRequestData(apiKey, requestBody));
 
 			// Send HTTP request to ExternalApi to process payout
-
 
 			URL url = new URL(approveOrRejectUrl);
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -7305,41 +7383,44 @@ public class TransactionService {
 				}
 			}
 
-			logger.info("Max limit Payout transaction "+action+" details: Invoice ID: {" + invoiceID + "}, URL: {" + approveOrRejectUrl
-					+ "}, Request Body: {" + requestBody + "}, Encrypted data sent: {" + jsonObject.toString()
-					+ "}, Response Code: {" + responseCode + "}, Response: {" + response.toString() + "}");
+			logger.info("Max limit Payout transaction " + action + " details: Invoice ID: {" + invoiceID + "}, URL: {"
+					+ approveOrRejectUrl + "}, Request Body: {" + requestBody + "}, Encrypted data sent: {"
+					+ jsonObject.toString() + "}, Response Code: {" + responseCode + "}, Response: {"
+					+ response.toString() + "}");
 
 			// If the response code is not in the 200 range, throw an exception
 			if (responseCode < 200 || responseCode >= 300) {
-				logger.error("Received non-success response code while processing max payout "+action+": {" + responseCode + "} for Invoice ID: {" + invoiceID + "}");
-				throw new Exception("ExternalApi failed with response code: " + responseCode + " for Invoice ID: " + invoiceID + ". Response: " + response.toString());
+				logger.error("Received non-success response code while processing max payout " + action + ": {"
+						+ responseCode + "} for Invoice ID: {" + invoiceID + "}");
+				throw new Exception("ExternalApi failed with response code: " + responseCode + " for Invoice ID: "
+						+ invoiceID + ". Response: " + response.toString());
 			}
 
+		} catch (Exception e) {
+			// Update the status in PAYOUT_HOLD_TXN to 'failed'
+			accountEnquiryDao.updatePayoutHoldTxnStatusByInvoiceID(invoiceID, "Failed", actionTakenBy);
+
+			logger.error("Error processing max payout " + action + " for Invoice ID: {" + invoiceID + "}. Error: "
+					+ e.getMessage(), e);
 		}
-	 catch (Exception e) {
-		// Update the status in PAYOUT_HOLD_TXN to 'failed'
-		accountEnquiryDao.updatePayoutHoldTxnStatusByInvoiceID(invoiceID, "Failed",actionTakenBy);
-
-		logger.error("Error processing max payout "+ action +" for Invoice ID: {" + invoiceID + "}. Error: " + e.getMessage(), e);
 	}
-}
 
-    // Obtain Merchant details by MerchantId.
-    public Merchant getMerchantDetailsByID(String merchantId) {
-        long merchantIdLong = Long.parseLong(merchantId.trim());
-        return accountEnquiryDao.getMerchantDetailsByID(merchantIdLong);
-    }
+	// Obtain Merchant details by MerchantId.
+	public Merchant getMerchantDetailsByID(String merchantId) {
+		long merchantIdLong = Long.parseLong(merchantId.trim());
+		return accountEnquiryDao.getMerchantDetailsByID(merchantIdLong);
+	}
 
-    // Obtain Mobile_User details by MerchantId.
-    public MobileUser getMobileUserByID(String merchantId) {
-        long merchantIdLong = Long.parseLong(merchantId.trim());
-        return accountEnquiryDao.getMobileUserByMerchantId(merchantIdLong);
-    }
+	// Obtain Mobile_User details by MerchantId.
+	public MobileUser getMobileUserByID(String merchantId) {
+		long merchantIdLong = Long.parseLong(merchantId.trim());
+		return accountEnquiryDao.getMobileUserByMerchantId(merchantIdLong);
+	}
 
-    private static String getPropertyWithDefault(String propertyKey, String defaultValue) {
-        String propertyValue = PropertyLoader.getFileData().getProperty(propertyKey);
-        return (propertyValue == null || propertyValue.isEmpty()) ? defaultValue : propertyValue;
-    }
+	private static String getPropertyWithDefault(String propertyKey, String defaultValue) {
+		String propertyValue = PropertyLoader.getFileData().getProperty(propertyKey);
+		return (propertyValue == null || propertyValue.isEmpty()) ? defaultValue : propertyValue;
+	}
 
 	private static String getCurrentTimestamp() {
 
@@ -7348,13 +7429,13 @@ public class TransactionService {
 	}
 
 	private static String addCommaSeparator(String numberString) {
-	    if (numberString == null || numberString.isEmpty()) {
-	        return null; // Return null for null or empty input
-	    }
+		if (numberString == null || numberString.isEmpty()) {
+			return null; // Return null for null or empty input
+		}
 
-	    try {
-	        BigDecimal number = new BigDecimal(numberString);
-	        return String.format("%,d", number.longValue());
+		try {
+			BigDecimal number = new BigDecimal(numberString);
+			return String.format("%,d", number.longValue());
 		} catch (NumberFormatException e) {
 			logger.error("Invalid number format: " + numberString);
 			return numberString;
@@ -7362,17 +7443,17 @@ public class TransactionService {
 	}
 
 	private static String addCommaSeparator(BigDecimal number) {
-	    if (number == null) {
-	        return null; // Return null for null input
-	    }
+		if (number == null) {
+			return null; // Return null for null input
+		}
 
-	    final DecimalFormat decimalFormat = new DecimalFormat("#,###.##");
-	    try {
-	        return decimalFormat.format(number);
-	    } catch (Exception e) {
+		final DecimalFormat decimalFormat = new DecimalFormat("#,###.##");
+		try {
+			return decimalFormat.format(number);
+		} catch (Exception e) {
 			logger.error("Invalid number format: " + number);
-	        return number.toString(); // Return the original number as a string on error
-	    }
+			return number.toString(); // Return the original number as a string on error
+		}
 	}
 
 //	public void handlePayoutTransactionRejection(String invoiceID, PayoutHoldTxn holdTxnDetails, String reason) {
@@ -7396,7 +7477,7 @@ public class TransactionService {
 //	}
 
 	private static String sendMaxLimitPayoutTransactionApprovalEmailToOperation(String invoiceID,
-			PayoutHoldTxn holdTxnDetails, Merchant merchantDetails, MobileUser mobileUser,String actionTakenBy) {
+			PayoutHoldTxn holdTxnDetails, Merchant merchantDetails, MobileUser mobileUser, String actionTakenBy) {
 
 		try {
 			String fromName = getPropertyValue("FROMNAME");
@@ -7415,67 +7496,83 @@ public class TransactionService {
 			emailContent.append("<title>Payout Approved</title>");
 			emailContent.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
 			emailContent.append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>");
-			emailContent.append("<link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap\" rel=\"stylesheet\">");
+			emailContent.append(
+					"<link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap\" rel=\"stylesheet\">");
 			emailContent.append("<style>");
 			emailContent.append("@media (max-width: 600px) {");
 			emailContent.append(".container { padding: 15px; margin: 20px auto !important; }");
 			emailContent.append(".header td { padding-left: 2px !important; }");
 			emailContent.append(".header img { width: 100px !important; height: 50px !important; }");
 			emailContent.append(".title { font-size: 1.2rem !important; margin-bottom: 10px !important; }");
-			emailContent.append(".details td { font-size: 10px !important; padding: 6px !important; padding-left: 2px !important; }");
+			emailContent.append(
+					".details td { font-size: 10px !important; padding: 6px !important; padding-left: 2px !important; }");
 			emailContent.append(".note, .contact { font-size: 10px !important; }");
 			emailContent.append("}");
 			emailContent.append("</style>");
 			emailContent.append("</head>");
-			emailContent.append("<body style=\"font-family: Poppins, sans-serif; background-color: #ffffff; margin: 0; padding: 0; text-align: center;\">");
-			emailContent.append("<table class=\"container\" style=\"background-color: #f6f6f6; text-align: left; padding: 20px; border-radius: 10px; max-width: 550px; margin: 20px auto;\">");
+			emailContent.append(
+					"<body style=\"font-family: Poppins, sans-serif; background-color: #ffffff; margin: 0; padding: 0; text-align: center;\">");
+			emailContent.append(
+					"<table class=\"container\" style=\"background-color: #f6f6f6; text-align: left; padding: 20px; border-radius: 10px; max-width: 550px; margin: 20px auto;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>");
 			emailContent.append("<table class=\"header\" style=\"width: 100%; text-align: left;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding-left: 2px;\">");
-			emailContent.append("<img src=\"https://portal.gomobi.io/MobiversaAdmin/resourcesNew/img/ElasticEmail-mobi.png\" width=\"110\" height=\"70\" style=\"width: 100px; height: 50px; clip-path: inset(0 10px 0 10px);\">");
+			emailContent.append(
+					"<img src=\"https://portal.gomobi.io/MobiversaAdmin/resourcesNew/img/ElasticEmail-mobi.png\" width=\"110\" height=\"70\" style=\"width: 100px; height: 50px; clip-path: inset(0 10px 0 10px);\">");
 			emailContent.append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"title\" style=\"width: 100%; text-align: left; color: #4CAF50; font-size: 1.4rem; font-weight: bold; margin-bottom: 10px;\">");
+			emailContent.append(
+					"<table class=\"title\" style=\"width: 100%; text-align: left; color: #4CAF50; font-size: 1.4rem; font-weight: bold; margin-bottom: 10px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>Payout Approved</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"intro\" style=\"width: 100%; font-size: 14px; margin-bottom: 15px; text-align: left; line-height: 1.6; color: #333739;\">");
+			emailContent.append(
+					"<table class=\"intro\" style=\"width: 100%; font-size: 14px; margin-bottom: 15px; text-align: left; line-height: 1.6; color: #333739;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>Dear Operations Team,</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding-top: 8px;\">The payout request that exceeded the transaction limit has been approved. Please find the transaction details below:</td>");
+			emailContent.append(
+					"<td style=\"padding-top: 8px;\">The payout request that exceeded the transaction limit has been approved. Please find the transaction details below:</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"details-header\" style=\"width: 100%; text-align: left; color: #333739; font-size: 14px; font-weight: bold; margin-top: 10px;\">");
+			emailContent.append(
+					"<table class=\"details-header\" style=\"width: 100%; text-align: left; color: #333739; font-size: 14px; font-weight: bold; margin-top: 10px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>Transaction Details:</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"details\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px;\">");
+			emailContent.append(
+					"<table class=\"details\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Merchant Name</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(merchantDetails.getBusinessName()).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(merchantDetails.getBusinessName()).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Transaction ID</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(holdTxnDetails.getInvoiceIdProof()).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(holdTxnDetails.getInvoiceIdProof()).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Requested Payout Amount (RM)</td>");
+			emailContent.append(
+					"<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Requested Payout Amount (RM)</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(addCommaSeparator(holdTxnDetails.getAmount().replace(",", ""))).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(addCommaSeparator(holdTxnDetails.getAmount().replace(",", ""))).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Allowed Limit (RM)</td>");
+			emailContent
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Allowed Limit (RM)</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(addCommaSeparator(mobileUser.getPayoutTransactionLimit())).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(addCommaSeparator(mobileUser.getPayoutTransactionLimit())).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Status</td>");
@@ -7488,17 +7585,22 @@ public class TransactionService {
 			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(actionTakenBy).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Approval Date & Time</td>");
+			emailContent
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Approval Date & Time</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(getCurrentTimestamp()).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(getCurrentTimestamp())
+					.append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"note\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">");
+			emailContent.append(
+					"<table class=\"note\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"color: #333739;\">The payout will now proceed as requested, and the funds will be deducted from the merchant's account.</td>");
+			emailContent.append(
+					"<td style=\"color: #333739;\">The payout will now proceed as requested, and the funds will be deducted from the merchant's account.</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"signature\" style=\"width: 100%; font-size: 14px; text-align: left; margin-top: 20px;\">");
+			emailContent.append(
+					"<table class=\"signature\" style=\"width: 100%; font-size: 14px; text-align: left; margin-top: 20px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"color: #333739;\">Best regards,</td>");
 			emailContent.append("</tr>");
@@ -7514,7 +7616,6 @@ public class TransactionService {
 			emailContent.append("</table>");
 			emailContent.append("</body>");
 			emailContent.append("</html>");
-
 
 //			emailContent.append("<!DOCTYPE html>")
 //			            .append("<html lang=\"en\">")
@@ -7647,8 +7748,8 @@ public class TransactionService {
 //			            .append("</body>")
 //			            .append("</html>");
 
-
-			int mailResponse = ElasticEmailClient.sendemailSlip(fromAddress, subject, fromName, toAddress, null, null, emailContent.toString());
+			int mailResponse = ElasticEmailClient.sendemailSlip(fromAddress, subject, fromName, toAddress, null, null,
+					emailContent.toString());
 
 			logger.info(String.format(
 					"DECLINED: Max payout transaction limit reached, triggering email to merchant- Invoice ID: %s, From Address: %s, To Address: %s, Subject: %s. Sent Successfully: %d",
@@ -7661,7 +7762,8 @@ public class TransactionService {
 		}
 	}
 
-	private static String sendMaxLimitPayoutTransactionRejectionEmailToMerchant(String invoiceID, String merchantID, String toAddress) {
+	private static String sendMaxLimitPayoutTransactionRejectionEmailToMerchant(String invoiceID, String merchantID,
+			String toAddress) {
 
 		try {
 			String fromName = getPropertyValue("FROMNAME");
@@ -7669,127 +7771,75 @@ public class TransactionService {
 
 			String subject = "Payout transaction rejected";
 
-			StringBuilder emailContent = new StringBuilder()
-				    .append("<!DOCTYPE html>")
-				    .append("<html lang=\"en\">")
-				    .append("<head>")
-				    .append("<meta charset=\"UTF-8\">")
-				    .append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
-				    .append("<title>Payout Rejected - Exceeded Max Limit</title>")
-				    .append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">")
-				    .append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>")
-				    .append("<link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap\" rel=\"stylesheet\">")
-				    .append("<style>")
-				    .append("@media (max-width: 600px) {")
-				    .append(".container {")
-				    .append("padding: 15px;")
-				    .append("margin: 20px auto !important;")
-				    .append("}")
-				    .append(".header td {")
-				    .append("padding-left: 2px !important;")
-				    .append("}")
-				    .append(".header img {")
-				    .append("width: 100px !important;")
-				    .append("height: 50px !important;")
-				    .append("}")
-				    .append(".title {")
-				    .append("font-size: 1.2rem !important;")
-				    .append("margin-bottom: 10px !important;")
-				    .append("}")
-				    .append(".details td {")
-				    .append("font-size: 10px !important;")
-				    .append("padding: 6px !important;")
-				    .append("padding-left: 2px !important;")
-				    .append("}")
-				    .append(".note,")
-				    .append(".contact {")
-				    .append("font-size: 10px !important;")
-				    .append("}")
-				    .append("}")
-				    .append("</style>")
-				    .append("</head>")
-				    .append("<body style=\"font-family: Poppins, sans-serif; background-color: #ffffff; margin: 0; padding: 0; text-align: center;\">")
-				    .append("<table class=\"container\" style=\"background-color: #f6f6f6; text-align: left; padding: 20px; border-radius: 10px; max-width: 550px; margin: 20px auto;\">")
-				    .append("<tr>")
-				    .append("<td>")
-				    .append("<table class=\"header\" style=\"width: 100%; text-align: left;\">")
-				    .append("<tr>")
-				    .append("<td style=\"padding-left: 2px;\">")
-				    .append("<img src=\"https://portal.gomobi.io/MobiversaAdmin/resourcesNew/img/ElasticEmail-mobi.png\" width=\"110\" height=\"70\" style=\"width: 100px; height: 50px; clip-path: inset(0 10px 0 10px);\">")
-				    .append("</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"title\" style=\"width: 100%; text-align: left; color: #FF0000; font-size: 1.4rem !important; font-weight: bold; margin-bottom: 10px;\">")
-				    .append("<tr>")
-				    .append("<td>Payout Rejected</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"greeting\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
-				    .append("<tr>")
-				    .append("<td style=\"color: #333739;\">Dear [Merchant Name],</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"color: #333739;\">We regret to inform you that your recent payout request was declined. Please find the details of the transaction below:</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"details\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px;\">")
-				    .append("<tr>")
-				    .append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Merchant Name</td>")
-				    .append("<td>:</td>")
-				    .append("<td style=\"padding: 5px; color: #333739;\">[Merchant Name]</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Merchant ID</td>")
-				    .append("<td>:</td>")
-				    .append("<td style=\"padding: 5px; color: #333739;\">[Merchant ID]</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Payout Amount (MYR)</td>")
-				    .append("<td>:</td>")
-				    .append("<td style=\"padding: 5px; color: #333739;\">[Payout Amount]</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Max Allowed Limit (MYR)</td>")
-				    .append("<td>:</td>")
-				    .append("<td style=\"padding: 5px; color: #333739;\">[Max Allowed Limit]</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"note\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
-				    .append("<tr>")
-				    .append("<td class=\"fw-bold\" style=\"font-weight: bold; color: #333739;\">Reason</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"color: #333739;\">Your payout request has been rejected as it exceeds the maximum limit set for your account.</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"instructions\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
-				    .append("<tr>")
-				    .append("<td class=\"fw-bold\" style=\"font-weight: bold; color: #333739;\">Next Steps</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"color: #333739;\">Please review the transaction by logging into the <a href=\"https://portal.gomobi.io/MobiversaAdmin/\" style=\"color: #FF0000; text-decoration: none;\">Merchant Portal</a> for more details. If you have any further inquiries, feel free to contact our support team.</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"contact\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
-				    .append("<tr>")
-				    .append("<td class=\"fw-bold\" style=\"font-weight: bold; color: #333739;\">Need Help? Contact Information</td>")
-				    .append("</tr>")
-				    .append("<tr>")
-				    .append("<td style=\"color: #333739;\">If you need assistance, please reach out to our support team via email at <a href=\"mailto:support@gomobi.io\" style=\"color: #FF0000; text-decoration: none;\">support@gomobi.io</a>.</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("<table class=\"footer\" style=\"width: 100%; font-size: 12px; color: #999999; margin-top: 20px; text-align: center;\">")
-				    .append("<tr>")
-				    .append("<td>&copy; 2024 Mobiversa. All rights reserved.</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("</td>")
-				    .append("</tr>")
-				    .append("</table>")
-				    .append("</body>")
+			StringBuilder emailContent = new StringBuilder().append("<!DOCTYPE html>").append("<html lang=\"en\">")
+					.append("<head>").append("<meta charset=\"UTF-8\">")
+					.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
+					.append("<title>Payout Rejected - Exceeded Max Limit</title>")
+					.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">")
+					.append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>")
+					.append("<link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap\" rel=\"stylesheet\">")
+					.append("<style>").append("@media (max-width: 600px) {").append(".container {")
+					.append("padding: 15px;").append("margin: 20px auto !important;").append("}").append(".header td {")
+					.append("padding-left: 2px !important;").append("}").append(".header img {")
+					.append("width: 100px !important;").append("height: 50px !important;").append("}")
+					.append(".title {").append("font-size: 1.2rem !important;")
+					.append("margin-bottom: 10px !important;").append("}").append(".details td {")
+					.append("font-size: 10px !important;").append("padding: 6px !important;")
+					.append("padding-left: 2px !important;").append("}").append(".note,").append(".contact {")
+					.append("font-size: 10px !important;").append("}").append("}").append("</style>").append("</head>")
+					.append("<body style=\"font-family: Poppins, sans-serif; background-color: #ffffff; margin: 0; padding: 0; text-align: center;\">")
+					.append("<table class=\"container\" style=\"background-color: #f6f6f6; text-align: left; padding: 20px; border-radius: 10px; max-width: 550px; margin: 20px auto;\">")
+					.append("<tr>").append("<td>")
+					.append("<table class=\"header\" style=\"width: 100%; text-align: left;\">").append("<tr>")
+					.append("<td style=\"padding-left: 2px;\">")
+					.append("<img src=\"https://portal.gomobi.io/MobiversaAdmin/resourcesNew/img/ElasticEmail-mobi.png\" width=\"110\" height=\"70\" style=\"width: 100px; height: 50px; clip-path: inset(0 10px 0 10px);\">")
+					.append("</td>").append("</tr>").append("</table>")
+					.append("<table class=\"title\" style=\"width: 100%; text-align: left; color: #FF0000; font-size: 1.4rem !important; font-weight: bold; margin-bottom: 10px;\">")
+					.append("<tr>").append("<td>Payout Rejected</td>").append("</tr>").append("</table>")
+					.append("<table class=\"greeting\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
+					.append("<tr>").append("<td style=\"color: #333739;\">Dear [Merchant Name],</td>").append("</tr>")
+					.append("<tr>")
+					.append("<td style=\"color: #333739;\">We regret to inform you that your recent payout request was declined. Please find the details of the transaction below:</td>")
+					.append("</tr>").append("</table>")
+					.append("<table class=\"details\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px;\">")
+					.append("<tr>")
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Merchant Name</td>")
+					.append("<td>:</td>").append("<td style=\"padding: 5px; color: #333739;\">[Merchant Name]</td>")
+					.append("</tr>").append("<tr>")
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Merchant ID</td>")
+					.append("<td>:</td>").append("<td style=\"padding: 5px; color: #333739;\">[Merchant ID]</td>")
+					.append("</tr>").append("<tr>")
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Payout Amount (MYR)</td>")
+					.append("<td>:</td>").append("<td style=\"padding: 5px; color: #333739;\">[Payout Amount]</td>")
+					.append("</tr>").append("<tr>")
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Max Allowed Limit (MYR)</td>")
+					.append("<td>:</td>").append("<td style=\"padding: 5px; color: #333739;\">[Max Allowed Limit]</td>")
+					.append("</tr>").append("</table>")
+					.append("<table class=\"note\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
+					.append("<tr>")
+					.append("<td class=\"fw-bold\" style=\"font-weight: bold; color: #333739;\">Reason</td>")
+					.append("</tr>").append("<tr>")
+					.append("<td style=\"color: #333739;\">Your payout request has been rejected as it exceeds the maximum limit set for your account.</td>")
+					.append("</tr>").append("</table>")
+					.append("<table class=\"instructions\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
+					.append("<tr>")
+					.append("<td class=\"fw-bold\" style=\"font-weight: bold; color: #333739;\">Next Steps</td>")
+					.append("</tr>").append("<tr>")
+					.append("<td style=\"color: #333739;\">Please review the transaction by logging into the <a href=\"https://portal.gomobi.io/MobiversaAdmin/\" style=\"color: #FF0000; text-decoration: none;\">Merchant Portal</a> for more details. If you have any further inquiries, feel free to contact our support team.</td>")
+					.append("</tr>").append("</table>")
+					.append("<table class=\"contact\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">")
+					.append("<tr>")
+					.append("<td class=\"fw-bold\" style=\"font-weight: bold; color: #333739;\">Need Help? Contact Information</td>")
+					.append("</tr>").append("<tr>")
+					.append("<td style=\"color: #333739;\">If you need assistance, please reach out to our support team via email at <a href=\"mailto:support@gomobi.io\" style=\"color: #FF0000; text-decoration: none;\">support@gomobi.io</a>.</td>")
+					.append("</tr>").append("</table>")
+					.append("<table class=\"footer\" style=\"width: 100%; font-size: 12px; color: #999999; margin-top: 20px; text-align: center;\">")
+					.append("<tr>").append("<td>&copy; 2024 Mobiversa. All rights reserved.</td>").append("</tr>")
+					.append("</table>").append("</td>").append("</tr>").append("</table>").append("</body>")
 					.append("</html>");
 
-			int mailResponse = ElasticEmailClient.sendemailSlip(fromAddress, subject, fromName, toAddress, null, null, emailContent.toString());
+			int mailResponse = ElasticEmailClient.sendemailSlip(fromAddress, subject, fromName, toAddress, null, null,
+					emailContent.toString());
 
 			logger.info(String.format(
 					"DECLINED: Max payout transaction limit reached, triggering email to merchant- Invoice ID: %s, From Address: %s, To Address: %s, Subject: %s. Sent Successfully: %d",
@@ -7803,7 +7853,7 @@ public class TransactionService {
 	}
 
 	private static String sendMaxLimitPayoutTransactionRejectionEmailToOperation(String invoiceID,
-			PayoutHoldTxn holdTxnDetails, Merchant merchantDetails, MobileUser mobileUser,String actionTakenBy) {
+			PayoutHoldTxn holdTxnDetails, Merchant merchantDetails, MobileUser mobileUser, String actionTakenBy) {
 		try {
 			String fromName = getPropertyValue("FROMNAME");
 			String fromAddress = getPropertyValue("FROMMAIL");
@@ -7821,67 +7871,84 @@ public class TransactionService {
 			emailContent.append("<title>Payout Rejected</title>");
 			emailContent.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
 			emailContent.append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>");
-			emailContent.append("<link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap\" rel=\"stylesheet\">");
+			emailContent.append(
+					"<link href=\"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap\" rel=\"stylesheet\">");
 			emailContent.append("<style>");
 			emailContent.append("@media (max-width: 600px) {");
 			emailContent.append(".container { padding: 15px; margin: 20px auto !important; }");
 			emailContent.append(".header td { padding-left: 2px !important; }");
 			emailContent.append(".header img { width: 100px !important; height: 50px !important; }");
-			emailContent.append(".title { font-size: 1.2rem !important; margin-bottom: 10px !important; color: #FF0000 !important; }");
-			emailContent.append(".details td { font-size: 10px !important; padding: 6px !important; padding-left: 2px !important; }");
+			emailContent.append(
+					".title { font-size: 1.2rem !important; margin-bottom: 10px !important; color: #FF0000 !important; }");
+			emailContent.append(
+					".details td { font-size: 10px !important; padding: 6px !important; padding-left: 2px !important; }");
 			emailContent.append(".note, .contact { font-size: 10px !important; }");
 			emailContent.append("}");
 			emailContent.append("</style>");
 			emailContent.append("</head>");
-			emailContent.append("<body style=\"font-family: Poppins, sans-serif; background-color: #ffffff; margin: 0; padding: 0; text-align: center;\">");
-			emailContent.append("<table class=\"container\" style=\"background-color: #f6f6f6; text-align: left; padding: 20px; border-radius: 10px; max-width: 550px; margin: 20px auto;\">");
+			emailContent.append(
+					"<body style=\"font-family: Poppins, sans-serif; background-color: #ffffff; margin: 0; padding: 0; text-align: center;\">");
+			emailContent.append(
+					"<table class=\"container\" style=\"background-color: #f6f6f6; text-align: left; padding: 20px; border-radius: 10px; max-width: 550px; margin: 20px auto;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>");
 			emailContent.append("<table class=\"header\" style=\"width: 100%; text-align: left;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding-left: 2px;\">");
-			emailContent.append("<img src=\"https://portal.gomobi.io/MobiversaAdmin/resourcesNew/img/ElasticEmail-mobi.png\" width=\"110\" height=\"70\" style=\"width: 100px; height: 50px; clip-path: inset(0 10px 0 10px);\">");
+			emailContent.append(
+					"<img src=\"https://portal.gomobi.io/MobiversaAdmin/resourcesNew/img/ElasticEmail-mobi.png\" width=\"110\" height=\"70\" style=\"width: 100px; height: 50px; clip-path: inset(0 10px 0 10px);\">");
 			emailContent.append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"title\" style=\"width: 100%; text-align: left; color: #FF0000; font-size: 1.4rem; font-weight: bold; margin-bottom: 10px;\">");
+			emailContent.append(
+					"<table class=\"title\" style=\"width: 100%; text-align: left; color: #FF0000; font-size: 1.4rem; font-weight: bold; margin-bottom: 10px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>Payout Rejected</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"intro\" style=\"width: 100%; font-size: 14px; margin-bottom: 15px; text-align: left; line-height: 1.6; color: #333739;\">");
+			emailContent.append(
+					"<table class=\"intro\" style=\"width: 100%; font-size: 14px; margin-bottom: 15px; text-align: left; line-height: 1.6; color: #333739;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>Dear Operations Team,</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding-top: 8px;\">The payout request that exceeded the transaction limit has been rejected and the transaction has been recorded as follows:</td>");
+			emailContent.append(
+					"<td style=\"padding-top: 8px;\">The payout request that exceeded the transaction limit has been rejected and the transaction has been recorded as follows:</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"details-header\" style=\"width: 100%; text-align: left; font-size: 14px; font-weight: bold; margin-top: 10px;\">");
+			emailContent.append(
+					"<table class=\"details-header\" style=\"width: 100%; text-align: left; font-size: 14px; font-weight: bold; margin-top: 10px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td>Transaction Details:</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"details\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px;\">");
+			emailContent.append(
+					"<table class=\"details\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 20px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Merchant Name</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(merchantDetails.getBusinessName()).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(merchantDetails.getBusinessName()).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Transaction ID</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(holdTxnDetails.getInvoiceIdProof()).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(holdTxnDetails.getInvoiceIdProof()).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Requested Payout Amount (RM)</td>");
+			emailContent.append(
+					"<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Requested Payout Amount (RM)</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(addCommaSeparator(holdTxnDetails.getAmount().replace(",", ""))).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(addCommaSeparator(holdTxnDetails.getAmount().replace(",", ""))).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Allowed Limit (RM)</td>");
+			emailContent
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Allowed Limit (RM)</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(addCommaSeparator(mobileUser.getPayoutTransactionLimit())).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">")
+					.append(addCommaSeparator(mobileUser.getPayoutTransactionLimit())).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"padding: 5px; font-weight: bold;\">Status</td>");
@@ -7894,17 +7961,22 @@ public class TransactionService {
 			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(actionTakenBy).append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Approval Date & Time</td>");
+			emailContent
+					.append("<td style=\"padding: 5px; font-weight: bold; color: #333739;\">Approval Date & Time</td>");
 			emailContent.append("<td>:</td>");
-			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(getCurrentTimestamp()).append("</td>");
+			emailContent.append("<td style=\"padding: 5px; color: #333739;\">").append(getCurrentTimestamp())
+					.append("</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"note\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">");
+			emailContent.append(
+					"<table class=\"note\" style=\"width: 100%; font-size: 14px; margin-bottom: 10px; text-align: left; line-height: 1.6;\">");
 			emailContent.append("<tr>");
-			emailContent.append("<td style=\"color: #333739;\">Please let us know if any further action is required.</td>");
+			emailContent
+					.append("<td style=\"color: #333739;\">Please let us know if any further action is required.</td>");
 			emailContent.append("</tr>");
 			emailContent.append("</table>");
-			emailContent.append("<table class=\"signature\" style=\"width: 100%; font-size: 14px; text-align: left; margin-top: 20px;\">");
+			emailContent.append(
+					"<table class=\"signature\" style=\"width: 100%; font-size: 14px; text-align: left; margin-top: 20px;\">");
 			emailContent.append("<tr>");
 			emailContent.append("<td style=\"color: #333739;\">Best regards,</td>");
 			emailContent.append("</tr>");
@@ -8012,7 +8084,8 @@ public class TransactionService {
 //				    .append("  </body>")
 //					.append("</html>");
 
-			int mailResponse = ElasticEmailClient.sendemailSlip(fromAddress, subject, fromName, toAddress, null, null, emailContent.toString());
+			int mailResponse = ElasticEmailClient.sendemailSlip(fromAddress, subject, fromName, toAddress, null, null,
+					emailContent.toString());
 
 			logger.info(String.format(
 					"DECLINED: Max payout transaction limit reached, triggering email to finance - Invoice ID: %s, From Address: %s, To Address: %s, Subject: %s. Sent Successfully: %d",
@@ -8083,282 +8156,438 @@ public class TransactionService {
 //
 //	String htmlContent = emailContent.toString();
 
-		public String getRoleFromUserName(String userName)
-		{
-			String role = null;
-			try{
-				BankUser bankUser = userDao.findByUserName(userName);
-				 role = bankUser.getDepartment();
+	public String getRoleFromUserName(String userName) {
+		String role = null;
+		try {
+			BankUser bankUser = userDao.findByUserName(userName);
+			role = bankUser.getDepartment();
+		} catch (Exception e) {
+			logger.error("Exception occured while searching for Bankuser : " + e.getMessage(), e);
+			role = "OPR";
+		}
+		return role;
+	}
+
+	public static byte[] generateMerchantPayinDetailExcelContentForEmail(List<FinanceReport> financeReport,
+			String fromDate, String toDate, String businessName) {
+		try (HSSFWorkbook workbook = new HSSFWorkbook()) {
+			HSSFSheet sheet = workbook.createSheet("Payin Transaction Report");
+			logger.info("Payin Transaction Report");
+
+			// Set metadata
+			int metaRowIndex = 0;
+
+			HSSFRow reportTypeRow = sheet.createRow(metaRowIndex++);
+
+			reportTypeRow.createCell(0).setCellValue("Report Type:");
+			reportTypeRow.createCell(1).setCellValue("Payin Report");
+
+			String date1 = convertDateFormatTo_dd_MM_yyyy(fromDate);
+			String date2 = convertDateFormatTo_dd_MM_yyyy(toDate);
+			HSSFRow fromDateRow = sheet.createRow(metaRowIndex++);
+			fromDateRow.createCell(0).setCellValue("From");
+			fromDateRow.createCell(1).setCellValue(date1);
+
+			HSSFRow toDateRow = sheet.createRow(metaRowIndex++);
+			toDateRow.createCell(0).setCellValue("To");
+			toDateRow.createCell(1).setCellValue(date2);
+
+			HSSFRow toTimeRow = sheet.createRow(metaRowIndex++);
+			toTimeRow.createCell(0).setCellValue("Time");
+			LocalDateTime now = LocalDateTime.now();
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
+			String formattedDateTime = now.format(formatter);
+			toTimeRow.createCell(1).setCellValue(formattedDateTime);
+
+			// Collect unique payment methods
+			Set<String> paymentMethods = new HashSet<>();
+			for (FinanceReport report : financeReport) {
+				if (report.getPaymentmethod() != null && !report.getPaymentmethod().isEmpty()) {
+					paymentMethods.add(report.getPaymentmethod());
+				}
 			}
-			catch(Exception e)
-			{
-				logger.error("Exception occured while searching for Bankuser : "+e.getMessage(),e);
-				role = "OPR";
+			String paymentMethodsString = paymentMethods.stream().collect(Collectors.joining(","));
+
+			// Add payment methods to the Nature row
+			HSSFRow toNatureRow = sheet.createRow(metaRowIndex++);
+			toNatureRow.createCell(0).setCellValue("Nature");
+			toNatureRow.createCell(1).setCellValue(paymentMethodsString.isEmpty() ? null : paymentMethodsString);
+
+			HSSFRow toMercNameRow = sheet.createRow(metaRowIndex++);
+			toMercNameRow.createCell(0).setCellValue("Merchant Name");
+			toMercNameRow.createCell(1).setCellValue(businessName);
+
+			// Total number of lines (unique txntypes)
+			int totalLines = financeReport.size();
+
+			// Add total lines dynamically
+			HSSFRow toTotalLinesRow = sheet.createRow(metaRowIndex++);
+			toTotalLinesRow.createCell(0).setCellValue("Total Lines");
+			toTotalLinesRow.createCell(1).setCellValue(totalLines);
+
+			// Total Transaction Amount (sum of all transaction amounts)
+			double totalTransactionAmount = financeReport.stream()
+					.filter(report -> report.getAmount() != null && !report.getAmount().isEmpty()
+							&& !report.getAmount().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getAmount().replace(",", ""))) // Convert String to
+																									// double, removing
+																									// commas
+					.sum();
+			logger.info("toTotalLinesRow::::" + toTotalLinesRow);
+
+			HSSFRow toTxnAmtRow = sheet.createRow(metaRowIndex++);
+			toTxnAmtRow.createCell(0).setCellValue("Total Transaction Amount");
+			toTxnAmtRow.createCell(1).setCellValue(totalTransactionAmount);
+
+			// Total Net Amount (sum of all net amounts)
+			double totalNetAmount = financeReport.stream()
+					.filter(report -> report.getNetamount() != null && !report.getNetamount().isEmpty()
+							&& !report.getNetamount().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getNetamount().replace(",", ""))).sum();
+			HSSFRow toNetAmtRow = sheet.createRow(metaRowIndex++);
+			toNetAmtRow.createCell(0).setCellValue("Total NetAmount");
+			toNetAmtRow.createCell(1).setCellValue(totalNetAmount);
+
+			// Total MDR Amount (sum of all MDR amounts)
+			double totalMDRAmount = financeReport.stream()
+					.filter(report -> report.getMdramount() != null && !report.getMdramount().isEmpty()
+							&& !report.getMdramount().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getMdramount())).sum();
+
+			HSSFRow toMdrAmtRow = sheet.createRow(metaRowIndex++);
+			toMdrAmtRow.createCell(0).setCellValue("Total MDR Amount");
+			toMdrAmtRow.createCell(1).setCellValue(totalMDRAmount);
+
+			// Leave an empty row between metadata and headers
+			metaRowIndex++;
+
+			// Set header
+			HSSFRow header = sheet.createRow(metaRowIndex);
+			String[] headers = PropertyLoad.getFile().getProperty("PAYIN_MERCHANT_REPORT_XLS_EXPORT_HEADER")
+					.toUpperCase().split(",");
+			for (int i = 0; i < headers.length; i++) {
+				header.createCell(i).setCellValue(headers[i]);
 			}
-			return role;
+
+			// Set rows
+			int rowIndex = metaRowIndex + 1;
+			for (FinanceReport report : financeReport) {
+				HSSFRow row = sheet.createRow(rowIndex++);
+				row.createCell(0).setCellValue(report.getDate().replace("/", "-"));
+				row.createCell(1).setCellValue(report.getTime());
+				row.createCell(2).setCellValue(report.getMid());
+				row.createCell(3).setCellValue(report.getTid());
+				row.createCell(4).setCellValue(report.getAmount());
+				row.createCell(5).setCellValue(report.getReference());
+				row.createCell(6).setCellValue(report.getApprovalcode());
+				row.createCell(7).setCellValue(report.getRrn());
+				row.createCell(8).setCellValue(report.getStatus());
+				row.createCell(9).setCellValue(report.getPaymentmethod());
+				row.createCell(10).setCellValue(report.getMdramount());
+				row.createCell(11).setCellValue(report.getNetamount());
+				row.createCell(12).setCellValue(report.getPaymentdate());
+				row.createCell(13).setCellValue(report.getEzysettleamount());
+				row.createCell(14).setCellValue(report.getSubmerchantid());
+
+			}
+
+			logger.info("Payin Transaction Report--Completed");
+			// Convert workbook to byte array
+			try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+				workbook.write(bos);
+				return bos.toByteArray();
+			}
+
+		} catch (Exception e) {
+			logger.error("Error generating Excel content for payin report", e);
+			return null;
+		}
+	}
+
+	public static byte[] generateMerchantPayoutReportXLSContentForEmail(List<FinanceReport> financeReport,
+			String fromDate, String toDate, String merchantName) {
+		try (HSSFWorkbook workbook = new HSSFWorkbook()) {
+			HSSFSheet sheet = workbook.createSheet("Payout Transaction Report");
+			logger.info("Payout Transaction Report");
+			int metaRowIndex = 0;
+
+			HSSFRow reportTypeRow1 = sheet.createRow(metaRowIndex++);
+			reportTypeRow1.createCell(0).setCellValue("Report Type:");
+			reportTypeRow1.createCell(1).setCellValue("Payout Report");
+
+			String date1 = convertDateFormatTo_dd_MM_yyyy(fromDate);
+			String date2 = convertDateFormatTo_dd_MM_yyyy(toDate);
+			HSSFRow fromDateRow = sheet.createRow(metaRowIndex++);
+			fromDateRow.createCell(0).setCellValue("From");
+			fromDateRow.createCell(1).setCellValue(date1);
+
+			HSSFRow toDateRow = sheet.createRow(metaRowIndex++);
+			toDateRow.createCell(0).setCellValue("To");
+			toDateRow.createCell(1).setCellValue(date2);
+
+			HSSFRow toTimeRow = sheet.createRow(metaRowIndex++);
+			toTimeRow.createCell(0).setCellValue("Time");
+			LocalDateTime now = LocalDateTime.now();
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
+			String formattedDateTime = now.format(formatter);
+			toTimeRow.createCell(1).setCellValue(formattedDateTime);
+
+			HSSFRow toNatureRow1 = sheet.createRow(metaRowIndex++);
+			toNatureRow1.createCell(0).setCellValue("Nature");
+			toNatureRow1.createCell(1).setCellValue("PAYOUT");
+
+			HSSFRow toMercNameRow = sheet.createRow(metaRowIndex++);
+			toMercNameRow.createCell(0).setCellValue("Merchant Name");
+			toMercNameRow.createCell(1).setCellValue(merchantName);
+
+			// Total number of lines (unique txntypes)
+			int totalLines = financeReport.size();
+
+			// Add total lines dynamically
+			HSSFRow toTotalLinesRow = sheet.createRow(metaRowIndex++);
+			toTotalLinesRow.createCell(0).setCellValue("Total Lines");
+			toTotalLinesRow.createCell(1).setCellValue(totalLines);
+
+			// Total Transaction Amount (sum of all transaction amounts)
+			double totalTransactionAmount = financeReport.stream()
+					.filter(report -> report.getAmount() != null && !report.getAmount().isEmpty()
+							&& !report.getAmount().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getAmount())) // Convert String to double
+					.sum();
+			logger.info("totalTransactionAmount::::" + totalTransactionAmount);
+
+			HSSFRow toTxnAmtRow = sheet.createRow(metaRowIndex++);
+			toTxnAmtRow.createCell(0).setCellValue("Total Transaction Amount");
+			toTxnAmtRow.createCell(1).setCellValue(totalTransactionAmount);
+
+			// Calculate Total Payout Fee
+			double totalPayoutFee = financeReport.stream()
+					.filter(report -> report.getPayoutFee() != null && !report.getPayoutFee().isEmpty()
+							&& !report.getPayoutFee().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getPayoutFee())) // Convert String to double
+					.sum();
+			logger.info("Total Payout Fee: " + totalPayoutFee);
+
+			HSSFRow toPayoutFeeRow = sheet.createRow(metaRowIndex++);
+			toPayoutFeeRow.createCell(0).setCellValue("Total Payout Fee");
+			toPayoutFeeRow.createCell(1).setCellValue(totalPayoutFee);
+
+			// Calculate Total Payout Amount
+			double totalPayoutAmt = financeReport.stream()
+					.filter(report -> report.getPayoutamount() != null && !report.getPayoutamount().isEmpty()
+							&& !report.getPayoutamount().equalsIgnoreCase("null"))
+					.mapToDouble(report -> Double.parseDouble(report.getPayoutamount())) // Convert String to double
+					.sum();
+			logger.info("Total Payout Amout: " + totalPayoutAmt);
+			HSSFRow totalPayoutAmtRow = sheet.createRow(metaRowIndex++);
+			totalPayoutAmtRow.createCell(0).setCellValue("Total Payout Amount");
+			totalPayoutAmtRow.createCell(1).setCellValue(totalPayoutAmt);
+
+			// Leave an empty row between metadata and headers
+			metaRowIndex++;
+
+			// Set header
+			HSSFRow header = sheet.createRow(metaRowIndex);
+			String[] headers = PropertyLoad.getFile().getProperty("PAYOUT_MERCHANT_REPORT_XLS_EXPORT_HEADER")
+					.toUpperCase().split(",");
+			for (int i = 0; i < headers.length; i++) {
+				header.createCell(i).setCellValue(headers[i]);
+			}
+
+			// Set rows
+			int rowIndex = metaRowIndex + 1;
+			for (FinanceReport report : financeReport) {
+				HSSFRow row = sheet.createRow(rowIndex++);
+				row.createCell(0).setCellValue(report.getDate().replace("/", "-"));
+				row.createCell(1).setCellValue(report.getTime());
+				row.createCell(2).setCellValue(report.getCustomerName());
+				row.createCell(3).setCellValue(report.getBrn());
+				row.createCell(4).setCellValue(report.getAccountNo());
+				row.createCell(5).setCellValue(report.getBankName());
+				row.createCell(6).setCellValue(report.getTransaction_id());
+				row.createCell(7).setCellValue(report.getPayoutamount());
+				row.createCell(8).setCellValue(report.getPayoutFee());
+				row.createCell(9).setCellValue(report.getStatus());
+				row.createCell(10).setCellValue(report.getPaidTime());
+				row.createCell(11).setCellValue(report.getPaidDate());
+				row.createCell(12).setCellValue(report.getSubmerchantMid());
+				row.createCell(13).setCellValue(report.getSubmerchantName());
+				row.createCell(14).setCellValue(report.getPayoutId());
+				row.createCell(15).setCellValue(report.getAmount());
+				row.createCell(16).setCellValue(report.getPayoutType());
+			}
+
+			logger.info("Payout Transaction Report");
+			// Convert workbook to byte array
+			try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+				workbook.write(bos);
+				return bos.toByteArray();
+			}
+		} catch (Exception e) {
+			logger.error("Error generating Excel content for payout report", e);
+			return null;
+		}
+	}
+
+	public String triggerIpnUsingProcessorAPI(String invoiceId) throws IOException {
+
+		if (!triggerCountPerIpn.containsKey(invoiceId)) {
+			triggerCountPerIpn.put(invoiceId, 3);
 		}
 
-		public static byte[] generateMerchantPayinDetailExcelContentForEmail(List<FinanceReport> financeReport, String fromDate,
-				String toDate, String businessName) {
-			try (HSSFWorkbook workbook = new HSSFWorkbook()) {
-				HSSFSheet sheet = workbook.createSheet("Payin Transaction Report");
-				logger.info("Payin Transaction Report");
+		int ipnRetriggerCount = triggerCountPerIpn.get(invoiceId);
 
-				// Set metadata
-				int metaRowIndex = 0;
+		if (Objects.isNull(invoiceId) || invoiceId.isEmpty()) {
 
-				HSSFRow reportTypeRow = sheet.createRow(metaRowIndex++);
+			logger.error("Invalid request body for IPN retrigger with empty/null invoice Id");
+			return "invalid/Empty request body";
 
-				reportTypeRow.createCell(0).setCellValue("Report Type:");
-				reportTypeRow.createCell(1).setCellValue("Payin Report");
+		} else if (ipnRetriggerCount <= 0 || ipnRetriggerCount > 3) {
 
-				String date1 = convertDateFormatTo_dd_MM_yyyy(fromDate);
-				String date2 = convertDateFormatTo_dd_MM_yyyy(toDate);
-				HSSFRow fromDateRow = sheet.createRow(metaRowIndex++);
-				fromDateRow.createCell(0).setCellValue("From");
-				fromDateRow.createCell(1).setCellValue(date1);
+			logger.info("You have exceeded your trigger limit for " + invoiceId);
+			return "You have exceeded your trigger limit for this transaction";
 
-				HSSFRow toDateRow = sheet.createRow(metaRowIndex++);
-				toDateRow.createCell(0).setCellValue("To");
-				toDateRow.createCell(1).setCellValue(date2);
+		} else {
 
-				HSSFRow toTimeRow = sheet.createRow(metaRowIndex++);
-				toTimeRow.createCell(0).setCellValue("Time");
-				LocalDateTime now = LocalDateTime.now();
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
-				String formattedDateTime = now.format(formatter);
-				toTimeRow.createCell(1).setCellValue(formattedDateTime);
+			logger.info(
+					"IPN retrigger initialized and  remaining count for : " + invoiceId + " is " + ipnRetriggerCount);
+			String responseFromAPI = getExternalProcessorAPIResponse(invoiceId).contains("success")? "IPN has been sent successfully.\n[Remaining attempts : "+(--ipnRetriggerCount)+"]" :"IPN send failed."+ipnRetriggerCount+" attempts remaining";
+			logger.info("IPN retrigger completed for Invoice Id of " + invoiceId);
+			triggerCountPerIpn.put(invoiceId, ipnRetriggerCount);
+			logger.error("IPN trigger end time : "+ LocalTime.now());
 
-				// Collect unique payment methods
-				Set<String> paymentMethods = new HashSet<>();
-				for (FinanceReport report : financeReport) {
-					if (report.getPaymentmethod() != null && !report.getPaymentmethod().isEmpty()) {
-						paymentMethods.add(report.getPaymentmethod());
+			return responseFromAPI;
+		}
+	}
+
+	//Triggering IPN(PAYOUT) for respected InvoiceID using external REST API
+	private static String getExternalProcessorAPIResponse(String invoiceId) throws IOException {
+
+		logger.info("getExternalProcessorAPIResponse() is invoked");
+
+		//get value from config-demo
+		String ipnRetriggerUrl= PropertyLoad.getFile().getProperty("IPN_RETRIGGER_URL");
+
+		URL url = new URL(ipnRetriggerUrl);
+		HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
+
+		httpConnection.setRequestMethod("POST");
+		httpConnection.setDoOutput(true);
+		httpConnection.setDoInput(true);
+		httpConnection.setRequestProperty("Content-Type", "application/json");
+		httpConnection.setInstanceFollowRedirects(true);
+		httpConnection.setUseCaches(false);
+
+		JSONObject jsonObject = new JSONObject();
+
+		jsonObject.put("invoiceIdProof", new String[] { invoiceId });
+
+		try (OutputStream os = httpConnection.getOutputStream()) {
+
+			logger.info("Sending payload in the form of JSON to the External API : " + url.getPath() + " of body "
+					+ jsonObject.toString());
+			byte[] payload = jsonObject.toString().getBytes();
+			os.write(payload, 0, payload.length);
+			os.flush();
+
+		} catch (Exception e) {
+			logger.error("error when trying to hit the API ::::::"+e.getLocalizedMessage());
+		}
+
+		StringBuffer responseBody = new StringBuffer();
+		String responseLine = null;
+
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(httpConnection.getInputStream()))) {
+
+			while ((responseLine = reader.readLine()) != null) {
+				responseBody.append(responseLine);
+			}
+		} catch (Exception e) {
+			responseBody.append(e.getLocalizedMessage());
+			logger.error("Error when getting response from IPN retrigger API ::::::: "+e.getLocalizedMessage());
+		}
+
+		logger.info("Response from External API is " + responseBody.toString());
+		httpConnection.disconnect();
+
+		return responseBody.toString().contains("successfully") ? "success": "failed";
+	}
+
+	//Called when stop the application by ShutdownHandler onShutdown()
+	public void saveIpnTriggerData() {
+		
+
+		//property loaded from config_demo.properties
+		String ipnExcelFilePath = PropertyLoad.getFile().getProperty("IPN_TRIGGER_FILE_PATH");
+		
+		String sheetName = "ipn trigger count";
+		File file = new File(ipnExcelFilePath);
+
+		HSSFWorkbook workbook;
+		HSSFSheet sheet;
+
+		try {
+			// Check if file exists, create new workbook or load existing one
+			if (file.exists()) {
+				try (FileInputStream fis = new FileInputStream(file)) {
+					workbook = new HSSFWorkbook(fis);
+				}
+			} else {
+				workbook = new HSSFWorkbook();
+			}
+
+			// Get the sheet or create a new one if it doesn't exist
+			sheet = workbook.getSheet(sheetName);
+			if (sheet == null) {
+				sheet = workbook.createSheet(sheetName);
+			} else {
+				// Clear all rows (Remove old data)
+				int lastRowNum = sheet.getLastRowNum();
+				if(lastRowNum > 0) {
+					for (int i = lastRowNum; i >= 0; i--) {
+						sheet.removeRow(sheet.getRow(i));
 					}
 				}
-				String paymentMethodsString = paymentMethods.stream().collect(Collectors.joining(","));
-
-				// Add payment methods to the Nature row
-				HSSFRow toNatureRow = sheet.createRow(metaRowIndex++);
-				toNatureRow.createCell(0).setCellValue("Nature");
-				toNatureRow.createCell(1).setCellValue(paymentMethodsString.isEmpty() ? null : paymentMethodsString);
-
-				HSSFRow toMercNameRow = sheet.createRow(metaRowIndex++);
-				toMercNameRow.createCell(0).setCellValue("Merchant Name");
-				toMercNameRow.createCell(1).setCellValue(businessName);
-
-				// Total number of lines (unique txntypes)
-				int totalLines = financeReport.size();
-
-				// Add total lines dynamically
-				HSSFRow toTotalLinesRow = sheet.createRow(metaRowIndex++);
-				toTotalLinesRow.createCell(0).setCellValue("Total Lines");
-				toTotalLinesRow.createCell(1).setCellValue(totalLines);
-
-				// Total Transaction Amount (sum of all transaction amounts)
-				double totalTransactionAmount = financeReport.stream()
-						.filter(report -> report.getAmount() != null && !report.getAmount().isEmpty()
-								&& !report.getAmount().equalsIgnoreCase("null"))
-						.mapToDouble(report -> Double.parseDouble(report.getAmount().replace(",", ""))) // Convert String to
-																										// double, removing
-																										// commas
-						.sum();
-				logger.info("toTotalLinesRow::::" + toTotalLinesRow);
-
-				HSSFRow toTxnAmtRow = sheet.createRow(metaRowIndex++);
-				toTxnAmtRow.createCell(0).setCellValue("Total Transaction Amount");
-				toTxnAmtRow.createCell(1).setCellValue(totalTransactionAmount);
-
-				// Total Net Amount (sum of all net amounts)
-				double totalNetAmount = financeReport.stream()
-						.filter(report -> report.getNetamount() != null && !report.getNetamount().isEmpty()
-								&& !report.getNetamount().equalsIgnoreCase("null"))
-						.mapToDouble(report -> Double.parseDouble(report.getNetamount().replace(",", ""))).sum();
-				HSSFRow toNetAmtRow = sheet.createRow(metaRowIndex++);
-				toNetAmtRow.createCell(0).setCellValue("Total NetAmount");
-				toNetAmtRow.createCell(1).setCellValue(totalNetAmount);
-				
-
-				// Total MDR Amount (sum of all MDR amounts)
-				double totalMDRAmount = financeReport.stream()
-						.filter(report -> report.getMdramount() != null && !report.getMdramount().isEmpty()
-								&& !report.getMdramount().equalsIgnoreCase("null"))
-						.mapToDouble(report -> Double.parseDouble(report.getMdramount())).sum();
-
-				HSSFRow toMdrAmtRow = sheet.createRow(metaRowIndex++);
-				toMdrAmtRow.createCell(0).setCellValue("Total MDR Amount");
-				toMdrAmtRow.createCell(1).setCellValue(totalMDRAmount);
-
-				// Leave an empty row between metadata and headers
-				metaRowIndex++;
-
-				// Set header
-				HSSFRow header = sheet.createRow(metaRowIndex);
-				String[] headers = PropertyLoad.getFile().getProperty("PAYIN_MERCHANT_REPORT_XLS_EXPORT_HEADER").toUpperCase()
-						.split(",");
-				for (int i = 0; i < headers.length; i++) {
-					header.createCell(i).setCellValue(headers[i]);
-				}
-
-				// Set rows
-				int rowIndex = metaRowIndex + 1;
-				for (FinanceReport report : financeReport) {
-					HSSFRow row = sheet.createRow(rowIndex++);
-					row.createCell(0).setCellValue(report.getDate().replace("/", "-"));
-					row.createCell(1).setCellValue(report.getTime());
-					row.createCell(2).setCellValue(report.getMid());
-					row.createCell(3).setCellValue(report.getTid());
-					row.createCell(4).setCellValue(report.getAmount());
-					row.createCell(5).setCellValue(report.getReference());
-					row.createCell(6).setCellValue(report.getApprovalcode());
-					row.createCell(7).setCellValue(report.getRrn());
-					row.createCell(8).setCellValue(report.getStatus());
-					row.createCell(9).setCellValue(report.getPaymentmethod());
-					row.createCell(10).setCellValue(report.getMdramount());
-					row.createCell(11).setCellValue(report.getNetamount());
-					row.createCell(12).setCellValue(report.getPaymentdate());
-					row.createCell(13).setCellValue(report.getEzysettleamount());
-					row.createCell(14).setCellValue(report.getSubmerchantid());
-					
-				}
-
-				logger.info("Payin Transaction Report--Completed");
-				// Convert workbook to byte array
-				try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-					workbook.write(bos);
-					return bos.toByteArray();
-				}
-
-			} catch (Exception e) {
-				logger.error("Error generating Excel content for payin report", e);
-				return null;
 			}
-		}
 
-		public static byte[] generateMerchantPayoutReportXLSContentForEmail(List<FinanceReport> financeReport, String fromDate,
-				String toDate, String merchantName) {
-			try (HSSFWorkbook workbook = new HSSFWorkbook()) {
-				HSSFSheet sheet = workbook.createSheet("Payout Transaction Report");
-				logger.info("Payout Transaction Report");
-				int metaRowIndex = 0;
-
-				HSSFRow reportTypeRow1 = sheet.createRow(metaRowIndex++);
-				reportTypeRow1.createCell(0).setCellValue("Report Type:");
-				reportTypeRow1.createCell(1).setCellValue("Payout Report");
-
-				String date1 = convertDateFormatTo_dd_MM_yyyy(fromDate);
-				String date2 = convertDateFormatTo_dd_MM_yyyy(toDate);
-				HSSFRow fromDateRow = sheet.createRow(metaRowIndex++);
-				fromDateRow.createCell(0).setCellValue("From");
-				fromDateRow.createCell(1).setCellValue(date1);
-
-				HSSFRow toDateRow = sheet.createRow(metaRowIndex++);
-				toDateRow.createCell(0).setCellValue("To");
-				toDateRow.createCell(1).setCellValue(date2);
-
-				HSSFRow toTimeRow = sheet.createRow(metaRowIndex++);
-				toTimeRow.createCell(0).setCellValue("Time");
-				LocalDateTime now = LocalDateTime.now();
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
-				String formattedDateTime = now.format(formatter);
-				toTimeRow.createCell(1).setCellValue(formattedDateTime);
-
-				HSSFRow toNatureRow1 = sheet.createRow(metaRowIndex++);
-				toNatureRow1.createCell(0).setCellValue("Nature");
-				toNatureRow1.createCell(1).setCellValue("PAYOUT");
-
-				HSSFRow toMercNameRow = sheet.createRow(metaRowIndex++);
-				toMercNameRow.createCell(0).setCellValue("Merchant Name");
-				toMercNameRow.createCell(1).setCellValue(merchantName);
-
-				// Total number of lines (unique txntypes)
-				int totalLines = financeReport.size();
-
-				// Add total lines dynamically
-				HSSFRow toTotalLinesRow = sheet.createRow(metaRowIndex++);
-				toTotalLinesRow.createCell(0).setCellValue("Total Lines");
-				toTotalLinesRow.createCell(1).setCellValue(totalLines);
-
-				// Total Transaction Amount (sum of all transaction amounts)
-				double totalTransactionAmount = financeReport.stream()
-						.filter(report -> report.getAmount() != null && !report.getAmount().isEmpty()
-								&& !report.getAmount().equalsIgnoreCase("null"))
-						.mapToDouble(report -> Double.parseDouble(report.getAmount())) // Convert String to double
-						.sum();
-				logger.info("totalTransactionAmount::::" + totalTransactionAmount);
-
-				HSSFRow toTxnAmtRow = sheet.createRow(metaRowIndex++);
-				toTxnAmtRow.createCell(0).setCellValue("Total Transaction Amount");
-				toTxnAmtRow.createCell(1).setCellValue(totalTransactionAmount);
-
-				// Calculate Total Payout Fee
-				double totalPayoutFee = financeReport.stream()
-						.filter(report -> report.getPayoutFee() != null && !report.getPayoutFee().isEmpty()
-								&& !report.getPayoutFee().equalsIgnoreCase("null"))
-						.mapToDouble(report -> Double.parseDouble(report.getPayoutFee())) // Convert String to double
-						.sum();
-				logger.info("Total Payout Fee: " + totalPayoutFee);
-
-				HSSFRow toPayoutFeeRow = sheet.createRow(metaRowIndex++);
-				toPayoutFeeRow.createCell(0).setCellValue("Total Payout Fee");
-				toPayoutFeeRow.createCell(1).setCellValue(totalPayoutFee);
-
-				// Calculate Total Payout Amount
-				double totalPayoutAmt = financeReport.stream()
-						.filter(report -> report.getPayoutamount() != null && !report.getPayoutamount().isEmpty()
-								&& !report.getPayoutamount().equalsIgnoreCase("null"))
-						.mapToDouble(report -> Double.parseDouble(report.getPayoutamount())) // Convert String to double
-						.sum();
-				logger.info("Total Payout Amout: " + totalPayoutAmt);
-				HSSFRow totalPayoutAmtRow = sheet.createRow(metaRowIndex++);
-				totalPayoutAmtRow.createCell(0).setCellValue("Total Payout Amount");
-				totalPayoutAmtRow.createCell(1).setCellValue(totalPayoutAmt);
-				
-
-
-				// Leave an empty row between metadata and headers
-				metaRowIndex++;
-
-				// Set header
-				HSSFRow header = sheet.createRow(metaRowIndex);
-				String[] headers = PropertyLoad.getFile().getProperty("PAYOUT_MERCHANT_REPORT_XLS_EXPORT_HEADER").toUpperCase()
-						.split(",");
-				for (int i = 0; i < headers.length; i++) {
-					header.createCell(i).setCellValue(headers[i]);
-				}
-
-				// Set rows
-				int rowIndex = metaRowIndex + 1;
-				for (FinanceReport report : financeReport) {
-					HSSFRow row = sheet.createRow(rowIndex++);
-					row.createCell(0).setCellValue(report.getDate().replace("/", "-"));
-					row.createCell(1).setCellValue(report.getTime());
-					row.createCell(2).setCellValue(report.getCustomerName());
-					row.createCell(3).setCellValue(report.getBrn());
-					row.createCell(4).setCellValue(report.getAccountNo());
-					row.createCell(5).setCellValue(report.getBankName());
-					row.createCell(6).setCellValue(report.getTransaction_id());
-					row.createCell(7).setCellValue(report.getPayoutamount());
-					row.createCell(8).setCellValue(report.getPayoutFee());
-					row.createCell(9).setCellValue(report.getStatus());
-					row.createCell(10).setCellValue(report.getPaidTime());
-					row.createCell(11).setCellValue(report.getPaidDate());
-					row.createCell(12).setCellValue(report.getSubmerchantMid());
-					row.createCell(13).setCellValue(report.getSubmerchantName());
-					row.createCell(14).setCellValue(report.getPayoutId());
-					row.createCell(15).setCellValue(report.getAmount());
-					row.createCell(16).setCellValue(report.getPayoutType());
-				}
-
-				logger.info("Payout Transaction Report");
-				// Convert workbook to byte array
-				try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-					workbook.write(bos);
-					return bos.toByteArray();
-				}
-			} catch (Exception e) {
-				logger.error("Error generating Excel content for payout report", e);
-				return null;
+			// Write new data from Map
+			int rowNum = 0; // Start from first row
+			for (Map.Entry<String, Integer> entry : triggerCountPerIpn.entrySet()) {
+				HSSFRow row = sheet.createRow(rowNum++);
+				row.createCell(0).setCellValue(entry.getKey());
+				row.createCell(1).setCellValue(entry.getValue());
 			}
+
+			// Save workbook to file
+			try (FileOutputStream fos = new FileOutputStream(file)) {
+				workbook.write(fos);
+			}
+
+			workbook.close();
+			logger.info("Excel file updated successfully with new data!");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error("Error while writing IPN retrigger count data: " + e.getMessage());
 		}
+	
+	}
+
+
+
+	public String getIpnTriggerMessage(String invoiceIdProof) {
+		logger.info( "getIpnTriggerMessage() is invoked");
+		boolean isIdPresent = triggerCountPerIpn.containsKey(invoiceIdProof);
+		
+		
+		
+		if(!isIdPresent) {
+			return "You can send the IPN upto 3 times.Sending now will reduce remaining attempts.\n[Remaining attempts : 3]";
+		}else {
+			Integer remainingTriggerCount = triggerCountPerIpn.get(invoiceIdProof);
+			return remainingTriggerCount < 1 || remainingTriggerCount > 3 ? "You have used all your IPN send attempts." : "You can send the IPN upto 3 times.Sending now will reduce your remaining attempts.\n[Remaining attempts : "+remainingTriggerCount+"]";
+		
+		}
+	}
+	
 }
