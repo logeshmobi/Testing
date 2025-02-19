@@ -1,0 +1,2886 @@
+<%@page
+	import="com.mobiversa.payment.controller.MerchantWebUMTransactionController"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@taglib prefix="sec"
+	uri="http://www.springframework.org/security/tags"%>
+<%@ page language="java" import="java.util.*"%>
+<%@ page import="java.text.SimpleDateFormat"%>
+<%@ page import="java.util.ResourceBundle"%>
+<%
+ResourceBundle resource = ResourceBundle.getBundle("config");
+String actionimg = resource.getString("NEWACTION");
+String voidimage = resource.getString("VOIDIMAGE");
+String refundimage = resource.getString("REFUNDIMAGE");
+String eyeimg = resource.getString("NEWEYE");
+%>
+
+<html lang="en-US">
+<head>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400&display=swap"
+	rel="stylesheet">
+<meta charset="UTF-8">
+<meta
+	content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+	name="viewport">
+
+<!-- Script tag for Datepicker -->
+
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+</head>
+
+
+<style>
+#merchantName:hover {
+	color: 275ca8;
+}
+
+.table-border-bottom td {
+	border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+.w24 {
+	width: 24px;
+}
+
+.hide_key {
+	display: none;
+}
+
+#pagination {
+	display: inline-block;
+	vertical-align: middle;
+	border-radius: 1px;
+	padding: 1px 2px 4px 2px;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
+	background-color: transparent;
+	float: right;
+	margin-right: 15px;
+	margin-bottom: 10px;
+	/* background-image: -webkit-linear-gradient(top, #DBDBDB, #E2E2E2);
+      background-image:    -moz-linear-gradient(top, #DBDBDB, #E2E2E2);
+      background-image:     -ms-linear-gradient(top, #DBDBDB, #E2E2E2);
+      background-image:      -o-linear-gradient(top, #DBDBDB, #E2E2E2);
+      background-image:         linear-gradient(top, #DBDBDB, #E2E2E2); */
+	/*  position:absolute;
+      left:62rem;
+      bottom:1rem; */
+	font-family: 'Poppins', sans-serif;
+	/* width:20%;
+      height:6%; */
+}
+
+#pagination a, #pagination i {
+	display: inline-block;
+	vertical-align: middle;
+	width: 2.2rem;
+	/*  color: #7D7D7D; */
+	text-align: center;
+	font-size: 16px;
+	padding: 2.5px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+
+#pagination a {
+	/* margin: 0 2px 0 2px; */
+	margin: 0 2px;
+	border-radius: 1px;
+	border: 1px solid #005baa;
+	cursor: pointer;
+	/* box-shadow: inset 0 1px 0 0 #D7D7D7, 0 1px 2px #666; */
+	/* text-shadow: 0 1px 1px #FFF; */
+	background-color: white;
+	color: #005baa;
+	height: 2.3rem;
+	vertical-align: middle;
+	padding-top: 4px;
+}
+
+#pagination i {
+	/*  margin: 0 3px 0 3px; */
+	
+}
+
+#pagination a.current {
+	border: 1px solid #005baa;
+	box-shadow: 0 1px 1px #999;
+	background-color: #005baa;
+	color: white;
+}
+
+#exampleModalCenter {
+	z-index: 99;
+	width: 25%;
+	font-size: 24px;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+.test {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 10;
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
+#close {
+	color: #fff;
+	background-color: #005baa;
+}
+
+#overlay_text {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	font-size: 50px;
+	color: #FFF;
+	transform: translate(-50%, -50%);
+}
+
+#overlay_text .img-fluid {
+	max-width: 100%;
+}
+
+#overlay_text img {
+	height: 150px;
+}
+
+#overlay {
+	position: fixed;
+	display: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 2;
+	cursor: pointer;
+}
+
+.pop-body {
+	border-radius: 25px;
+}
+
+.mb-0 {
+	padding-bottom: 0px !important;
+}
+
+.key_hover:hover {
+	cursor: pointer;
+}
+
+#agentName:hover {
+	color: 275ca8;
+}
+
+.example_e1:focus {
+	outline: none !important;
+}
+
+.example_e1 {
+	display: inline-block;
+	margin-bottom: 0;
+	font-weight: 600;
+	text-align: left;
+	vertical-align: middle;
+	-ms-touch-action: manipulation;
+	touch-action: manipulation;
+	cursor: pointer;
+	background-image: none;
+	border: 0;
+	color: rgb(39, 92, 168);
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	padding: 10px 15px;
+	font-size: 13px;
+	line-height: 1.428571429;
+	border-radius: 25px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	transition: box-shadow 0.3s cubic-bezier(0.35, 0, 0.25, 1), transform
+		0.2s cubic-bezier(0.35, 0, 0.25, 1), background-color 0.3s ease-in-out;
+	font-style: Arial, Helvetica, sans-serif;
+	border-radius: 15px;
+}
+
+.example_e1:hover {
+	color: rgb(39, 92, 168);
+	font-weight: 600 !important;
+	-webkit-box-shadow: 0px 5px 40px -10px rgba(0, 0, 0, 0.57);
+	-moz-box-shadow: 0px 5px 40px -10px rgba(0, 0, 0, 0.57);
+	transition: all 0.3s ease 0s;
+	border: 2px solid #cfcfd1;
+	outline: 0 !important;
+}
+</style>
+<script type="text/javascript">
+	history.pushState(null, null, "");
+	window.addEventListener('popstate', function() {
+		history.pushState(null, null, "");
+
+	});
+</script>
+<!-- <script type="text/javascript">
+	jQuery(document).ready(function() {
+
+		$('#export').select2();
+		$('#txnType').select2();
+	});
+</script> -->
+
+<style>
+.export_div .select-wrapper {
+	width: 65%;
+	float: left;
+}
+
+.datepicker {
+	width: 80% !important;
+}
+
+.select-wrapper .caret {
+	fill: #005baa;
+}
+
+.addUserBtn, .addUserBtn:hover {
+	background-color: #fff;
+	border: 1px solid #005baa;
+	border-radius: 20px;
+	color: #005baa;
+	font-weight: 600;
+}
+
+.blue-btn {
+	background-color: #005baa;
+	color: #fff;
+	border-radius: 20px;
+}
+
+.button-class {
+	float: right;
+}
+
+.float-right {
+	float: right;
+}
+</style>
+
+
+<style>
+td, th {
+	padding: 7px 8px;
+	color: #707070;
+}
+
+thead th {
+	border-bottom: 1px solid #ffa500;
+	color: #4377a2;
+}
+</style>
+
+<!-- style for refund and void  -->
+
+<style>
+.popup-body {
+	border-radius: 20px;
+}
+
+#refundamount:not(.browser-default) {
+	border-bottom: 1.5px solid #ffa500 !important;
+}
+
+#voidamount:not(.browser-default) {
+	border-bottom: 1.5px solid #ffa500 !important;
+}
+
+#detailsofsuccessrefund:not(.browser-default) {
+	border: 1.5px solid #ffa500 !important;
+}
+
+#detailsofsuccessvoid:not(.browser-default) {
+	border: 1.5px solid #ffa500 !important;
+}
+
+#overlay-popup {
+	position: fixed;
+	display: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #000;
+	opacity: 0.5;
+	z-index: 99;
+	cursor: pointer;
+}
+
+#overlay_gifloader {
+	position: fixed;
+	display: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #000;
+	opacity: 0.5;
+	z-index: 99;
+	cursor: pointer;
+}
+
+#refundrequestpopup {
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+#successmodalforrefund{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+#modalforfailedrefund{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+#voidrequestpopup{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+#successmodalforvoid{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+#modalforfailedvoid{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+#modalforfailedrefundcustomized{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+#modalforfailedvoidcustomized{
+	z-index: 99;
+	width: 25%;
+	font-weight: 400;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+</style>
+
+<!-- style for refund and void end  -->
+
+
+<!-- script for refund and void start  -->
+<script type="text/javascript">
+	
+document.getElementById("refundrequestpopup").style.display = "none";
+document.getElementById("successmodalforrefund").style.display = "none";
+document.getElementById("modalforfailedrefund").style.display = "none";
+document.getElementById("modalforfailedrefundcustomized").style.display = "none";
+
+
+document.getElementById("voidrequestpopup").style.display = "none";
+document.getElementById("successmodalforvoid").style.display = "none";
+document.getElementById("modalforfailedvoid").style.display = "none";
+document.getElementById("modalforfailedvoidcustomized").style.display = "none";
+
+ 	function updateRefundAmount(amount) {	
+/*  		amount = amount.replace(/[^0-9]/g, ''); */	 
+	    document.getElementById("refundamount").value = amount; 		
+	}
+ 	
+
+	function updateConfirmationMessage(amount) {	 
+	    document.getElementById("innertextforrefund").innerHTML = "Do you wish to proceed with the refund for this " + amount + "RM transaction?";
+	}	
+
+function refundRequest(amount,rrn){
+	
+	document.getElementById("refundButtons").setAttribute("data-amount", amount);
+	document.getElementById("refundButtons").setAttribute("data-rrn", rrn);
+	
+	var amountWithoutCommas = amount.replace(/,/g, '');
+	
+	document.getElementById("refundrequestpopup").style.display = "block";
+	document.getElementById("overlay-popup").style.display = "block";
+	document.getElementById("fullrefund").checked = true;
+	document.getElementById("refundamount").disabled = true;
+	document.getElementById("refundbutton").disabled = false;
+	document.getElementById("refundamount").style.color = "#D3D3D3";
+	/* document.getElementById("refundAmountError").style.display= "none"; */
+	
+	 updateRefundAmount(amountWithoutCommas);
+	 updateConfirmationMessage(amountWithoutCommas);
+	
+	
+}
+
+function handleRefundOption(){
+	
+	 var exist_amount =  document.getElementById("refundButtons").getAttribute("data-amount");
+	 
+	 var amountWithoutCommas = exist_amount.replace(/,/g, '');
+	 
+	/*  var errorElement = document.getElementById("refundAmountError"); */
+	 var fullRefundRadio = document.getElementById("fullrefund");
+	 var refundAmountInput = document.getElementById("refundamount");
+	 var refundButton =  document.getElementById("refundbutton");
+	 
+	 if(fullRefundRadio.checked){
+		 refundAmountInput.disabled = true;
+		 refundAmountInput.style.color = "#D3D3D3";
+		 refundButton.disabled = false;
+		 /* errorElement.style.display = "none"; */
+		 
+		 updateRefundAmount(amountWithoutCommas);
+		 updateConfirmationMessage(amountWithoutCommas);
+		 
+	 }else{
+		 refundAmountInput.disabled = false;
+		 refundAmountInput.value = "0.00";
+		 updateConfirmationMessage(refundAmountInput.value);
+		 refundButton.disabled = true;
+		 refundAmountInput.style.color = "#72777B";
+		 
+		 refundAmountInput.addEventListener("input", function (event) {
+			 
+			 refundAmountInput.style.color = "#72777B";
+			 
+			 var value = event.target.value;
+             const amountValue = value.replace(/[^0-9]/g, '');
+                       
+             const partial_refund_amount = (parseFloat(amountValue) / 100).toFixed(2);
+             
+             updateRefundAmount(partial_refund_amount);
+    		 updateConfirmationMessage(partial_refund_amount);
+    		 
+    		 var fullrefundamount = parseFloat(exist_amount);
+    		 var zeroValue = parseFloat("0.00");
+    		 
+    		 /* if (isNaN(partial_refund_amount) || partial_refund_amount < 0 || partial_refund_amount > fullrefundamount){
+    			 
+    			 errorElement.innerHTML = "Please Enter a valid amount & should not exceeding the full refund amount.";
+                 errorElement.style.color = "red";
+                 errorElement.style.display = " block";
+                 refundButton.disabled = true;
+                 
+    		 }else if(partial_refund_amount == '0.00'){
+    			 errorElement.innerHTML = "";
+                 errorElement.style.display = "none";
+    			 refundButton.disabled = true;
+    		 }else{
+    			 errorElement.innerHTML = "";
+                 errorElement.style.display = "none";
+    			 refundButton.disabled = false;
+    		 } */
+    		 
+    		 if(partial_refund_amount > zeroValue ){	
+     			 refundButton.disabled = false;
+     			 event.target.value = partial_refund_amount ;
+     		 }else{
+     			 const defaultPartialRefundAmount = "0.00";
+     			 refundButton.disabled = true;
+     			 updateConfirmationMessage(defaultPartialRefundAmount);
+     			 event.target.value = defaultPartialRefundAmount ;
+     			
+     		 }
+             
+            	 
+		 });
+		 
+		 
+		 
+	 }
+
+}
+
+
+function initiateRefund(){
+	
+	 var amount = document.getElementById("refundButtons").getAttribute("data-amount");
+	 var rrn = document.getElementById("refundButtons").getAttribute("data-rrn");
+	 
+	 var amountWithoutCommas = amount.replace(/,/g, '');
+	 
+	 var updated_amount = document.getElementById("refundamount").value ;
+	 
+	 
+	 var fullrefundamount = parseFloat(amountWithoutCommas);
+
+	 
+	 if(updated_amount > fullrefundamount ){
+		 alert("Invalid amount. Please Enter a valid amount & amount should not exceeding the full refund amount. ");
+		 
+	 }
+	 else{
+ 
+	 var refundType = document.getElementById("fullrefund").checked ? "Full" : "Partial";
+	
+	/* 	console.log("Updatedamount : ",updated_amount)
+	    console.log("RRN:", rrn);
+	    console.log("Refund Type:", refundType); */
+	    
+	    document.getElementById("refundrequestpopup").style.display = "none";
+		document.getElementById("overlay-popup").style.display = "none";
+		
+		$("#overlay_gifloader").show();	
+		
+		 
+	    	    	    
+	     $.ajax({
+	        type: "GET",
+	        url: "${pageContext.request.contextPath}/merchant/transaction/refund/boost",
+	        data: {
+	            "transactionId": rrn,
+	            "refundAmount": updated_amount,
+	            "refundType": refundType
+	        },
+	        success: function (result) {
+	            if (result.responseCode == '0000') {
+	                
+	                $("#overlay_gifloader").hide();
+	                
+	             document.getElementById("successmodalforrefund").style.display = "block"; 
+	   	    	 document.getElementById("overlay-popup").style.display = "block";
+	   	    	 document.getElementById("transactionIdOfSuccess").innerHTML = result.transactionId;
+	   			 document.getElementById("amountOfSuccess").innerHTML = "RM "+result.amount; 
+	   			 
+	              
+	            } else if (result.responseCode == '0001') {
+	               
+	          
+	                $("#overlay_gifloader").hide();
+	                
+	             document.getElementById("modalforfailedrefund").style.display = "block"; 
+	   	    	 document.getElementById("overlay-popup").style.display = "block"; 
+	            
+	            } else if(result.responseCode == '0002'){
+	            	
+	            	   $("#overlay_gifloader").hide();
+		                
+	  	             document.getElementById("modalforfailedrefundcustomized").style.display = "block"; 
+	  	   	    	 document.getElementById("overlay-popup").style.display = "block"; 
+	            	
+	            }
+	        },
+	        error: function (xhr, status, error) {
+	        	
+	        	$("#overlay_gifloader").hide();
+	            console.log("Error: " + error);
+	            alert("An error occurred. Please try again later.");
+	        }
+	    }); 
+	   
+		
+	 }
+	 
+
+	
+}
+
+function closeRefund(){
+	document.getElementById("refundrequestpopup").style.display = "none";
+	document.getElementById("overlay-popup").style.display = "none";
+}
+
+function closeForSuccessRefund(){
+	document.getElementById("successmodalforrefund").style.display = "none";
+	document.getElementById("overlay-popup").style.display = "none";
+	
+	$("#overlay_gifloader").hide();	
+	
+	 var url = "${pageContext.request.contextPath}/transactionUmweb/merchantBoostlist";
+	 $(location).attr('href', url);
+}
+
+function closeForFailedRefund(){
+	 document.getElementById("modalforfailedrefund").style.display = "none"; 
+	 document.getElementById("overlay-popup").style.display = "none";
+	 
+		$("#overlay_gifloader").hide();	
+}
+
+function closeForFailedRefundCustomized(){
+	 document.getElementById("modalforfailedrefundcustomized").style.display = "none"; 
+	 document.getElementById("overlay-popup").style.display = "none";
+	 
+		$("#overlay_gifloader").hide();	
+}
+
+
+/* ========================================== void script ================================================== */
+ 
+
+ 	function updateVoidAmount(amount) {	
+/*  		amount = amount.replace(/[^0-9]/g, ''); */	 
+	    document.getElementById("voidamount").value = amount; 		
+	}
+ 	
+
+	function updateConfirmationMessageForVoid(amount) {	 
+	    document.getElementById("innertextforvoid").innerHTML = "Do you wish to proceed with the void for this " + amount + "RM transaction?";
+	}	
+
+function voidRequest(amount,rrn){
+	
+	document.getElementById("voidButtons").setAttribute("data-amount", amount);
+	document.getElementById("voidButtons").setAttribute("data-rrn", rrn);
+	
+	var amountWithoutCommas = amount.replace(/,/g, '');
+	
+	document.getElementById("voidrequestpopup").style.display = "block";
+	document.getElementById("overlay-popup").style.display = "block";
+	document.getElementById("fullvoid").checked = true;
+	document.getElementById("voidamount").disabled = true;
+	document.getElementById("voidbutton").disabled = false;
+	document.getElementById("voidamount").style.color = "#D3D3D3";
+	/* document.getElementById("voidAmountError").style.display= "none"; */
+	
+	 updateVoidAmount(amountWithoutCommas);
+	 updateConfirmationMessageForVoid(amountWithoutCommas);
+	
+	
+}
+
+function handleVoidOption(){
+	
+	 var exist_amount_of_void =  document.getElementById("voidButtons").getAttribute("data-amount");
+	 
+	 var amountWithoutCommas = exist_amount_of_void.replace(/,/g, '');
+	 
+	/*  var errorElementOfVoid = document.getElementById("voidAmountError"); */
+	 var fullVoidRadio = document.getElementById("fullvoid");
+	 var voidAmountInput = document.getElementById("voidamount");
+	 var voidButton =  document.getElementById("voidbutton");
+	 
+	 if(fullVoidRadio.checked){
+		 voidAmountInput.disabled = true;
+		 voidAmountInput.style.color = "#D3D3D3";
+		 voidButton.disabled = false;
+		/*  errorElementOfVoid.style.display = "none"; */
+		 
+		 updateVoidAmount(amountWithoutCommas);
+		 updateConfirmationMessageForVoid(amountWithoutCommas);
+	 }else{
+		 voidAmountInput.style.color = "#72777B";
+		 voidAmountInput.disabled = false;
+		 voidAmountInput.value = "0.00";
+		 updateConfirmationMessageForVoid(voidAmountInput.value);
+		 voidButton.disabled = true;
+		 
+		 voidAmountInput.addEventListener("input", function (event) {
+			 
+			 voidAmountInput.style.color = "#72777B";
+			 
+			 var valueOfVoid = event.target.value;
+             const amountValueOfVoid = valueOfVoid.replace(/[^0-9]/g, '');
+                       
+             const partial_void_amount = (parseFloat(amountValueOfVoid) / 100).toFixed(2);
+             
+             updateVoidAmount(partial_void_amount);
+    		 updateConfirmationMessageForVoid(partial_void_amount);
+    		 
+    		 var fullvoidamount = parseFloat(exist_amount_of_void);
+    		 var zeroValue = parseFloat("0.00");
+    		 
+    		/*  if (isNaN(partial_void_amount) || partial_void_amount < 0 || partial_void_amount > fullvoidamount){
+    			 
+    			 errorElementOfVoid.innerHTML = "Please Enter a valid amount & should not exceeding the full void amount.";
+    			 errorElementOfVoid.style.color = "red";
+    			 errorElementOfVoid.style.display = " block";
+                 voidButton.disabled = true;
+                 
+    		 }else if(partial_void_amount == '0.00'){
+    			 errorElementOfVoid.innerHTML = "";
+    			 errorElementOfVoid.style.display = "none";
+    			 voidButton.disabled = true;
+    		 }else{
+    			 errorElementOfVoid.innerHTML = "";
+    			 errorElementOfVoid.style.display = "none";
+    			 voidButton.disabled = false;
+    		 } */
+    		 
+    		 if(partial_void_amount > zeroValue){
+    			 voidButton.disabled = false;
+    			 event.target.value = partial_void_amount ;
+    		 }else{
+    			 const defaultPartialVoidAmount = "0.00";
+    			 voidButton.disabled = true;
+    			 updateConfirmationMessageForVoid(defaultPartialVoidAmount);
+    			 event.target.value = defaultPartialVoidAmount ;
+    		 }
+    		
+             
+            	 
+		 });
+		 
+		 
+		 
+	 }
+
+}
+
+
+function initiateVoid(){
+	
+	 var amount = document.getElementById("voidButtons").getAttribute("data-amount");
+	 var rrn = document.getElementById("voidButtons").getAttribute("data-rrn");
+	 
+	 var amountWithoutCommas = amount.replace(/,/g, '');
+	 
+	 var updated_void_amount = document.getElementById("voidamount").value ;
+	 
+	 var updated_amountvoid = parseFloat(updated_void_amount);
+	 var fullvoidamount = parseFloat(amountWithoutCommas);
+	 
+	 if(updated_amountvoid > fullvoidamount ){
+		 alert("Invalid amount. Please Enter a valid amount & should not exceeding the full void amount. ");
+		 
+	 }
+	 else{
+ 
+	 var voidType = document.getElementById("fullvoid").checked ? "Full" : "Partial";
+	
+	/* 	console.log("Updatedamountofvoid : ",updated_void_amount)
+	    console.log("RRN:", rrn);
+	    console.log("void Type:", voidType); */
+	    
+	    document.getElementById("voidrequestpopup").style.display = "none";
+	    document.getElementById("overlay-popup").style.display = "none";
+	    
+	    $("#overlay_gifloader").show();	
+	    
+	     
+	    
+	    $.ajax({
+	        type: "GET",
+	        url: "${pageContext.request.contextPath}/merchant/transaction/void/boost",
+	        data: {
+	            "transactionId": rrn,
+	            "voidAmount": updated_void_amount,
+	            "voidType": voidType
+	        },
+	        success: function (result) {
+	            if (result.responseCode == '0000') {
+	            	
+	            	$("#overlay_gifloader").hide();
+	              
+	                
+	             document.getElementById("successmodalforvoid").style.display = "block"; 
+	   	    	 document.getElementById("overlay-popup").style.display = "block";
+	   	    	 document.getElementById("transactionIdOfSuccessVoid").innerHTML = result.transactionId;
+	   			 document.getElementById("amountOfSuccessVoid").innerHTML = "RM "+result.amount; 
+	   			 
+	   			 
+	   			 
+	              
+	            } else if (result.responseCode == '0001') {
+	          
+	            	$("#overlay_gifloader").hide();
+	            	
+	             document.getElementById("modalforfailedvoid").style.display = "block"; 
+	   	    	 document.getElementById("overlay-popup").style.display = "block"; 
+	            
+	            } else if(result.responseCode == '0002'){
+	            	
+	            	   $("#overlay_gifloader").hide();
+		                
+	  	             document.getElementById("modalforfailedvoidcustomized").style.display = "block"; 
+	  	   	    	 document.getElementById("overlay-popup").style.display = "block"; 
+	            	
+	            }
+	        },
+	        error: function (xhr, status, error) {
+	        	
+	        	$("#overlay_gifloader").hide();
+	        	
+	            console.log("Error: " + error);
+	            alert("An error occurred. Please try again later.");	
+	        }
+	    }); 
+	
+	
+	    
+	 
+	 }
+	
+}
+
+function closeVoid(){
+	document.getElementById("voidrequestpopup").style.display = "none";
+	document.getElementById("overlay-popup").style.display = "none";
+}
+
+function closeForSuccessVoid(){
+	document.getElementById("successmodalforvoid").style.display = "none";
+	document.getElementById("overlay-popup").style.display = "none";
+	
+	$("#overlay_gifloader").hide();
+	
+
+	 var url = "${pageContext.request.contextPath}/transactionUmweb/merchantBoostlist";
+	 $(location).attr('href', url);
+	
+
+}
+
+function closeForFailedVoid(){
+	 document.getElementById("modalforfailedvoid").style.display = "none"; 
+	 document.getElementById("overlay-popup").style.display = "none";
+	 
+	 $("#overlay_gifloader").hide();
+}
+
+function closeForFailedVoidCustomized(){
+	 document.getElementById("modalforfailedvoidcustomized").style.display = "none"; 
+	 document.getElementById("overlay-popup").style.display = "none";
+	 
+		$("#overlay_gifloader").hide();	
+}
+
+</script>
+
+<!-- refund and void script end -->
+
+<script type="text/javascript">
+
+function openNewWin(mrn){
+	//alert(txnID);
+	
+	var url=window.location;
+	//alert(url);
+	var src = document.getElementById('popOutiFrame').src;
+	 src=url+'transactionUmweb/UMdetails/'+mrn;
+	//    alert(src);
+	//src = pdffile_url;
+	//alert(src);
+	var h = 600;
+	var w = 1000;
+	var title = "Mobiversa Receipt";
+	
+	var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : window.screenX;
+    var dualScreenTop = window.screenTop != undefined ? window.screenTop : window.screenY;
+
+    var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+    var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+    var left = ((width / 2) - (w / 2)) + dualScreenLeft;
+    var top = ((height / 2) - (h / 2)) + dualScreenTop;
+   
+   // divviewer.style.display='block';
+    var newWindow = window.open(src, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+    
+    //alert(src);
+   // alert(newWindow);
+    // Puts focus on the newWindow
+    if (window.focus) {
+        newWindow.focus();
+    }
+		
+}
+
+
+
+//Boost Sales Slip - Start
+
+/* function openBoostslip(rrn){
+
+var url=window.location;
+var src = document.getElementById('popOutiFrame').src;
+src=url+'transactionUmweb/BoostSlip/'+rrn;
+var h = 600;
+var w = 1000;
+var title = "Mobiversa Receipt";
+
+var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : window.screenX;
+var dualScreenTop = window.screenTop != undefined ? window.screenTop : window.screenY;
+
+var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+var left = ((width / 2) - (w / 2)) + dualScreenLeft;
+var top = ((height / 2) - (h / 2)) + dualScreenTop;
+
+var newWindow = window.open(src, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+
+if (window.focus) {
+ newWindow.focus();
+}
+	
+} */
+
+//Boost Sales Slip - End
+
+
+//New Boost Sales Slip - Start 
+
+ function formatTopDate(dateString) {
+		    const date = new Date(dateString);
+		    const options = { day: 'numeric', month: 'long', year: 'numeric' };
+		    return date.toLocaleDateString('en-GB', options);
+		}
+		
+function openBoostslip(date,time,txnamount,mid,rrn,authcode,reference,txntype,status,merchantName)
+{
+	var parts = date.split('/');
+	var formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+	var dateTimeString =  formatTopDate(formattedDate) + " " + time;
+	
+	var parsedDate2 = new Date(formattedDate);
+	var monthNames = ["January", "February", "March", "April", "May", "June",
+		  "July", "August", "September", "October", "November", "December"
+		];
+	var formattedDate2 = parsedDate2.getDate() + ' ' + monthNames[parsedDate2.getMonth()] + ' ' + parsedDate2.getFullYear();
+	
+    var modal = document.getElementById("xPay_slip-modal-id");
+    modal.style.display = "block";
+    var modal1 = document.getElementById("payout-slip-main-container-id");
+    
+    var amountWithCurrency = "MYR " + txnamount;
+    
+    document.getElementById("boost_slip_amount").innerText = txnamount;
+    document.getElementById("boost_slip_amount_td").innerText = amountWithCurrency;
+    document.getElementById("boost_slip_date").innerText = dateTimeString;
+    document.getElementById("boost_slip_mid").innerText = mid;
+    document.getElementById("boost_slip_authcode").innerText = authcode;
+    document.getElementById("boost_slip_reference").innerText = reference; 
+    document.getElementById("boost_slip_merchantname").innerText = merchantName; 
+
+    // Analyze status and set appropriate message and color
+    var statusElement = document.getElementById("boost_slip_Status");
+    if (status === "SETTLED") {
+        statusElement.innerText = "Successful";
+        statusElement.style.color = "var(--success-title)"; // Use your success color variable here
+    } else if (status === "VOIDED") {
+        statusElement.innerText = "Voided";
+        statusElement.style.color = "#D9AA00"; // Refunded status color
+    } else {
+        statusElement.innerText = "Successful";
+        statusElement.style.color = "var(--success-title)"; // Default to success color for any other status
+    }
+    
+    
+    //close when clicked outside
+    window.onclick = function (event) {
+        if (event.target === modal || event.target === modal1) {
+            closeXpayModal();
+        }
+    };
+
+    };
+
+
+    function closeXpayModal() {
+        body.style.overflow = initialOverflow;
+        var modal = document.getElementById("xPay_slip-modal-id");
+        modal.style.display = "none";
+
+    }
+
+
+
+// New Boost Sales Slip - End
+
+
+//Grabpay Sales Slip - Start
+
+function openGrabpayslip(rrn){
+
+var url=window.location;
+var src = document.getElementById('popOutiFrame').src;
+src=url+'transactionUmweb/GrabpaySlip/'+rrn;
+var h = 600;
+var w = 1000;
+var title = "Mobiversa Receipt";
+
+var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : window.screenX;
+var dualScreenTop = window.screenTop != undefined ? window.screenTop : window.screenY;
+
+var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+var left = ((width / 2) - (w / 2)) + dualScreenLeft;
+var top = ((height / 2) - (h / 2)) + dualScreenTop;
+
+var newWindow = window.open(src, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+
+
+if (window.focus) {
+ newWindow.focus();
+}
+	
+}
+
+//Grabpay Sales Slip - End
+
+
+
+//tng sale slip start
+function openTngpayslip(rrn){
+
+	var url=window.location;
+	var src = document.getElementById('popOutiFrame').src;
+	src=url+'transactionUmweb/TngpaySlip/'+rrn;
+	var h = 600;
+	var w = 1000;
+	var title = "Mobiversa Receipt";
+
+	var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : window.screenX;
+	var dualScreenTop = window.screenTop != undefined ? window.screenTop : window.screenY;
+
+	var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+	var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+	var left = ((width / 2) - (w / 2)) + dualScreenLeft;
+	var top = ((height / 2) - (h / 2)) + dualScreenTop;
+
+	var newWindow = window.open(src, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+
+
+	if (window.focus) {
+	 newWindow.focus();
+	}
+		
+	}
+	//tng sale slip end
+	
+	
+	//shoppepay sales slip 
+	function openShopeepayslip(rrn){
+
+	var url=window.location;
+	var src = document.getElementById('popOutiFrame').src;
+	src=url+'transactionUmweb/Shopeepayslip/'+rrn;
+	var h = 600;
+	var w = 1000;
+	var title = "Mobiversa Receipt";
+
+	var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : window.screenX;
+	var dualScreenTop = window.screenTop != undefined ? window.screenTop : window.screenY;
+
+	var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+	var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+	var left = ((width / 2) - (w / 2)) + dualScreenLeft;
+	var top = ((height / 2) - (h / 2)) + dualScreenTop;
+
+	var newWindow = window.open(src, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+
+
+	if (window.focus) {
+	 newWindow.focus();
+	}
+		
+	}
+	
+	
+	//shopeepay saales slip
+
+
+
+
+//Fpx Sales Slip - Start
+
+function openFpxslip(txnId){
+
+var url=window.location;
+var src = document.getElementById('popOutiFrame').src;
+src=url+'transactionUmweb/FpxSlip/'+txnId;
+var h = 600;
+var w = 1000;
+var title = "Mobiversa Receipt";
+
+var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : window.screenX;
+var dualScreenTop = window.screenTop != undefined ? window.screenTop : window.screenY;
+
+var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+var left = ((width / 2) - (w / 2)) + dualScreenLeft;
+var top = ((height / 2) - (h / 2)) + dualScreenTop;
+
+var newWindow = window.open(src, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+
+
+if (window.focus) {
+ newWindow.focus();
+}
+	
+}
+
+//Fpx Sales Slip - End
+
+
+
+    </script>
+
+
+<script lang="JavaScript">
+	function loadSelectData() {
+		//alert("test"+document.getElementById("txnType").value);
+		$("#overlay").show();
+		var e = document.getElementById("from").value;
+		var e1 = document.getElementById("to").value;
+		var PageNumber = document.getElementById("pgnum").value;
+		//var e2 = document.getElementById("txnType").value;
+		
+		var fromDate = new Date(e);//.toDateString("yyyy-MM-dd");
+		var toDate = new Date(e1);//.toDateString("yyyy-MM-dd");	
+
+		var fromday = fromDate.getDate();
+		var frommon = fromDate.getMonth() + 1;
+		var fromyear = fromDate.getFullYear();
+
+		var today = toDate.getDate();
+		var tomon = toDate.getMonth() + 1;
+		var toyear = toDate.getFullYear();
+
+		var fromdateString = (fromday <= 9 ? '0' + fromday : fromday) + '/' + (frommon <= 9 ? '0' + frommon : frommon) + '/' + fromyear;
+		var todateString = (today <= 9 ? '0' + today : today) + '/' + (tomon <= 9 ? '0' + tomon : tomon) + '/' + toyear;
+
+		/* var e2 = document.getElementById("txnType").value; */
+		if (e == null ||e == '' || e1 == null || e1 == '') {
+			alert("Please Select date(s)");
+			$("#overlay").hide();
+			//form.submit == false;
+		} else {
+			
+			document.getElementById("dateval1").value = fromdateString;
+			document.getElementById("dateval2").value = todateString;
+			//var TxnType = document.getElementById("txnType").value;
+			/* document.getElementById("txnType").value = e2; */
+			/* document.location.href = '${pageContext.request.contextPath}/transaction/searchUMEzyway?date='
+					+ e + '&date1=' + e1 + '&txnType=' + e2; */
+					
+			document.location.href = '${pageContext.request.contextPath}/transactionUmweb/searchmerchantBoostlist?date='
+					+ fromdateString + '&date1=' + todateString + '&currPage=' + PageNumber ;
+			/* Updated code...... */
+			localStorage.setItem("fromDate", e);     
+			localStorage.setItem("toDate",e1);		
+			form.submit;
+			//document.getElementById("dateval1").value = e;
+			//document.getElementById("dateval2").value = e1;
+
+		}
+	}
+	
+	/* Updated code..... */
+	// event listeners
+	  window.addEventListener('load', function() {     
+		var fromDate = localStorage.getItem("fromDate");     
+		var toDate = localStorage.getItem("toDate");    
+		
+		if(fromDate && toDate){
+		
+			document.getElementById("from").value = fromDate;
+			document.getElementById("to").value = toDate;
+	
+	 		
+	 		document.getElementById("datef").style.transform = "translateY(-14px) scale(0.8)";
+			document.getElementById("datet").style.transform = "translateY(-14px) scale(0.8)";
+	 	}
+	 		
+		localStorage.removeItem("fromDate");
+		localStorage.removeItem("toDate");
+		//localStorage.clear();
+	});  
+	
+	
+	function loadSelectData1() {
+		//alert("test"+document.getElementById("txnType").value);
+		 	$("#overlay").show();
+		var date = document.getElementById("from").value;
+		var date1 = document.getElementById("to").value;	
+		var e = document.getElementById("FromDate").value;
+		var e1 = document.getElementById("From1Date").value;
+		var PageNumber = document.getElementById("pgnum").value;
+		//var e2 = document.getElementById("txnType").value;
+		
+		var fromDate = new Date(e);//.toDateString("yyyy-MM-dd");
+		var toDate = new Date(e1);//.toDateString("yyyy-MM-dd");	
+
+		var fromday = fromDate.getDate();
+		var frommon = fromDate.getMonth() + 1;
+		var fromyear = fromDate.getFullYear();
+
+		var today = toDate.getDate();
+		var tomon = toDate.getMonth() + 1;
+		var toyear = toDate.getFullYear();
+
+		var fromdateString = (fromday <= 9 ? '0' + fromday : fromday) + '/' + (frommon <= 9 ? '0' + frommon : frommon) + '/' + fromyear;
+		var todateString = (today <= 9 ? '0' + today : today) + '/' + (tomon <= 9 ? '0' + tomon : tomon) + '/' + toyear;
+
+		/* var e2 = document.getElementById("txnType").value; */
+		if (e == null ||e == '' || e1 == null || e1 == '') {
+			alert("Please Select date(s)");
+			//form.submit == false;
+		} else {
+			document.getElementById("dateval1").value = fromdateString;
+			document.getElementById("dateval2").value = todateString;
+			//var TxnType = document.getElementById("txnType").value;
+			/* document.getElementById("txnType").value = e2; */
+			/* document.location.href = '${pageContext.request.contextPath}/transaction/searchUMEzyway?date='
+					+ e + '&date1=' + e1 + '&txnType=' + e2; */
+			document.location.href = '${pageContext.request.contextPath}/transactionUmweb/searchmerchantBoostlist?date='
+					+ fromdateString + '&date1=' + todateString + '&currPage=' + PageNumber ;
+					/* Updated code...... */
+			localStorage.setItem("fromDate", date);     
+			localStorage.setItem("toDate",date1);
+			form.submit;
+			//document.getElementById("dateval1").value = e;
+			//document.getElementById("dateval2").value = e1;
+
+		}
+	}
+	
+	
+/* SEARCH IMPLEMENTATION */
+	
+	function loadSearch()
+    {
+  		$("#overlay").show();
+  		var Value = document.getElementById("searchApi").value;
+  		var TXNTYPE = 'BOOST1';
+  		var type = document.getElementById("drop_val").value;
+  		
+  		if(Value.trim() === '' || type.trim() === ''){
+   	 		alert("Please choose a value before submitting");
+   	 		$("#overlay").hide();
+           return;
+    	}
+  		
+  		document.location.href = '${pageContext.request.contextPath}/searchNew/findWallets?VALUE='
+				+ Value + '&TXNTYPE='+ TXNTYPE +'&Type=' + type;
+			form.submit;
+  		
+    }
+	 
+	function loadDropSearch(){
+	 	  var e = document.getElementById("drop_search");
+	     	var strUser = e.options[e.selectedIndex].value;
+	     	document.getElementById("drop_val").value = strUser;   
+	     	
+	     	/* For Dynamic Placeholder in SEARCH */
+	     	
+	     	if (strUser == "Ref") {
+	     		document.getElementsByName('search')[0].placeholder = 'Ex: Enter Invoice ID';
+	     	  } else if (strUser == "Ap_Code") {
+	     		  document.getElementsByName('search')[0].placeholder = 'Ex: Enter Transaction ID';
+	     	  }
+	     	  
+	     	 else if (strUser == "RRN") {
+	    		  document.getElementsByName('search')[0].placeholder = 'Ex: Enter RRN Number';
+	    	  }
+	     	  else if(strUser == ""){
+	     		  document.getElementsByName('search')[0].placeholder = 'Please select type to search ';
+	     	  }
+	   }
+		
+	
+	
+	function loadExpData() {
+		//alert("test"+document.getElementById("txnType").value);
+		var e = document.getElementById("from").value;
+		var e1 = document.getElementById("to").value;
+		var e2 = document.getElementById("export1").value;
+		//var txnType = document.getElementById("txnType").value;
+		
+		var fromDate = new Date(e);//.toDateString("yyyy-MM-dd");
+		var toDate = new Date(e1);//.toDateString("yyyy-MM-dd");	
+
+		var fromday = fromDate.getDate();
+		var frommon = fromDate.getMonth() + 1;
+		var fromyear = fromDate.getFullYear();
+
+		var today = toDate.getDate();
+		var tomon = toDate.getMonth() + 1;
+		var toyear = toDate.getFullYear();
+
+		var fromdateString = (fromday <= 9 ? '0' + fromday : fromday) + '/' + (frommon <= 9 ? '0' + frommon : frommon) + '/' + fromyear;
+		var todateString = (today <= 9 ? '0' + today : today) + '/' + (tomon <= 9 ? '0' + tomon : tomon) + '/' + toyear;
+
+	
+		if (e == null ||e == '' || e1 == null || e1 == '') {
+			alert("Please Select date(s)");
+			//form.submit == false;
+		} else {
+			/* alert("inside else"); */
+			document.getElementById("datevalex1").value = fromdateString;
+			document.getElementById("datevalex2").value = todateString;
+			
+			document.location.href = '${pageContext.request.contextPath}/transactionUmweb/exportBoosttransactionlist?fromDate=' +fromdateString
+					+ '&toDate=' + todateString + '&export='+e2;
+			form.submit;
+			
+		}
+	}
+
+
+	function loadDropDate13() {
+		//alert("loadDropDate13");
+		var e = document.getElementById("export");
+
+		var strUser = e.options[e.selectedIndex].value;
+		document.getElementById("export1").value = strUser;
+		//alert("data :" + strUser + " "+ document.getElementById("status1").value);
+
+	}
+
+
+	function loadDate(inputtxt, outputtxt) {
+		var field = inputtxt.value;
+		outputtxt.value = field;
+	}
+
+	
+	
+	function show_key(id){
+		
+		document.getElementById('show_key_'+id).style.display ="block";
+		document.getElementById('hide_key_'+id).style.display ="none";
+
+	}
+	
+function hide_key(id){
+		
+		document.getElementById('show_key_'+id).style.display ="none";
+		document.getElementById('hide_key_'+id).style.display ="block";
+
+	}
+
+function show_rrn(id){
+	
+	document.getElementById('show_rrn_'+id).style.display ="block";
+	document.getElementById('hide_rrn_'+id).style.display ="none";
+
+}
+
+function hide_rrn(id){
+	
+	document.getElementById('show_rrn_'+id).style.display ="none";
+	document.getElementById('hide_rrn_'+id).style.display ="block";
+
+}
+</script>
+<body class="">
+
+	<div id="overlay">
+		<div id="overlay_text">
+			<img class="img-fluid"
+				src="${pageContext.request.contextPath}/resourcesNew1/assets/loader.gif">
+		</div>
+	</div>
+	
+<!-- gif loader for refund and void -->
+
+	
+	<div id="overlay_gifloader">
+		<div id="overlay_text">
+			<img class="img-fluid"
+				src="${pageContext.request.contextPath}/resourcesNew1/assets/loader.gif">
+		</div>
+	</div>
+
+<!--  -->
+	
+ 	<div class="test" id="pop-bg-color"></div> 
+ 	<div id="overlay-popup"></div>
+	<div class="container-fluid mb-0" id="pop-bg">
+		<div class="row">
+
+
+
+			<div class="col s12">
+				<div class="card blue-bg text-white">
+					<div class="card-content">
+						<div class="d-flex align-items-center">
+							<h3 class="text-white">
+								<strong>BOOST Transaction Summary</strong>
+							</h3>
+						</div>
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- no records found popup start -->
+
+		<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 270px !important;"
+			id="exampleModalCenter" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 12px; border-bottom: 2px solid #ffa500;">Information</p>
+					<img
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/NoRecordPNG.png"
+						width="60px !important; height:60px !important;">
+					<p id="innerText" style="font-size: 22px;"></p>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary"
+							data-dismiss="modal" id="close" onclick="closepopup()"
+							style="width: 106px !important; height: 38px !important; font-size: 18px; border-radius: 50px !important; margin-right: 187px !important; letter-spacing: 0.8px; font-family: 'Poppins', sans-serif; font-weight: medium; transform: translateY(-10px);">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- no records found pop up end -->
+		
+<!-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+		
+		
+
+		<!-- modal for refund pop up start -->
+		<div class="modal fade bd-example-modal-xl popup-body"
+			style="width: 500px !important; height: 370px !important; font-size: 18px;"
+			id="refundrequestpopup" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="popup-head"
+						style="background-color: #f9f9f9; width: 100%; height: 50px; color: #005baa; padding-top: 12px; border-bottom: 2px solid #ffa500; font-weight: 600; font-size: 18px; margin-bottom:8px">Confirmation</p>
+					<img
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/clarity_alert-solid.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innertextforrefund"
+						style="font-size: 18px; padding: 0 10%; font-weight: 400; margin-bottom:4px; color: #72777B;"></p>
+					
+					<!-- refund option -->
+					<div class="row" id="refundoption"
+						style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 1% 10%">
+
+						<div class="col s12"
+							style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start;">
+							<input type="radio" id="fullrefund" name="refund"
+								value="Full refund"
+								style="width: 18px; height: 18px; accent-color: #005baa !important; opacity: 1; cursor: pointer;"
+								onchange="handleRefundOption()">
+								<label
+								for="fullrefund"
+								style="font-size: 18px; color: #72777B; padding: 0 14%; cursor: pointer;">Full
+								refund</label>
+						</div>
+
+						<div class="col s12 "
+							style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start;">
+							<input type="radio" id="partialrefund" name="refund"
+								value="Partial refund"
+								style="width: 18px; accent-color: #005baa !important; height: 18px; opacity: 1; cursor: pointer;"
+								onchange="handleRefundOption()"><label
+								for="partialrefund"
+								style="font-size: 18px; color: #72777B; padding: 0 14%; cursor: pointer;">Partial
+								refund</label>
+						</div>
+
+					</div>
+					<!-- <span id="refundAmountError"
+						style="font-size: 10px; display: block;"></span> -->
+					<div id="refundamountinput" style="padding: 0 10%;">
+						<input type="text" id="refundamount" name="refundamount" value=""
+							style="text-align: center; font-size: 18px; color: #707070; border-bottom: 2px solid #ffa500; margin-bottom:2px;"
+							inputmode="decimal">
+					</div>
+					
+					<div class="modal-footer" style = "padding : 8px 6px;">
+						<!-- refund buttons  -->
+						<div id="refundButtons" 
+							style="padding: 3% 9%; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+							<button type="button" class="btn btn-secondary" id="closeforrefund"
+								style="width: 30%; background-color: #fff; color: #005baa; border: 1px solid #005baa; height: 38px !important; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"
+								onclick="closeRefund()">Cancel</button>
+							<button type="button" class="btn btn-secondary" id="refundbutton"
+								style="width: 65%; background-color: #005baa; color: #fff; height: 38px !important; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"
+								onclick="initiateRefund()">Proceed to refund</button>
+						</div>
+						<!--  -->
+					</div>
+				</div>
+			</div>
+		</div>
+
+			<!-- refund pop up end -->
+			
+			<!-- success  popup for refund -->
+			
+					
+	<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 370px !important; font-size: 18px;"
+			id="successmodalforrefund" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 15px; font-weight: 600; border-bottom: 2px solid #ffa500; font-size: 18px; margin-bottom:12px;">Confirmation</p>
+					<img id="successicon"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/Successful.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innerTextOfSuccess"
+						style="font-size: 18px; margin-bottom: 0;">The refund has been
+						successfully processed</p>
+
+					<div id="detailsofsuccessrefund"
+						style="display: inline-block; border: 2px solid #005baa; border-radius: 10px; padding: 2% 3%; text-align: left; margin: 2% 0;">
+						<p
+							style="font-size: 15px; font-weight: 600; color: #005baa; margin-bottom: 7px; text-align: left;">Details</p>
+
+		
+						<table>
+							<tbody>
+								<tr style="border-bottom: none;">
+									<td
+										style="font-size: 15px; text-align: left; margin-bottom: 2px; padding-left: 0; padding-bottom: 0;">
+										Transaction ID :</td>
+
+									<td style="width: 10px;"></td>
+									<td
+										style="font-size: 15px; display: flex; align-items: baseline; /* margin-bottom: 2px; */ padding-bottom: 0;">
+										<span id="transactionIdOfSuccess" style="padding: 0 0px;"></span>
+									</td>
+								</tr>
+								<tr style="border-bottom: none;">
+									<td
+										style="font-size: 15px; text-align: left; margin-bottom: 2px; padding-left: 0; padding-bottom: 0; padding-top: 5px;">
+										Refund Amount :</td>
+
+									<td style="width: 10px;"></td>
+									<td
+										style="font-size: 15px; text-align: left; margin-bottom: 2px; padding-top: 5px; padding-bottom: 0;">
+										<span id="amountOfSuccess" style="padding: 0 0px;"> </span>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<div class="modal-footer"
+					style="display: flex; align-items: center; justify-content: center;">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal" id="closeforsuccessrefund"
+						onclick="closeForSuccessRefund()"
+						style="width: 30%; height: 38px !important; background-color: #005baa; color: #fff; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;">Close</button>
+				</div>
+			</div>
+		</div>
+			
+			
+			
+			<!--  success popup for refund end-->
+			
+			<!--  failed popup for refund-->
+			
+			<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 280px !important;"
+			id="modalforfailedrefund" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 15px; font-weight: 600; border-bottom: 2px solid #ffa500; font-size: 18px;">Confirmation</p>
+					<img id="failedicon"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/FailureIcon.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innerTextOfFailure"
+						style="font-size: 18px; margin-bottom: 8px; color:#72777B;">The refund attempt has encountered a failure</p>
+					<p id="contactText" style="font-size: 14px; margin-bottom: 8px;">Please contact <a href='mailto:csmobi@gomobi.io' style='text-decoration: underline;'>csmobi@gomobi.io</a> for more details</p>
+					
+					<div class="modal-footer"
+						style="display: flex; align-items: center; justify-content: center;">
+						<button type="button" class="btn btn-secondary" id="closeforfailedrefund"
+							data-dismiss="modal"  onclick="closeForFailedRefund()"
+							style="width: 30%; height: 38px !important; background-color: #005baa; color: #fff; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+			
+			
+			<!-- failed popup for refund end -->
+			
+			
+			
+			<!--  customized failed popup for refund-->
+			
+			<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 310px !important;"
+			id="modalforfailedrefundcustomized" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 15px; font-weight: 600; border-bottom: 2px solid #ffa500; font-size: 18px;">Confirmation</p>
+					<img id="failediconforrefundcustomized"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/FailureIcon.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innerTextOfFailureVoidCustomized"
+						style="font-size: 18px; margin-bottom: 8px; color:#72777B;padding:0 9%;">Refund Amount not covered in the next Settlement 5 days</p>
+					<p id="contactTextForRefundCustomized" style="font-size: 14px; margin-bottom: 8px;">Please contact <a href='mailto:csmobi@gomobi.io' style='text-decoration: underline;'>csmobi@gomobi.io</a> for more details</p>
+					
+					<div class="modal-footer"
+						style="display: flex; align-items: center; justify-content: center;">
+						<button type="button" class="btn btn-secondary" id="closeforfailedrefundcustomized"
+							data-dismiss="modal"  onclick="closeForFailedRefundCustomized()"
+							style="width: 30%; height: 38px !important; background-color: #005baa; color: #fff; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+			
+			
+			<!-- customized failed popup for refund end -->
+			
+			
+			
+			
+<!--  ==================================void modals ================================================== -->	
+
+<!-- modal for void pop up start -->
+
+		<div class="modal fade bd-example-modal-xl popup-body"
+			style="width: 500px !important; height: 370px !important; font-size: 18px;"
+			id="voidrequestpopup" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="popup-head"
+						style="background-color: #f9f9f9; width: 100%; height: 50px; color: #005baa; padding-top: 12px; border-bottom: 2px solid #ffa500; font-weight: 600; font-size: 18px; margin-bottom:8px">Confirmation</p>
+					<img
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/clarity_alert-solid.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innertextforvoid"
+						style="font-size: 18px; padding: 0 10%; font-weight: 400; margin-bottom:4px; color: #72777B;text-align:center"></p>
+					
+					<!-- refund option -->
+					<div class="row" id="voidoption"
+						style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 1% 10%">
+
+						<div class="col s12"
+							style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start;">
+							<input type="radio" id="fullvoid" name="void"
+								value="Full void"
+								style="width: 18px; height: 18px; accent-color: #005baa !important; opacity: 1; cursor: pointer;"
+								onchange="handleVoidOption()">
+								<label
+								for="fullvoid"
+								style="font-size: 18px; color: #72777B; padding: 0 14%; cursor: pointer;">Full
+								void</label>
+						</div>
+
+						<div class="col s12 "
+							style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start;">
+							<input type="radio" id="partialvoid" name="void"
+								value="Partial void"
+								style="width: 18px; accent-color: #005baa !important; height: 18px; opacity: 1; cursor: pointer;"
+								onchange="handleVoidOption()"><label
+								for="partialvoid"
+								style="font-size: 18px; color: #72777B; padding: 0 14%; cursor: pointer;">Partial
+								void</label>
+						</div>
+
+					</div>
+					<!-- <span id="voidAmountError"
+						style="font-size: 10px; display: block;"></span> -->
+					<div id="voidamountinput" style="padding: 0 10%;">
+						<input type="text" id="voidamount" name="voidamount" value=""
+							style="text-align: center; font-size: 18px; color: #707070; border-bottom: 2px solid #ffa500; margin-bottom:2px;"
+							inputmode="decimal">
+					</div>
+					
+					<div class="modal-footer" style = "padding : 8px 6px;">
+						<!-- refund buttons  -->
+						<div id="voidButtons" 
+							style="padding: 3% 9%; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+							<button type="button" class="btn btn-secondary" id="closeforvoid"
+								style="width: 30%; background-color: #fff; color: #005baa; border: 1px solid #005baa; height: 38px !important; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"
+								onclick="closeVoid()">Cancel</button>
+							<button type="button" class="btn btn-secondary" id="voidbutton"
+								style="width: 65%; background-color: #005baa; color: #fff; height: 38px !important; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"
+								onclick="initiateVoid()">Proceed to void</button>
+						</div>
+						<!--  -->
+					</div>
+				</div>
+			</div>
+		</div>
+
+			<!-- void pop up end -->		
+			
+			
+			<!-- success  popup for void -->
+			
+					
+		<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 370px !important; font-size: 18px;"
+			id="successmodalforvoid" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 15px; font-weight: 600; border-bottom: 2px solid #ffa500; font-size: 18px; margin-bottom:12px;">Confirmation</p>
+					<img id="successiconforvoid"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/Successful.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innerTextOfSuccessVoid"
+						style="font-size: 18px; margin-bottom: 0;">The void has been
+						successfully processed</p>
+
+					<div id="detailsofsuccessvoid"
+						style="display: inline-block; border: 2px solid #005baa; border-radius: 5px; padding: 2% 3%; text-align: left; margin: 2% 0;">
+						<p
+							style="font-size: 15px; font-weight: 600; color: #005baa; margin-bottom: 7px; text-align: left;">Details</p>
+
+						
+
+						<table>
+							<tbody>
+								<tr style="border-bottom: none;">
+									<td
+										style="font-size: 15px; text-align: left; margin-bottom: 2px; padding-left: 0; padding-bottom: 0;">
+										Transaction ID :</td>
+
+									<td style="width: 10px;"></td>
+									<td
+										style="font-size: 15px; display: flex; align-items: baseline; /* margin-bottom: 2px; */ padding-bottom: 0;">
+										<span id="transactionIdOfSuccessVoid" style="padding: 0 0px;"></span>
+									</td>
+								</tr>
+								<tr style="border-bottom: none;">
+									<td
+										style="font-size: 15px; text-align: left; margin-bottom: 2px; padding-left: 0; padding-bottom: 0; padding-top: 5px;">
+										Void Amount :</td>
+
+									<td style="width: 10px;"></td>
+									<td
+										style="font-size: 15px; text-align: left; margin-bottom: 2px; padding-top: 5px; padding-bottom: 0;">
+										<span id="amountOfSuccessVoid" style="padding: 0 0px;">
+									</span>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+
+					</div>
+
+					<div class="modal-footer"
+						style="display: flex; align-items: center; justify-content: center;">
+						<button type="button" class="btn btn-secondary"
+							data-dismiss="modal" id="closeforsuccessvoid"
+							onclick="closeForSuccessVoid()"
+							style="width: 30%; height: 38px !important; background-color: #005baa; color: #fff; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+			
+			
+			
+			<!--  success popup for void end-->
+			
+			
+				
+			<!--  failed popup for void-->
+			
+			<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 280px !important;"
+			id="modalforfailedvoid" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 15px; font-weight: 600; border-bottom: 2px solid #ffa500; font-size: 18px;">Confirmation</p>
+					<img id="failediconforvoid"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/FailureIcon.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innerTextOfFailureVoid"
+						style="font-size: 18px; margin-bottom: 8px; color:#72777B;">The void attempt has encountered a failure</p>
+					<p id="contactTextForVoid" style="font-size: 14px; margin-bottom: 8px;">Please contact <a href='mailto:csmobi@gomobi.io' style='text-decoration: underline;'>csmobi@gomobi.io</a> for more details</p>
+					
+					<div class="modal-footer"
+						style="display: flex; align-items: center; justify-content: center;">
+						<button type="button" class="btn btn-secondary" id="closeforfailedvoid"
+							data-dismiss="modal"  onclick="closeForFailedVoid()"
+							style="width: 30%; height: 38px !important; background-color: #005baa; color: #fff; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+			
+			
+			<!-- failed popup for void end -->
+			
+			
+			<!--  customized failed popup for void-->
+			
+			<div class="modal fade bd-example-modal-xl pop-body"
+			style="width: 500px !important; height: 310px !important;"
+			id="modalforfailedvoidcustomized" tabindex="-1" role="dialog"
+			aria-labelledby="mySmallModalLabel" aria-hidden="true"
+			style="text-align:center;">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content "
+					style="padding: 0 !important; margin: 0 !important;">
+					<p class="pop-head"
+						style="background-color: #f9f9f9; width: 100%; height: 60px; color: #005baa; padding-top: 15px; font-weight: 600; border-bottom: 2px solid #ffa500; font-size: 18px;">Confirmation</p>
+					<img id="failediconforvoidcustomized"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/FailureIcon.svg"
+						width="60px !important; height:60px !important;">
+					<p id="innerTextOfFailureVoidCustomized"
+						style="font-size: 18px; margin-bottom: 8px; color:#72777B; padding:0 9%">Void Amount not covered in the next Settlement 5 days</p>
+					<p id="contactTextForVoidCustomized" style="font-size: 14px; margin-bottom: 8px;">Please contact <a href='mailto:csmobi@gomobi.io' style='text-decoration: underline;'>csmobi@gomobi.io</a> for more details</p>
+					
+					<div class="modal-footer"
+						style="display: flex; align-items: center; justify-content: center;">
+						<button type="button" class="btn btn-secondary" id="closeforfailedvoidcustomized"
+							data-dismiss="modal"  onclick="closeForFailedVoidCustomized()"
+							style="width: 30%; height: 38px !important; background-color: #005baa; color: #fff; font-size: 16px; border-radius: 50px !important; font-family: 'Poppins', sans-serif;"">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+			
+			
+			<!-- customized failed popup for void end -->
+			
+			
+			
+			
+			
+
+<!-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+
+			<div class="row">
+				<div class="col s12">
+					<div class="card border-radius">
+						<div class="card-content padding-card">
+
+							<div class="row">
+								<div class="input-field col s12 m3 l3">
+									<label id = "datef" for="from" style="margin: 0px;">From </label> <input
+										type="hidden" name="date11" id="date11"
+										<c:out value="${fromDate}"/>> <input type="text"
+										id="from" name="fromDate" class="validate datepicker"
+										onchange="loadDate(document.getElementById('from'),document.getElementById('date11'))">
+									<i class="material-icons prefix">date_range</i>
+
+
+								</div>
+
+								<div class="input-field col s12 m3 l3">
+
+									<label id = "datet" for="to" style="margin: 0px;">To</label> <input
+										type="hidden" name="date12" id="date12"
+										<c:out value="${toDate}"/>> <input id="to" type="text"
+										name="toDate" class="datepicker"
+										onchange="loadDate(document.getElementById('to'),document.getElementById('date12'))">
+									<i class="material-icons prefix">date_range</i>
+								</div>
+
+								<div class="input-field col s12 m3 l3">
+									<input type="hidden" name="export1" id="export1"
+										<c:out value="${status}"/>> <select name="export"
+										id="export" onchange="return loadDropDate13();">
+										<option selected value="">Choose</option>
+										<option value="PDF">PDF</option>
+										<option value="EXCEL">CSV</option>
+									</select> <label class="control-label">Export Type</label>
+								</div>
+
+								<div class="input-field col s12 m3 l3">
+									<div class="button-class" style="float: left;">
+
+										<input type="hidden" name="date1" id="dateval1"> <input
+											type="hidden" name="date2" id="dateval2">
+										<button class="btn btn-primary icon-btn" type="button"
+											onclick="return loadSelectData();">Search</button>
+
+
+										<input type="hidden" name="dateex1" id="datevalex1"> <input
+											type="hidden" name="dateex2" id="datevalex2">
+										<button class="btn btn-primary icon-btn" type="button"
+											onclick="return loadExpData();">Export</button>
+									</div>
+								</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<script>
+		jQuery(function() {		
+			var date = new Date();
+			var currentMonth = date.getMonth();
+			var currentDate = date.getDate();
+			var currentYear = date.getFullYear();
+			
+			$('.datepicker').datepicker({
+				minDate: new Date(currentYear, currentMonth-2, currentDate),
+				maxDate: new Date(currentYear, currentMonth, currentDate+1)
+			});
+		});
+
+	$('.pickadate-clear-buttons').pickadate({
+    close: 'Close Picker', 
+	formatSubmit: 'dd/mm/yyyy',
+});
+
+
+</script>
+
+
+			<!-- MAIN DIV SEARCH TEST -->
+			<div class="row" id="searchBoxDiv">
+				<div class="col s12">
+					<div class="card blue-bg text-white">
+						<div class="card-content">
+
+							<!-- SEARCH TEST -->
+							<div class="row"
+								style="display: flex; align-items: center; justify-content: space-between; margin-left: 01%;">
+								<div class="col s12">
+									<div class="input-field col s12 m3 l3"
+										style="font-family: 'Poppins', sans-serif; width: 30%;">
+										<select name="drop_search" id="drop_search"
+											onchange="return loadDropSearch();">
+											<option selected value="" id="choose">Choose Type</option>
+											<option value="Ref">Invoice ID</option>
+											<!-- <option value="RRN">RRN</option> -->
+											<option value="Ap_Code">Transaction ID</option>
+										</select> <input type="hidden" id="drop_val">
+									</div>
+
+									<div class="input-field col s12 m3 l3"
+										style="margin-left: 07%; width: 30%;">
+										<input type="text" id="searchApi" name="search" class=""
+											style="font-family: 'Poppins', sans-serif;"
+											placeholder="Please select type to search">
+									</div>
+									<div class="input-field col s12 m3 l3"
+										style="width: 10%; margin-left: 07%;">
+										<div class="button-class" style="float: left;">
+											<button class="btn btn-primary blue-btn" type="button"
+												onclick="loadSearch()"
+												style="font-family: 'Poppins', sans-serif; width: 100%; font-size: 14px;">Search</button>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!--  SEARCH TEST ENDS -->
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- MAIN SEARCH TEST ENDS -->
+
+<!--  NEW SLIP BOOST START-->
+
+		<div id="xPay_slip-modal-id" class="slip-modal-class">
+			<section class="payout-slip-main-container poppins-regular"
+				id="payout-slip-main-container-id">
+				<div class="slip-card" id="slip-card-id">
+					<div class="title-logo" style="position: relative">
+
+						<img
+							src="${pageContext.request.contextPath}/resourcesNew1/assets/mobi_logo.svg"
+							width="55" height="55" /> <img
+							style="position: absolute; top: 3px; right: 10px; height: 20px ! important; width: 20px !important; cursor: pointer;"
+							src="${pageContext.request.contextPath}/resourcesNew1/assets/xmark.svg"
+							width="35" height="35" onclick="closeXpayModal()" />
+					</div>
+
+					<hr class="horizontal-line">
+					<!-- Second Part - Status and Time stamp -->
+					<div class="main-status poppins-semibold">
+						<!-- comment this below for Failure status -->
+	             	<p id="boost_slip_Status" class="status status-success">${dto.STATUS}</p>
+
+						<!-- Uncomment this for Failure status -->
+						<!-- <p class="status status-failure">Failed</p> -->
+						<div class="status-container">
+							<p class="sub-head">Transaction Summary</p>
+							<p class="amount poppins-regular">
+								MYR <span class="poppins-semibold amount-value"
+									id="boost_slip_amount"></span>
+							</p>
+							<p class="time-stamp poppins-semibold" id="boost_slip_date"></p>
+							<hr class="horizontal-default">
+						</div>
+					</div>
+					<!-- Third Part - Transaction details area  -->
+					<div class="transaction-details">
+						<table>
+							<tr class="no_border_bottom">
+								<th class="poppins-regular xpay_slip_whiteSpace">Paid To</th>
+								<td class="poppins-medium xpay_slip_wordBreak"
+									style="text-transform: uppercase;" id="boost_slip_merchantname"></td>
+							</tr>
+							<tr class="no_border_bottom">
+								<th class="poppins-regular xpay_slip_whiteSpace">Order ID
+									</th>
+								<td class="poppins-medium xpay_slip_wordBreak"
+									id="boost_slip_reference"></td>
+							</tr>
+							<tr class="no_border_bottom">
+								<th class="poppins-regular xpay_slip_whiteSpace">Transaction ID
+									</th>
+								<td class="poppins-medium xpay_slip_wordBreak"
+									id="boost_slip_authcode"></td>
+							</tr>
+						
+							<tr class="no_border_bottom">
+								<th class="poppins-regular xpay_slip_whiteSpace">MID</th>
+								<td class="poppins-medium xpay_slip_wordBreak"
+									style="text-transform: uppercase;" id="boost_slip_mid"></td>
+							</tr>
+							
+							<tr class="no_border_bottom">
+								<th class="poppins-regular xpay_slip_whiteSpace">Payment
+									Method</th>
+								<td class="poppins-medium xpay_slip_wordBreak">Boost</td>
+							</tr>
+							
+						</table>
+						<div class="bill-box-container">
+							<div class="poppins-medium">Transfer Amount</div>
+							<div class="poppins-semibold"
+								style="font-size: 1rem; color: var(--value-color);"
+								id="boost_slip_amount_td"></div>
+						</div>
+					</div>
+					<hr class="horizontal-default">
+					<div class="notes-section">
+						<strong>Note</strong>
+						<p class="notes">
+							This receipt is computer generated and no signature is required.
+							For support, contact  <a href="mailto:csmobi@gomobi.io" style="color: #005BAA; text-decoration: underline;">csmobi@gomobi.io</a>
+						</p>
+					</div>
+				</div>
+			</section>
+		</div>
+
+
+		<style>
+.slip-modal-class {
+	display: none;
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	top: 0%;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	scrollbar-width: none;
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
+@import
+	url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap')
+	;
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+:root {
+	--success-title: #36B37E;
+	--failure-title: #EC3E3E;
+	--card-bg: #F6F6F6;
+	--hr-line: #eeeeee;
+	--title-color: #333739;
+	--value-color: #2D2D2D;
+	--bill-box: #ECECEC;
+}
+
+.no_border_bottom {
+	border-bottom: none !important;
+}
+
+/* FONT STYLE CSS  */
+.poppins-light {
+	font-family: "Poppins", sans-serif;
+	font-weight: 300;
+}
+
+.poppins-regular {
+	font-family: "Poppins", sans-serif;
+	font-weight: 400;
+}
+
+.xpay_slip_wordBreak {
+	word-break: break-all !important;
+}
+
+.xpay_slip_whiteSpace {
+	white-space: nowrap !important;
+	vertical-align: baseline !important;
+}
+
+.poppins-medium {
+	font-family: "Poppins", sans-serif;
+	font-weight: 500;
+}
+
+.poppins-semibold {
+	font-family: "Poppins", sans-serif;
+	font-weight: 600;
+}
+
+.poppins-bold {
+	font-family: "Poppins", sans-serif;
+	font-weight: 700;
+}
+
+/* Payout Slip Container main box  */
+.payout-slip-main-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+}
+
+.slip-card {
+	width: 100%;
+	max-width: 24rem;
+	background-color: var(--card-bg);
+	border-radius: 0.5rem;
+	overflow: hidden;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title-logo {
+	margin: 0.5rem auto 0.5rem auto;
+	text-align: center;
+}
+
+.title-logo img {
+	max-width: 100%;
+	height: 1.625rem;
+}
+
+.horizontal-line {
+	height: 0.3rem;
+	background-color: var(--hr-line);
+	border: none;
+	margin: 0 auto 1rem auto;
+}
+
+.horizontal-default {
+	width: 90%;
+	height: 1px;
+	background-color: var(--hr-line);
+	color: var(--hr-line);
+	margin: 0.5rem auto 0 auto;
+	opacity: 0.5;
+}
+
+.main-status {
+	text-align: center;
+	color: var(--value-color);
+}
+
+.status {
+	font-size: 1.3rem;
+	margin-top: 0.25rem;
+}
+
+  .status-success {
+        color: var(--success-title);
+    }
+    .status-refunded {
+        color: #D9AA00;
+    }
+
+.status-failure {
+	color: var(--failure-title);
+}
+
+.status-container {
+	padding: 0 0.5rem;
+}
+
+.sub-head {
+	font-size: 0.7rem;
+	margin-top: 0.75rem;
+}
+
+.amount {
+	font-size: 1.4rem;
+	color: var(--title-color);
+}
+
+.amount-value {
+	color: var(--value-color);
+}
+
+.time-stamp {
+	font-size: 0.7rem;
+	margin-top: 0.1rem;
+}
+
+.transaction-details {
+	padding: 0 1.25rem;
+}
+
+.transaction-details table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.transaction-details th {
+color: #333739;
+}
+
+.transaction-details th, .transaction-details td {
+	padding: 0.85rem 0.3rem;
+	text-align: left;
+	font-size: 0.8rem;
+}
+
+.transaction-details td {
+	text-align: right;
+	text-wrap: wrap;
+	font-weight: 600;
+	color: #2D2D2D;
+}
+
+.bill-box-container {
+	background-color: var(--bill-box);
+	border-radius: 10px;
+	font-size: 0.8rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.7rem 1.5rem;
+	margin-top: 0.5rem;
+	color: var(--title-color);
+}
+
+.notes-section {
+	padding: 0.5rem 1.5rem;
+	font-size: 0.8rem;
+	color: var(--title-color);
+	margin-bottom: 0.5rem;
+}
+
+.notes {
+	font-size: 0.75rem;
+}
+
+/* Media Queries for Responsive Design */
+@media ( max-width : 768px) {
+	.slip-card {
+		padding: 0;
+	}
+	.status {
+		font-size: 1.1rem;
+	}
+	.amount {
+		font-size: 1.2rem;
+	}
+}
+
+@media ( max-width : 480px) {
+	.slip-card {
+		padding: 0;
+	}
+	.status {
+		font-size: 1rem;
+	}
+	.amount {
+		font-size: 1rem;
+	}
+}
+</style>
+
+
+
+		<!--  NEW SLIP BOOST END --> 
+
+
+
+
+			<div class="row">
+				<div class="col s12">
+					<div class="card border-radius">
+						<div class="card-content padding-card">
+
+							<div class="table-responsive m-b-20 m-t-15" id="page-table">
+								<table id="data_list_table1"
+									class=" table-border-bottom table table-striped table-bordered">
+									<thead>
+										<tr>
+											<th>Date</th>
+											<th>Time</th>
+											<th>MID</th>
+											<th>TID</th>
+											<th>Amount(RM)</th>
+<%--											<th>Name on Card</th>--%>
+<%--											<th>Card Number</th>--%>
+<%--											<th>Reference</th>--%>
+<%--											<th>Approval Code</th>--%>
+<%--											<th>RRN</th>--%>
+											<th>Invoice ID</th>
+											<th>Transaction ID</th>
+											<th>Status</th>
+											<th>Payment Method</th>
+											<th>MDR Amount</th>
+											<th>Net Amount</th>
+											<th>Payment Date</th>
+											<th>EZYSETTLE Amount</th>
+<%--											<th>PREAUTH Fee</th>--%>
+											<th>Sales Slip</th>
+											<th>Sub Merchant MID</th>
+											<th>Void</th>
+											<th>Refund</th>
+
+										</tr>
+									</thead>
+									<tbody>
+
+										<c:forEach items="${paginationBean.itemList}" var="dto"
+											varStatus="id">
+											<tr>
+												<td>${dto.date}</td>
+												<td>${dto.time}</td>
+												<td>${dto.f001_MID}</td>
+												<td>${dto.f354_TID}</td>
+												<td style="text-align: right;">${dto.f007_TXNAMT}</td>
+<%--												<td>${dto.f268_CHNAME}</td>--%>
+<%--												<td>${dto.PAN}</td>--%>
+<%--												<td>${dto.f270_ORN}</td>--%>
+<%--												<td class='key_hover'><span--%>
+<%--													onclick="show_key('${id.index}')" id="hide_key_${id.index}"><img--%>
+<%--														class="w24" src='data:image/png;base64,<%=eyeimg%> ' /> </span>--%>
+<%--													<span onclick="hide_key('${id.index}')"--%>
+<%--													id="show_key_${id.index}" class="hide_key">${dto.f011_AUTHIDRESP}</span></td>--%>
+<%--												<td class='key_hover'><span--%>
+<%--													onclick="show_rrn('${id.index}')" id="hide_rrn_${id.index}"><img--%>
+<%--														class="w24" src='data:image/png;base64,<%=eyeimg%> ' /> </span>--%>
+<%--													<span onclick="hide_rrn('${id.index}')"--%>
+<%--													id="show_rrn_${id.index}" class="hide_key">${dto.f023_RRN}</span></td>--%>
+												<td>${dto.f270_ORN}</td>
+												<td>${dto.f011_AUTHIDRESP}</td>
+												<td>${dto.STATUS}</td>
+												<td>${dto.cardType}</td>
+												<td style="text-align: right;">${dto.mdrAmt}</td>
+												<td style="text-align: right;">${dto.netAmount}</td>
+												<td>${dto.settlementDate}</td>
+												<td>${dto.ezysettleAmt}</td>
+<%--												<td>${dto.preauthfee}</td>--%>
+
+
+												<td align="center"><c:if
+														test="${dto.cardType == 'MASTERCARD DEBIT' || dto.cardType == 'MASTERCARD CREDIT' || dto.cardType == 'VISA DEBIT' || dto.cardType == 'VISA CREDIT' }">
+														<c:if
+															test="${dto.STATUS =='SETTLED' || dto.STATUS =='NOT SETTLED' || dto.STATUS =='VOIDED'}">
+															<a href="javascript:void(0)" id="openNewWin"
+																onclick="javascript: openNewWin('${dto.f263_MRN}')">
+																<img class="w24"
+																src='data:image/png;base64,<%=actionimg%> ' />
+															</a>
+
+														</c:if>
+													</c:if> <c:if test="${dto.cardType == 'BOOST'}">
+														<c:if
+															test="${dto.STATUS =='SETTLED' || dto.STATUS =='NOT SETTLED' || dto.STATUS =='VOIDED'}">
+															<a href="javascript:void(0)" id="openBoostslip"
+																onclick="javascript: openBoostslip(
+																'${dto.date}',
+																'${dto.time}',
+																'${dto.f007_TXNAMT}',
+																'${dto.f001_MID}',
+																'${dto.f023_RRN}',
+																'${dto.f011_AUTHIDRESP}',
+																'${dto.f270_ORN}',
+																'${dto.cardType}',
+																'${dto.STATUS}',
+																'${dto.merchantName}'	
+																
+																)">
+																<img class="w24"
+															src="${pageContext.request.contextPath}/resourcesNew1/assets/salesSlip.svg" />
+															</a>
+
+														</c:if>
+													</c:if> <c:if test="${dto.cardType == 'GRABPAY'}">
+														<c:if
+															test="${dto.STATUS =='SETTLED' || dto.STATUS =='NOT SETTLED' || dto.STATUS =='VOIDED'}">
+															<a href="javascript:void(0)" id="openGrabpayslip"
+																onclick="javascript: openGrabpayslip('${dto.f023_RRN}')">
+																<img class="w24"
+																src='data:image/png;base64,<%=actionimg%> ' />
+															</a>
+
+														</c:if>
+													</c:if> <c:if test="${dto.cardType == 'TNG'}">
+														<c:if
+															test="${dto.STATUS =='SETTLED' || dto.STATUS =='NOT SETTLED'}">
+															<a href="javascript:void(0)" id="openTngslip"
+																onclick="javascript: openTngpayslip('${dto.f263_MRN}')">
+																<img class="w24"
+																src='data:image/png;base64,<%=actionimg%> ' />
+															</a>
+
+														</c:if>
+													</c:if> <c:if test="${dto.cardType == 'SPP'}">
+														<c:if
+															test="${dto.STATUS =='SETTLED' || dto.STATUS =='NOT SETTLED'}">
+															<a href="javascript:void(0)" id="openShopeeslip"
+																onclick="javascript: openShopeepayslip('${dto.f263_MRN}')">
+																<img class="w24"
+																src='data:image/png;base64,<%=actionimg%> ' />
+															</a>
+
+														</c:if>
+													</c:if> <c:set var="fpx" value="${dto.cardType}" /> <c:if
+														test="${fn:contains(fpx, 'FPX')}">
+														<c:if
+															test="${dto.STATUS =='SETTLED' || dto.STATUS =='NOT SETTLED' || dto.STATUS =='VOIDED' || dto.STATUS =='REFUNDED'}">
+															<a href="javascript:void(0)" id="openFpxslip"
+																onclick="javascript: openFpxslip('${dto.f011_AUTHIDRESP}')">
+																<img class="w24"
+																src='data:image/png;base64,<%=actionimg%> ' />
+															</a>
+
+														</c:if>
+													</c:if>
+
+
+
+													<div class="form-group col-md-4" id="divviewer"
+														style="display: none;">
+														<div class="form-group">
+															<div style="clear: both">
+																<iframe id="popOutiFrame" frameborder="0" scrolling="no"
+																	width="800" height="600"></iframe>
+
+															</div>
+
+														</div>
+													</div></td>
+
+												<td class='key_hover'><span
+														onclick="show_rrn('${id.index}')" id="hide_rrn_${id.index}"><img
+														class="w24" src='data:image/png;base64,<%=eyeimg%> ' /> </span>
+													<span onclick="hide_rrn('${id.index}')"
+														  id="show_rrn_${id.index}" class="hide_key">${dto.submerchantmid}</span></td>
+
+											<td style="text-align: center;">
+											
+											
+															<c:if
+																test="${ dto.STATUS =='NOT SETTLED'}">
+
+																<a href="javascript:void(0)"
+																	onclick="voidRequest('${dto.f007_TXNAMT}','${dto.f023_RRN}')"
+																	id="voidRequest"> <img class="w24"
+																	src='data:image/png;base64,<%=voidimage%>' /></a>
+
+															</c:if>
+													</td>
+
+											<td style="text-align: center;">
+											<c:set var="settlementDateStr" value="${dto.settlementDate}" />
+											<c:set var="currentDate" value='<%=new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date())%>' />
+ 
+												<fmt:parseDate var="settlementDate" value="${settlementDateStr}" pattern="dd/MM/yyyy" />
+											   <fmt:parseDate var="formattedCurrentDate" value="${currentDate}" pattern="dd/MM/yyyy" />
+													
+												 <c:if test="${settlementDate != null && settlementDate != 'undefined' && settlementDate != '' && settlementDate < formattedCurrentDate && dto.STATUS == 'SETTLED'}">
+													<a href="javascript:void(0)"
+														onclick="refundRequest('${dto.f007_TXNAMT}', '${dto.f023_RRN}')">
+														<img class="w24"
+														src='data:image/png;base64,<%=refundimage%>' />
+													</a>
+												</c:if>
+												</td>
+											</tr>
+										</c:forEach>
+										
+										<tr>
+                                    <td colspan="21" style="text-align: center;">
+                                        <div id="no-data">
+                                        <p></p>
+                                        </div>
+                                    </td>
+                                </tr>
+									
+										
+									</tbody>
+								</table>
+
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+		<script>
+$(document).ready(function() {
+   // $('#data_list_table').DataTable();
+} );
+
+$(document).ready(function() {
+    $('#data_list_table').DataTable( {
+    	"bSort" : false
+    } );
+} );
+
+</script>
+		<div id="pagination"></div>
+		<input type="hidden" id="pgnum"> <input type="hidden"
+			id="FromDate"> <input type="hidden" id="From1Date">
+	<div id="exportData" data-export="${exportData}" ></div>
+
+		<!-- <input type="hidden" id="TXNType1" > -->
+		<script>
+         document.getElementById("overlay-popup").style.display ="none";
+         document.getElementById("pop-bg-color").style.display ="none";
+         
+         document.getElementById("exampleModalCenter").style.display ="none";
+         
+         var fromDateServer = document.getElementById("FromDate").value="${paginationBean.dateFromBackend}";
+         var from1DateServer = document.getElementById("From1Date").value="${paginationBean.date1FromBackend}";
+         
+       //  var TransactionType = document.getElementById("TXNType1").value="${paginationBean.TXNtype}";  /*  ${paginationBean.TXNtype}*/
+         
+       /*   if(${paginationBean.itemList.size()}==0){
+         document.getElementById("exampleModalCenter").style.display ="block";
+          document.getElementById("overlay-popup").style.display ="block";
+          document.getElementById("page-table").style.display ="none";
+          document.getElementById("searchBoxDiv").style.display ="none";
+                  document.getElementById("innerText").innerHTML = "Sorry, No Records Found";
+                  document.getElementById("innerText").style.fontWeight ="400";
+                  document.getElementById("innerText").style.color ="#171717";
+                  document.getElementById("nxt").style.cursor ="not-allowed";
+                  document.getElementById("nxt").style.opacity ="0.6";
+                  document.getElementById("nxt").disabled ="disabled";
+         }
+         
+         function closepopup(){
+         document.getElementById("exampleModalCenter").style.display ="none";
+          document.getElementById("overlay-popup").style.display ="none";
+         }
+          */
+
+		 var exportData = document.getElementById("exportData").getAttribute("data-export");
+
+		 if (${paginationBean.itemList.size()} == 0 && exportData === "noRecords") {
+
+			 document.getElementById("exampleModalCenter").style.display = "block";
+			 document.getElementById("pop-bg-color").style.display = "block";
+			 document.getElementById("page-table").style.display = "none";
+			 document.getElementById("innerText").innerHTML = "Sorry, No Records Found";
+			 document.getElementById("innerText").style.fontWeight = "400";
+			 document.getElementById("innerText").style.color = "#171717";
+			 document.getElementById("nxt").style.cursor = "not-allowed";
+			 document.getElementById("nxt").style.opacity = "0.6";
+			 document.getElementById("nxt").disabled = "disabled";
+		 } else if(${paginationBean.itemList.size()} == 0){
+			 document.getElementById("no-data").innerText = "No data available";
+		 }
+
+		 function closepopup(){
+			 document.getElementById("exampleModalCenter").style.display ="none";
+			 document.getElementById("pop-bg-color").style.display ="none";
+		 }
+          
+      </script>
+		<script>
+         /* * * * * * * * * * * * * * * * *
+          * Pagination
+          * javascript page navigation
+          * * * * * * * * * * * * * * * * */
+         
+          
+          function dynamic(pgNo){
+         	/* alert("Page Number:"+pgNo); */
+         	document.getElementById("pgnum").value=pgNo;
+         	 loadSelectData1();
+         	
+         }
+         
+          function previous(pgNo){
+         		/* alert("Page Number:"+pgNo); */
+         		pgNo--;
+         		document.getElementById("pgnum").value=pgNo;
+         		 loadSelectData1();
+         		
+         	}
+          
+          function next(pgNo){
+         		/* alert("Page Number:"+pgNo); */
+         		pgNo++;
+         		document.getElementById("pgnum").value=pgNo;
+         		 loadSelectData1();
+         	}
+          
+          
+         var Pagination = {
+         
+             code: '',
+         
+             // --------------------
+             // Utility
+             // --------------------
+         
+             // converting initialize data
+             Extend: function(data) {
+                 data = data || {};
+                // Pagination.size = data.size || 300; 
+                 //console.log(Pagination.size);
+               // Pagination.size = Math.ceil(${paginationBean.fullCount}/10) ||100;
+               
+                Pagination.size = ((${paginationBean.currPage})+4) ||100;
+                 /* Pagination.page = data.page || 1; */
+                 Pagination.page = ${paginationBean.currPage} || 1;
+                 Pagination.step = ((data.step)-4) || 3;
+             },
+         
+             // add pages by number (from [s] to [f])
+             Add: function(s, f) {
+                 for (var i = s; i < f; i++) {
+                     Pagination.code += '<a onclick="dynamic('+i+')">' + i + '</a>';
+                 }
+             },
+         
+             // add last page with separator
+           /*   Last: function() {
+                 Pagination.code += '<i>...</i>';
+             },
+              */
+         	 Last: function() {
+                 Pagination.code += '<a onclick="dynamic(((Pagination.page)+1))">'+ ((Pagination.page)+1)+ '</a>'+'<a onclick="dynamic(((Pagination.page)+2))">'+ ((Pagination.page)+2)+ '</a>'+'<a onclick="dynamic(((Pagination.page)+3))">'+ ((Pagination.page)+3)+ '</a>'+'<i>...</i>';
+             }, 
+         
+             // add first page with separator
+             First: function() {
+             	if(Pagination.page==1){
+             		 Pagination.code += '<i>...</i>'+'<a onclick="dynamic(Pagination.page)">'+Pagination.page+'</a>';
+         			 
+         		 }
+             	else{
+                 Pagination.code += '<a>1</a>'+'<i>...</i>'+'<a onclick="dynamic(((Pagination.page)-1))">'+((Pagination.page)-1)+'</a>'+'<a onclick="dynamic(Pagination.page)">'+Pagination.page+'</a>';
+             	}
+             },
+         
+         
+         
+             // --------------------
+             // Handlers
+             // --------------------
+         
+             // change page
+             Click: function() {
+                 Pagination.page = +this.innerHTML;
+                 Pagination.Start();
+                 dynamic(page);
+             },
+         
+             // previous page
+             Prev: function() { 
+             		
+                 Pagination.page--;
+                 if (Pagination.page < 1) {
+                     Pagination.page = 1;
+                 }
+                 Pagination.Start();
+                 dynamic(page);
+              }, 
+             
+             
+         
+             // next page
+             
+             
+             Next: function() {
+                 Pagination.page++;
+                 if (Pagination.page > Pagination.size) {
+                     Pagination.page = Pagination.size;
+                 }
+                 Pagination.Start();
+                 dynamic(page);
+              }, 
+             
+              
+         
+             // --------------------
+             // Script
+             // --------------------
+         
+             // binding pages
+             Bind: function() {
+                 var a = Pagination.e.getElementsByTagName('a');
+                 for (var i = 0; i < a.length; i++) {
+                     if (+a[i].innerHTML === Pagination.page) a[i].className = 'current';
+                     a[i].addEventListener('click', Pagination.Click, false);
+                 }
+             },
+         
+             // write pagination
+             Finish: function() {
+                 Pagination.e.innerHTML = Pagination.code;
+                 Pagination.code = '';
+                 Pagination.Bind();
+             },
+         
+             // find pagination type
+             Start: function() {
+                 if (Pagination.size < Pagination.step * 2 + 6) {
+                     Pagination.Add(1, Pagination.size + 1);
+                 }
+                 else if (Pagination.page < Pagination.step * 2 + 1) {
+                     Pagination.Add(1, Pagination.step * 2 + 4);
+                     Pagination.Last();
+                 }
+                 else if (Pagination.page > Pagination.size - Pagination.step * 2) {
+                     Pagination.First();
+                     Pagination.Add(Pagination.size - Pagination.step * 2 - 2, Pagination.size + 1);
+                 }
+                 else {
+                     Pagination.First();
+                     Pagination.Add(Pagination.page - Pagination.step, Pagination.page + Pagination.step + 1);
+                     Pagination.Last();
+                 }
+                 Pagination.Finish();
+             },
+         
+         
+         
+             // --------------------
+             // Initialization
+             // --------------------
+         
+             // binding buttons
+             Buttons: function(e) {
+                 var nav = e.getElementsByTagName('a');
+                 nav[0].addEventListener('click', Pagination.Prev, false);
+                 nav[1].addEventListener('click', Pagination.Next, false);
+             },
+         
+             // create skeleton
+             Create: function(e) {
+         
+                 var html = [
+                     '<a onclick="previous(${paginationBean.currPage})" style="width:7rem;font-weight:bold;font-size:14px;height:2.3rem;padding-top:6px;">&#60;&#60; Previous</a>', // previous button
+                     '<span></span>',  // pagination container
+                     '<a onclick="next(${paginationBean.currPage})" style="width:6.5rem;font-weight:bold;font-size:14px;height:2.3rem;padding-top:6px;" id="nxt">Next &#62;&#62;</a>'  // next button
+                 ];
+         
+                 e.innerHTML = html.join('');
+                 Pagination.e = e.getElementsByTagName('span')[0];
+                 Pagination.Buttons(e);
+             },
+         
+             // init
+             Init: function(e, data) {
+                 Pagination.Extend(data);
+                 Pagination.Create(e);
+                 Pagination.Start();
+             }
+         };
+         
+         
+         
+         /* * * * * * * * * * * * * * * * *
+         * Initialization
+         * * * * * * * * * * * * * * * * */
+         
+         var init = function() {
+             Pagination.Init(document.getElementById('pagination'), {
+                 size: 100, // pages size
+                 page: 1,  // selected page
+                 step: 3   // pages before and after current
+             });
+         };
+         
+         document.addEventListener('DOMContentLoaded', init, false);
+      </script>
+      
+              <script>
+             var body = document.body;
+             var initialOverflow = body.style.overflow;
+
+           </script>
+      
+</body>
+
+</html>

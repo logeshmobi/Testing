@@ -1,0 +1,200 @@
+package com.mobiversa.payment.dao;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hibernate.criterion.Criterion;
+
+import com.mobiversa.common.bo.CommonStatus;
+import com.mobiversa.common.bo.EzyRecurringPayment;
+import com.mobiversa.common.bo.FileUpload;
+import com.mobiversa.common.bo.KeyManager;
+import com.mobiversa.common.bo.MID;
+import com.mobiversa.common.bo.Merchant;
+import com.mobiversa.common.bo.MerchantDetails;
+import com.mobiversa.common.bo.MerchantStatusHistory;
+import com.mobiversa.common.bo.MotoTxnDetails;
+import com.mobiversa.common.bo.TerminalDetails;
+import com.mobiversa.common.bo.TransactionRequest;
+import com.mobiversa.payment.controller.bean.PaginationBean;
+import com.mobiversa.payment.dto.MerchantGPVData;
+
+public interface MerchantDao extends BaseDAO {
+	public void findByUserNames(final String businessName, final PaginationBean<Merchant> paginationBean);
+
+	public void listMerchantUser(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props);
+
+	public void updateMerchantStatus(Long id, CommonStatus status, MerchantStatusHistory history);
+
+	public MerchantStatusHistory loadMerchantStatusHistoryID(Merchant merchant);
+
+	public Merchant loadMerchant(String username);
+
+	public Merchant loadMerchant(MID mid);
+	
+	public int changeMerchantPassWord(String Username,String newPwd,String OldPwd);
+	
+	
+	public int changeMerchantPassWordByAdmin(String Username,String newPwd);
+	
+	//public String generatePassword();
+	
+	public Merchant loadMerchantbyEmail(String email);
+	
+	public int updateMIDData(Long m_id,Long merchant_id);
+
+	public List<Merchant> loadMerchant();
+	
+	public List<Merchant> loadMerchantByNOB(String nob);
+	
+	//public List<MID> loadMIDByNOB(List<Long> ids);
+	
+	public List<MID> loadMIDByNOB(List<Long> ids);
+	
+	public void listAgentMerchant(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props);
+	  
+	
+	public MID loadMid(String mid);
+	
+	public void listMerchantUser1(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props);
+	
+	
+	public FileUpload loadFileById(String id);
+	
+	
+	public FileUpload updateFileById(FileUpload fileUpload);
+	
+	public List<FileUpload> loadFileByMerchantId(String merchId);
+	
+	
+	
+public Merchant loadMerchantDetails(String username);
+
+
+//new method for merchant summary search condition 16062017
+
+
+public void listMerchantSearch(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props);
+
+	
+
+
+public List<Merchant> listMerchantSummary(ArrayList<Criterion> props,final String date,
+		final String date1);
+
+public Merchant loadmobileMerchant(MID mid);
+
+public Merchant loadMerchantbyid(MID mid);
+
+public KeyManager validatecaptcha(String captcha2);
+
+public boolean deleteCaptcha(String captcha2);
+
+//public MerchantDetails loadMerchantPoints(String mid);
+
+public int changeMobileuserPassWordByAdmin(String Username, String newPwd);
+
+public MID loadMotoMid(String motomid);
+
+public MID loadEzyPassMid(String ezypassmid);
+
+
+public MID loadMerchantmid(String mid);
+
+public MID loadMerchantmotomid(String motomid);
+
+public MID loadMerchantbyMerchant_FK(Long merchant_fk);
+
+public MID loadMidtoUpdateAudit(String mid);
+
+public Merchant loadMerchantbymerchantid(Long id);
+
+public MerchantDetails loadMerchantPoints(Merchant merchant);
+
+public TransactionRequest listMerchantCardDetails(BigInteger TxnId);
+
+public void listRecurringMerchantUser(
+		PaginationBean<EzyRecurringPayment> paginationBean,
+		ArrayList<Criterion> props);
+
+
+
+public int UpdateRecurringStatus(String status, Long id);
+
+public EzyRecurringPayment loadMerchantRecurring(Long recID);
+
+public MID loadEzywayMid(String ezywaymid);
+
+public MID loadEzyrecMid(String ezyrecmid);
+
+public MID loadMerchantMIDDetails(String mid,String midType);
+
+public void listMotoTxnReqMerchantUser(PaginationBean<MotoTxnDetails> paginationBean, ArrayList<Criterion> props);
+
+public void loadReqMotoData(PaginationBean<MotoTxnDetails> paginationBean,String fromDate,String toDate,String status);
+
+public List<Merchant> loadMerchantByAdmin();
+
+public MID loadUMMid(String um_mid);
+
+public MID loadUMMotoMid(String um_motomid);
+
+public MID loadUMEzyPassMid(String um_ezypassmid);
+
+public MID loadUMEzywayMid(String um_ezywaymid);
+
+public MID loadUMEzyrecMid(String um_ezyrecMid);
+
+MID loadMidByMerchant_PK(String id);
+
+TerminalDetails loadTerminalDetailsByMid(String mid);
+
+public List<Merchant> loadUMMerchant();
+
+
+
+//public MID loadMerchantezypassmid(String ezypassMid);
+
+
+public String getMerchantCurrentMonthTxnByNOB(StringBuffer str, StringBuffer strUm);
+
+public String getMerchantDailyTxnByNOB(StringBuffer str, StringBuffer strUm);
+
+public String getMerchantWeeklyTxnByNOB(StringBuffer str, StringBuffer strUm);
+
+public List<Merchant> loadMerchantByAgID(BigInteger agid);
+
+public void listPayLaterMerchants(PaginationBean<Merchant> paginationBean);
+
+public void searchPayLaterMerchants(PaginationBean<Merchant> paginationBean, String date, String date1);
+
+public void listMerchantDetails(PaginationBean<Merchant> paginationBean);
+
+public void getMerchantGPV(StringBuffer str, PaginationBean<Merchant> paginationBean);
+
+public void loadTerminalDetails(StringBuffer midStr, PaginationBean<TerminalDetails> paginationBean);
+
+public void loadCurrentTxnDetails(Merchant merchant, PaginationBean<TerminalDetails> paginationBean, String agentName);
+
+public List<String> getProductDetails(StringBuffer midStr);
+
+public void searchTxnDetails(Merchant merchant, PaginationBean<TerminalDetails> paginationBean, String period,
+		String productType, String year);
+
+public void listMerchantGPVDetails(PaginationBean<Merchant> paginationBean);
+
+public List<Merchant> loadFpxMerchant();
+
+public Merchant validateMerchantEmailId(String emailId);
+
+MID loadumMotoMid(String umMotoMid);
+
+MID loadumEzywayMid(String umEzywayMid);
+
+public List<MerchantGPVData> listMerchantGPVDetailsByAgent(String agId);
+
+List<MerchantGPVData> listMerchantGPVDetailsBySuperAgent();
+
+
+}

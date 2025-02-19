@@ -1,0 +1,8 @@
+body{
+	background:  url(../../../assets/login_bg.png) no-repeat center center fixed;
+    background-size: cover
+	}
+	
+	
+	#login .form-control {border:solid 1px #6e8dc7;}
+	.too-small{font-size: .675em;}

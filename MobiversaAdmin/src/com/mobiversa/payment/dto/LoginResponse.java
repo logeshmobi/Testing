@@ -1,0 +1,160 @@
+package com.mobiversa.payment.dto;
+
+import java.util.Date;
+
+public class LoginResponse {
+	private String responseMessage;
+	private String responseCode;
+	private String responseDescription;
+	private String captcha;
+	private String userName;
+	private String password;
+	private String businessName;
+	private String sessionID;
+	private String email;
+	private String website;
+	private String registrationNo;
+	private String merchantID;
+	
+	private String merchantAddress;
+	private Date expiryDate;
+	private String businessContactNumber;
+	private String  ownerContactNumber;
+	
+	
+	private String olddepositAmount;
+	private String depositAmount;
+	private String response;
+	private String referenceNo;
+	
+	
+	
+	public String getMerchantID() {
+		return merchantID;
+	}
+	public void setMerchantID(String merchantID) {
+		this.merchantID = merchantID;
+	}
+	public String getMerchantAddress() {
+		return merchantAddress;
+	}
+	public void setMerchantAddress(String merchantAddress) {
+		this.merchantAddress = merchantAddress;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	public String getWebsite() {
+		return website;
+	}
+	public void setWebsite(String website) {
+		this.website = website;
+	}
+	public String getRegistrationNo() {
+		return registrationNo;
+	}
+	public void setRegistrationNo(String registrationNo) {
+		this.registrationNo = registrationNo;
+	}
+	public String getBusinessName() {
+		return businessName;
+	}
+	public void setBusinessName(String businessName) {
+		this.businessName = businessName;
+	}
+	public String getSessionID() {
+		return sessionID;
+	}
+	public void setSessionID(String sessionID) {
+		this.sessionID = sessionID;
+	}
+	public String getResponseMessage() {
+		return responseMessage;
+	}
+	public void setResponseMessage(String responseMessage) {
+		this.responseMessage = responseMessage;
+	}
+	public String getResponseCode() {
+		return responseCode;
+	}
+	public void setResponseCode(String responseCode) {
+		this.responseCode = responseCode;
+	}
+	public String getResponseDescription() {
+		return responseDescription;
+	}
+	public void setResponseDescription(String responseDescription) {
+		this.responseDescription = responseDescription;
+	}
+	public String getCaptcha() {
+		return captcha;
+	}
+	public void setCaptcha(String captcha) {
+		this.captcha = captcha;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	public Date getExpiryDate() {
+		return expiryDate;
+	}
+	public void setExpiryDate(Date date) {
+		this.expiryDate = date;
+	}
+	public String getPhoneNumber() {
+		return businessContactNumber;
+	}
+	public void setPhoneNumber(String businessContactNumber) {
+		this.businessContactNumber = businessContactNumber;
+	}
+	public String getOwnerContactNumber() {
+		return ownerContactNumber;
+	}
+	public void setOwnerContactNumber(String ownerContactNumber) {
+		this.ownerContactNumber = ownerContactNumber;
+	}
+	public String getBusinessContactNumber() {
+		return businessContactNumber;
+	}
+	public void setBusinessContactNumber(String businessContactNumber) {
+		this.businessContactNumber = businessContactNumber;
+	}
+	public String getDepositAmount() {
+		return depositAmount;
+	}
+	public void setDepositAmount(String depositAmount) {
+		this.depositAmount = depositAmount;
+	}
+	public String getResponse() {
+		return response;
+	}
+	public void setResponse(String response) {
+		this.response = response;
+	}
+	public String getOlddepositAmount() {
+		return olddepositAmount;
+	}
+	public void setOlddepositAmount(String olddepositAmount) {
+		this.olddepositAmount = olddepositAmount;
+	}
+	public String getReferenceNo() {
+		return referenceNo;
+	}
+	public void setReferenceNo(String referenceNo) {
+		this.referenceNo = referenceNo;
+	}
+			
+	
+}

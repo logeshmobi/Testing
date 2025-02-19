@@ -1,0 +1,87 @@
+package com.mobiversa.payment.excel;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.springframework.web.servlet.view.document.AbstractExcelView;
+
+import com.mobiversa.common.bo.FpxTransaction;
+
+
+public class fpxTxnExcel extends AbstractExcelView {
+	
+	@Override
+	protected void buildExcelDocument(Map model, HSSFWorkbook workbook,
+			HttpServletRequest request, HttpServletResponse response)
+			throws Exception {
+
+		HSSFSheet excelSheet = workbook.createSheet("Settlemrnt MDR List");
+		setExcelHeader(excelSheet);
+		
+		List txnList = (List) model.get("txnList");
+		setExcelRows(excelSheet,txnList);
+		
+	}
+
+	@SuppressWarnings("static-method")
+	public void setExcelHeader(HSSFSheet excelSheet) {
+		HSSFRow excelHeader = excelSheet.createRow(0);
+		excelHeader.createCell(0).setCellValue("Transaction Date");
+		excelHeader.createCell(1).setCellValue("Transaction Time");
+		excelHeader.createCell(2).setCellValue("Merchant Name");		
+		excelHeader.createCell(3).setCellValue("MID");		
+		excelHeader.createCell(4).setCellValue("Transaction Amount");
+		excelHeader.createCell(5).setCellValue("Transaction Currency");
+		excelHeader.createCell(6).setCellValue("Buyer Bank ID");
+		excelHeader.createCell(7).setCellValue("Seller order No");
+		excelHeader.createCell(8).setCellValue("Buyer Name");
+		excelHeader.createCell(9).setCellValue("Status");
+		excelHeader.createCell(10).setCellValue("FPX Txn Id");
+		excelHeader.createCell(11).setCellValue("SubMerchantMid");
+		
+		/*excelHeader.createCell(8).setCellValue("Seller Ex order No");
+		excelHeader.createCell(9).setCellValue("Debit Auth Code");
+		excelHeader.createCell(10).setCellValue("Debit Auth Status");
+		excelHeader.createCell(11).setCellValue("Credit Auth Code");
+		excelHeader.createCell(12).setCellValue("Credit Auth Status");*/
+		
+		
+		
+	}
+	
+	@SuppressWarnings("static-method")
+	public void setExcelRows(HSSFSheet excelSheet, List<FpxTransaction> txnList){
+		int record = 1;
+		for (FpxTransaction txn : txnList) {
+			HSSFRow excelRow = excelSheet.createRow(record++);
+			excelRow.createCell(0).setCellValue(txn.getTxDate());
+			excelRow.createCell(1).setCellValue(txn.getTxTime());
+			excelRow.createCell(2).setCellValue(txn.getMakerName());			
+			excelRow.createCell(3).setCellValue(txn.getMid());
+			excelRow.createCell(4).setCellValue(txn.getTxnAmount());
+			excelRow.createCell(5).setCellValue(txn.getTxnCurrency());
+			excelRow.createCell(6).setCellValue(txn.getBuyerBankId());			
+			excelRow.createCell(7).setCellValue(txn.getSellerOrderNo());
+			excelRow.createCell(8).setCellValue(txn.getBuyerName());
+			excelRow.createCell(9).setCellValue(txn.getStatus());
+			excelRow.createCell(10).setCellValue(txn.getFpxTxnId());
+			excelRow.createCell(11).setCellValue(txn.getSubMerchantMID());
+			
+			/*excelRow.createCell(8).setCellValue(txn.getSellerExOrderNo());
+			excelRow.createCell(9).setCellValue(txn.getDebitAuthCode());
+			excelRow.createCell(10).setCellValue(txn.getDebitAuthCodeStr());
+			excelRow.createCell(11).setCellValue(txn.getCreditAuthCode());
+			excelRow.createCell(12).setCellValue(txn.getCreditAuthCodeStr());*/
+
+
+			
+		}
+	}
+
+}

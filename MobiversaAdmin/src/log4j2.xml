@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+	<Appenders>
+		<RollingFile name="MyFile"
+			fileName="C:\\Mobi_config\\logs\\MobiAdmin_log.log" filePattern="C:\\Mobi_config\\logs\\MobiAdmin_log-%d{yyyy-MM-dd}.%i.log">
+			<PatternLayout
+				pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+				<Policies>
+					<TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+					<SizeBasedTriggeringPolicy size="80 MB" />
+                </Policies>
+               <!--  <DefaultRolloverStrategy max="5" /> -->
+		</RollingFile>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+		</Console>
+	</Appenders>
+
+	<Loggers>
+		<Logger name="com.mobiversa" level="info" additivity="false">
+			<appender-ref ref="MyFile" level="info" />
+			<appender-ref ref="Console" level="info" />
+		</Logger>
+		<Root level="info" additivity="false">
+			<appender-ref ref="Console" />
+		</Root>
+	</Loggers>
+</Configuration>
+
+
+<!-- <Configuration status="DEBUG">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+        <File name="MyFile" fileName="C:\\Mobi_config\\logs\\Admin_web.log">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="MyFile"/> 
+        </Root>
+        <logger name="com" level="ERROR">
+	  		<AppenderRef ref="Console"/>
+	  		<AppenderRef ref="MyFile"/>
+	  	</logger>
+	  	<logger name="org" level="ERROR">
+	  		<AppenderRef ref="Console"/>
+	  		<AppenderRef ref="MyFile"/>
+	  	</logger>
+	  	<logger name="com.mobiversa" level="DEBUG">
+	  		<AppenderRef ref="Console"/>
+	  		<AppenderRef ref="MyFile"/>
+	  	</logger>
+	  	<logger name="com.postmark" level="ERROR">
+	  		<AppenderRef ref="Console"/>
+	  		<AppenderRef ref="MyFile"/>
+	  	</logger>
+	 </Loggers>
+</Configuration>  -->

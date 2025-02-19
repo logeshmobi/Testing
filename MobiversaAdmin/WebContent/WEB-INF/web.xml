@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+  <display-name>Mobiversa</display-name>
+  
+  <context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/application-context.xml</param-value>
+		<!-- <param-value>/WEB-INF/application-context.xml,/WEB-INF/dispatcher-servlet.xml</param-value> -->
+	</context-param>
+	
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.springframework.security.web.session.HttpSessionEventPublisher</listener-class>
+	</listener>
+	
+	<!-- <listener>
+        <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
+    </listener>
+ 
+    <filter>
+        <filter-name>log4jServletFilter</filter-name>
+        <filter-class>org.apache.logging.log4j.web.Log4jServletFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>log4jServletFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+        <dispatcher>INCLUDE</dispatcher>
+        <dispatcher>ERROR</dispatcher>
+        <dispatcher>ASYNC</dispatcher>Servlet 3.0 w/ disabled auto-initialization only; not supported in 2.5
+    </filter-mapping> -->
+	
+	<!-- <filter>
+        <filter-name>encryptRequestFilter</filter-name>
+        <filter-class>com.xinrong.web.admin.security.RequestEncryptFilter</filter-class>
+        <init-param>
+            <param-name>ignoreReqPrefix</param-name>
+            <param-value>/auth,/login,/merchant,/merchantweb</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encryptRequestFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+    </filter-mapping> -->
+	<servlet>
+		<servlet-name>appServlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<!-- <param-value>/WEB-INF/dispatcher-servlet.xml</param-value> -->
+			<param-value>/WEB-INF/dispatcher-servlet.xml,/WEB-INF/application-context.xml</param-value>
+		</init-param>
+		
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>appServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	
+	
+<!-- 	  <servlet>
+    <servlet-name>forgotpwd</servlet-name>
+    <servlet-class>com.mobiversa.payment.controller.ForgotPasswordController</servlet-class>
+  </servlet> -->
+<!--   <servlet-mapping>
+    <servlet-name>forgotpwd</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping> -->
+	
+	
+	
+	
+	<!-- Spring Security --> 
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+		
+	</filter-mapping>
+	
+	<jsp-config>
+		<jsp-property-group>
+			<url-pattern>*.jsp</url-pattern>
+			<trim-directive-whitespaces>true</trim-directive-whitespaces>
+		</jsp-property-group>
+	</jsp-config>
+	<session-config>
+        <!--  <cookie-config>
+        	<http-only>true</http-only>
+        	<secure>true</secure>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>  -->
+        <session-timeout>30</session-timeout>
+	</session-config>
+	<error-page>
+        <location>/views/403.jsp</location>
+    </error-page>
+</web-app>

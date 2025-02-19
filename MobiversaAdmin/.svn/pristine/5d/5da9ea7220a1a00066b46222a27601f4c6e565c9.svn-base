@@ -1,0 +1,269 @@
+/* * {
+  box-sizing: border-box;
+} */
+body {
+  margin: 0;
+   background: linear-gradient(to bottom, #005baa 50%, white 50%);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+.topnav {
+	overflow: hidden;
+	width: 1920px;
+	height: 91px;
+	box-shadow: 0 3px 12px 0 rgba(0, 0, 0, 0.33);
+	background-color: #005baa;
+	margin-bottom: 50px;
+}
+
+
+.menuLines1{
+	width: 35px;
+	height: 5px;
+	background-color: white;
+	margin-left: 25px;
+	margin-top: 20px
+}
+.menuLines2{
+	width: 35px;
+	height: 5px;
+	background-color: white;
+	margin-left: 25px;
+	margin-top: 10px
+}
+.menuLines3{
+	width: 35px;
+	height: 5px;
+	background-color: white;
+	margin-left: 25px;
+	margin-top: 10px
+}
+
+.settingsCard{
+	width: 1000px;
+  height: 716px;
+  border-radius: 15px;
+  box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.38);
+  background-color: #ffffff;
+  margin-left:70px;
+  margin-top: 40px;
+}
+
+.settingsContainer{
+		width: 348px;
+	  height: 35px;
+	  font-family: Helvetica;
+	  font-size: 45px;
+	  font-weight: bold;
+	  font-stretch: normal;
+	  font-style: normal;
+	  line-height: 1.18;
+	  letter-spacing: normal;
+	  text-align: left;
+	  color: #ffffff;
+}
+
+
+
+
+#wrap {
+   width:600px;
+   margin:0 auto;
+}
+#left_col {
+   float:left;
+   width:300px;
+}
+
+#right_col {
+   float:right;
+   width:265px;
+}
+
+#profile{
+	margin-left: -120px;
+    margin-top: 50px;
+}
+
+#uploadContent{
+	margin-right: -100px;
+    margin-top: 180px;
+}
+
+#userName{
+	width: 227px;
+  height: 47px;
+  font-family: Helvetica;
+  font-size: 30px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.18;
+  letter-spacing: normal;
+  text-align: left;
+  color: #005baa;
+  margin-bottom:2px;
+}
+
+#profilecont{
+	border:none;
+	height: 28px;
+	font-family: Helvetica;
+	font-size: 22px;
+	font-weight: 300;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: 1.27;
+	letter-spacing: normal;
+	text-align: left;
+	color: #aca8a8;
+	margin-bottom:5px;
+	margin-top:20px;
+}
+
+hr.lineBar{
+	width:100%;
+	border-top: 1px solid #e89b23;
+	
+}
+
+
+.condSet{
+	margin-left: 50px;
+}
+
+
+.vr {
+    width:1px;
+    background-color:#707070;
+    position:absolute;
+    top:280px;
+    bottom:160px;
+   
+}
+
+.uploadBox{
+	width: 350px;
+  height: 300px;
+  border-radius: 52px;
+  border: solid 2px #e89b23;
+  margin-left: 50px;
+}
+
+#characPwd {
+ width: 308px;
+  font-family: Helvetica;
+  font-size: 20px;
+  font-weight: 300;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.26;
+  letter-spacing: normal;
+  text-align: left;
+  color: #707070;
+  margin-bottom:30px;
+}
+
+.upldboxCon{
+	margin-top:100px;
+	margin-left:90px;
+}
+
+.uploadLabel{
+	 margin-top:75px;
+	width: 160px;
+  height: 32px;
+  font-family: Helvetica;
+  font-size: 17px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.19;
+  letter-spacing: normal;
+  text-align: center;
+  color: #595b5d;
+}
+
+.submitBtn{
+	margin-top: 50px;
+    width: 220px;
+    height: 55px;
+  border-radius: 49px;
+  box-shadow: 0 3px 6px 0 rgba(15, 88, 22, 0.55);
+  background-color: #53b749;
+  text-align: center;
+  margin-left: 60px;
+}
+
+.submitBtn span{
+	width: 98px;
+  height: 35px;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.34);
+  font-family: Helvetica;
+  font-size: 25px;
+  font-weight: bold;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.21;
+  letter-spacing: normal;
+  text-align: left;
+  color: #ffffff;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+
+
+.browseBtn{
+	 width: 151px;
+  height: 41px;
+  margin-top:95px;
+  border-radius: 39px;
+  box-shadow: 3px 3px 12px 0 rgba(0, 91, 170, 0.47);
+  background-color: #005baa;
+  text-align:center;
+}
+
+.browseBtn span{
+	width: 65px;
+  height: 21px;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.34);
+  font-family: Helvetica;
+ font-size: 18px;
+  font-weight: bold;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.21;
+  letter-spacing: normal;
+  text-align: left;
+  color: #ffffff;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.contactdesc{
+	margin-top: 90px;
+	margin-left:40px;
+	 width: 449px;
+  height: 42px;
+  font-family: Helvetica;
+  font-size: 18px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.17;
+  letter-spacing: normal;
+  text-align: left;
+  color: #595b5d;
+}
+
+
+
+
+

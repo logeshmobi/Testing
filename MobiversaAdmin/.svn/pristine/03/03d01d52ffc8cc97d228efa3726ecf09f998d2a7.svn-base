@@ -1,0 +1,44 @@
+package com.mobiversa.payment.connect;
+
+import java.util.HashMap;
+
+public class ResponseData {
+
+	public static void main(String[] args) {
+		String ar="{\"responseCode\":\"0000\",\"responseMessage\":\"SUCCESSFUL\",\"responseDescription\":\"Settlement Done\",\"responseData\":{}}";
+		ar= ar.replace("{", "");
+		ar= ar.replace("}", "");
+		ar= ar.replace("\"", "");
+		System.out.println(" Data : "+ar);
+		splitData(ar);
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static HashMap<String,String> splitData(String a){
+		a= a.replaceAll("\"", "");
+		String[] data1 = a.split(",");
+		HashMap<String,String> hm = new HashMap<String, String>();
+		System.out.println(data1.length);
+		for (String data : data1){
+			System.out.println("Data :"+data);
+			String[] data2 = data.split(":");
+			System.out.println("Data2 :"+data2.length);
+			//for(String dd : data2){
+				//System.out.println(" response :"+!(data2[1] == null)+"~~");
+				if(data2.length == 2){
+					hm.put(data2[0], data2[1]);
+				}
+		}
+		System.out.println(" hashmap : "+hm);
+		System.out.println("Hashmap :"+ hm.containsKey("responseMessage") +"   "+hm.values());
+		System.out.println("Hashmap :"+ hm.containsValue("responseMessage"));
+		if(hm.containsKey("responseMessage")){
+			System.out.println(hm.get("responseMessage"));
+		}
+		
+		return hm;
+	}
+	
+
+}

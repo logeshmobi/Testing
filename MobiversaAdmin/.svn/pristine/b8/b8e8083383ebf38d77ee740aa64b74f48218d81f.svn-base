@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	
+    <!--  <context:component-scan base-package="com.mobiversa.payment.*,com.mobiversa.common.*" /> -->
+    
+    <bean id="UserDetailsService" class="com.mobiversa.payment.service.MyUserDetailsService">
+		<property name="webUserDao" ref="webUserDao" />
+		<!-- <property name="merchantWebDao" ref="merchantWebDao" />
+		<property name="agentWebDao" ref="agentWebDao" /> -->
+	</bean>
+	
+    <!--  <bean id="UserDetailsService" class="com.mobiversa.payment.service.MyMerchantWebService">
+	<property name="merchantWebDao" ref="merchantWebDao"/>
+	</bean> -->
+	
+	<bean id="authenticationProvider1"	class="com.mobiversa.auth.AdminAuthenticationProvider">
+		<property name="UserDetailsService" ref="UserDetailsService" />
+		<!-- <property name="MerchantUserDetailsService" ref="MerchantUserDetailsService" /> -->
+		<property name="passwordEncoder" ref="passwordEncoder"/>
+	</bean>
+	
+	
+	<!-- <bean id="authenticationProvider2"	class="com.mobiversa.auth.MerchantAuthenticationProvider">
+		<property name="UserDetailsService" ref="UserDetailsService" />
+		<property name="UserDetailsService" ref="UserDetailsService" />
+		<property name="passwordEncoder" ref="passwordEncoder"/>
+	</bean> -->
+	
+		<!-- <bean id="myUserDetailsService" class="com.mobiversa.payment.service.MyUserDetailsService">
+		<property name="webUserDao" ref="webUserDao" />
+	</bean> -->
+	<!-- <bean id="myMerchantDetailsWebService" class="com.mobiversa.payment.service.MyMerchantWebService">
+	<property name="merchantWebDao" ref="merchantWebDao"/>
+	</bean>
+	
+	 <bean id="myAgentWebService" class="com.mobiversa.payment.service.MyAgentWebService">
+	<property name="agentWebDao" ref="agentWebDao"/>
+	</bean>   -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<context:annotation-config/>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+    
+	<!-- <bean id="userDao" class="com.mobiversa.payment.dao.UserDaoImpl" /> -->
+	
+	<bean id="webUserDao" class="com.mobiversa.payment.dao.WebUserDaoImpl" />
+	<bean id="merchantWebDao" class="com.mobiversa.payment.dao.MerchantWebDaoImpl"/>
+	<bean id="agentWebDao" class="com.mobiversa.payment.dao.AgentWebDaoImpl"/>
+	<!--<bean id="nonmerchantWebDao" class="com.mobiversa.payment.dao.NonMerchantWebDaoImpl"/> 
+	<bean id="randomPassword" class="com.mobiversa.payment.util.RandomPassword"/>-->
+	
+	
+	<!-- <bean id="merchantDAO" class="com.mobiversa.payment.dao.MerchantDaoImpl" />
+	<bean id="mobileuserDAO" class="com.mobiversa.payment.dao.MobileUserDaoImpl" />
+	<bean id="transactionDAO" class="com.mobiversa.payment.dao.TransactionDaoImpl" />
+	 <bean id="agentDAO" class="com.mobiversa.payment.dao.AgentDaoImpl" /> 
+	 <bean id="settlementWebDAO" class="com.mobiversa.payment.dao.SettlementWebDaoImpl"/>
+	<bean id="dashBoardDao" class="com.mobiversa.payment.dao.DashBoardDaoImpl"/>
+	
+	   <bean id="subAgentDAO" class="com.mobiversa.payment.dao.SubAgentDaoImpl"/>
+  	 <bean id="subAgentMenuDAO" class="com.mobiversa.payment.dao.SubAgentMenuDaoImpl"/> -->
+	
+	<!-- merchantweb console  -->
+    <!-- <bean id="merchantWebDAO" class="com.mobiversa.payment.dao.MerchantWebDaoImpl"/>
+    <bean id ="readerDAO"  class="com.mobiversa.payment.dao.ReaderDaoImpl"/>
+    <bean id="settlementsDAO" class="com.mobiversa.payment.dao.SettlementsDaoImpl"/>
+     <bean id="agentWebDao" class="com.mobiversa.payment.dao.AgentWebDaoImpl"/>
+     <bean id="reportDataDAO" class="com.mobiversa.payment.dao.ReportDataDAOImpl"/>
+      <bean id="promotionDAO" class="com.mobiversa.payment.dao.PromotionDaoImpl"/> -->
+</beans>

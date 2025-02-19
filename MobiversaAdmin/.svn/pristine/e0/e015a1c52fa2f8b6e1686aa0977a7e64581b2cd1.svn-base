@@ -1,0 +1,181 @@
+package com.mobiversa.payment.connect;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mobiversa.common.bo.Merchant;
+
+public class PaymentCommunication {
+	private static Logger logger = Logger.getLogger(PaymentCommunication.class);
+	public static String getFilePath(){
+		//To get path
+				Properties prop = new Properties();
+				InputStream input = null;
+				String path=null;
+				
+				try {
+					
+					ClassLoader loader = Thread.currentThread().getContextClassLoader();           
+					input = loader.getResourceAsStream("/config.properties");
+					prop.load(input);
+					System.out.println("Path :"+prop.getProperty("PaymentURL"));
+					path=prop.getProperty("PaymentURL");
+					return path; 
+				} catch (IOException io) {
+					io.printStackTrace();
+				} finally {
+					if (input != null) {
+						try {
+							input.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			
+				return path; 
+	}
+	
+	public static Message createContent(String name, String deviceId, Merchant merchant,String tid) {
+		String pass = "abc123";
+		Message c = new Message();
+		c.createData(name, deviceId,pass,merchant,tid);
+		System.out.println("createData::"+c);
+		logger.info( "createData:" + ":"+ c);
+		return c;
+	}
+	
+	public String sendWebSettlement(String name, String deviceId, Merchant merchant,String tid) {
+		logger.info("sendwebsettlement : " + name + "  " + deviceId);
+		logger.info( "Sending POST to GCM");
+		String apiKey = "AIzaSyB8azikXJKi_NjpWcVNJVO0d........";
+		Message content = createContent(name, deviceId,merchant,tid);
+		String resData = post(apiKey, content);
+		// resData = deviceId +"-"+resData;
+		return resData;
+	}
+	
+	
+	public static String post(String apiKey, Message content){
+		 String response1 = null;
+		 DataOutputStream wr = null;
+		 String inputLine;
+		 BufferedReader in = null;
+         StringBuffer response = new StringBuffer();
+         InputStreamReader inputStr = null;
+		HashMap<String, String> resdata = null;
+		 logger.info("content:" + ":"+ content);
+		 
+        try{
+ 
+        // 1. URL
+        //URL url = new URL("https://android.googleapis.com/gcm/send");
+        URL url = new URL(getFilePath());
+        logger.info("url:" + ":"+ url);
+        // 2. Open connection
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+ 
+        // 3. Specify POST method
+        conn.setRequestMethod("POST");
+ 
+        // 4. Set the headers
+        conn.setRequestProperty("Content-Type", "application/json");
+        //conn.setRequestProperty("Authorization", "key="+apiKey);
+ 
+        conn.setDoOutput(true);
+ 
+            // 5. Add JSON data into POST request body 
+ 
+            //`5.1 Use Jackson object mapper to convert Contnet object into JSON
+            ObjectMapper mapper = new ObjectMapper();
+            //mapper.setVisibility()
+            // 5.2 Get connection output stream
+            //DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+            //DataOutput wr = new DataOutputStream(conn.getOutputStream());
+             wr = new DataOutputStream(conn.getOutputStream());
+ 
+            // 5.3 Copy Content "JSON" into 
+            mapper.writeValue(wr, content);
+            //mapper.writerWithDefaultPrettyPrinter().writeValue(wr, content);  
+
+           // mapper.writer   writeValue(wr, content);
+ 
+            // 5.4 Send the request
+            wr.flush();
+ 
+            // 5.5 close
+            wr.close();
+ 
+            // 6. Get the response
+            int responseCode = conn.getResponseCode();
+            System.out.println("\nSending 'POST' request to URL : " + url);
+            System.out.println("Response Code : " + responseCode);
+            inputStr = new InputStreamReader(conn.getInputStream());
+            in = new BufferedReader(inputStr);
+            
+            //StringBuilder jsonString = new StringBuilder();
+ 
+            while ((inputLine = in.readLine()) != null) {
+            	response.append(inputLine);
+            }
+            in.close();
+            inputStr.close();
+            System.out.println("Response Data : "+response.toString());
+            
+            resdata = ResponseData.splitData(response.toString());
+            if(resdata.containsKey("responseDescription")){
+    			System.out.println(resdata.get("responseDescription"));
+    			response1 = resdata.get("responseDescription");
+    		}
+            
+            
+            /*} catch (MalformedURLException e) {
+                e.printStackTrace();*/
+            } catch (IOException e) {
+                
+                try{
+            		if(wr != null){
+            			wr.close();
+            		}
+            		if(inputStr != null){
+            			inputStr.close();
+            		}
+            		if(in != null){
+            			in.close();
+            		}
+            	}catch (IOException ee) { }
+                e.printStackTrace();
+            }finally{
+            	try{
+            		if(wr != null){
+            			wr.close();
+            		}
+            		if(inputStr != null){
+            			inputStr.close();
+            		}
+            		if(in != null){
+            			in.close();
+            		}
+            	}catch (IOException e) { }
+            }
+	       /* if(resdata.get("responseDescription") != null){
+	        	response1 = resdata.get("responseDescription");
+	        }*/
+        //return resdata.get("responseDescription");
+        return response1;
+       }
+	
+
+	
+}
+	

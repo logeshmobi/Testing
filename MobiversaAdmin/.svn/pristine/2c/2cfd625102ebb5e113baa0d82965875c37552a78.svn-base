@@ -1,0 +1,303 @@
+
+
+body, html {
+	margin: 0;
+	height: 100%;
+}
+
+body {
+	display: grid;
+	grid-template-rows: auto;
+	justify-items: center;
+	align-items: center;
+}
+
+
+
+
+
+.login-bg {
+	 /* background: url('/MobiversaAdmin/resourcesNew1/assets/optimizedGif.gif') no-repeat center center fixed; */
+	 background: url('/MobiversaAdmin/resourcesNew1/assets/portalBackground.jpg') no-repeat center center fixed;  
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;  
+	}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+.container {
+    grid-column-start: 1;
+}
+
+/* #mobiLogoImg {
+    width: 200px;
+    margin-left: 360px;
+    margin-top: 18px; 
+    margin: auto;
+    display: table;
+    
+} */
+
+
+#mobiLogoImg {
+	
+	width: 130px;
+    margin: auto;
+    display: table;
+    
+}
+
+.loginCard {
+	
+	height: 100%;
+	display: flex;
+	width: 473px;
+	height: 506px;
+	border-radius: 70px;
+	box-shadow: 0 3px 32px 0 rgba(0, 0, 0, 0.46);
+	background-color: #ffffff;  margin:auto;display:table; 
+	/* margin-top:8px; */
+	
+	margin-top:30px;
+}
+.loginContent{
+	padding: 20px;
+}
+.loginContent h1{
+	width: 137px;
+	height: 66px;
+	font-family: Helvetica;
+	font-size: 56px;
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: 1.18;
+	letter-spacing: normal;
+	text-align: left;
+	color: #005baa;
+}
+  
+ 
+
+#CaptchaDiv{
+	 font-size:28px;
+	 color:#005baa;
+	 text-align:center;
+	height: 58px;
+	border-radius: 14px;
+	box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.16);
+	border: solid 1px #005baa;
+	background-color: #ffffff;
+	/* padding: 0px 20px; */
+	padding: 5px 20px;
+	font-family: Modern;
+}
+
+.captchacontent{
+	/* margin-top:30px; */
+	margin-top: 16px;
+	margin-left: 18px;
+}
+
+.captchButton{
+	border: none;
+	width: 140px;
+	height: 58px;
+	border-radius: 14px;
+	box-shadow: 3px 3px 12px 0 rgba(0, 0, 0, 0.16);
+	background-color: #005baa;
+	/* white-space: normal; */ 
+	color:#fff;
+}
+
+#txtCompare2 {
+	font:25px verdana, arial, sans-serif;
+	font-style: italic;
+	color: #000000;
+	background-color: #FFFFFF;
+	padding: 4px; 
+	-moz-border-radius : 4px;
+	 -webkit-border-radius : 4px;
+	border-radius : 4px;
+	text-align: center;
+	margin-top: 10px;
+}
+
+
+.desccard{
+	width: 288px;
+	height: 34px;
+	font-family: Helvetica;
+	font-size: 15px;
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: 1.13;
+	letter-spacing: normal;
+	text-align: center;
+	color: #bcc5d3;
+	/* margin-left: 40px; */
+	
+	margin-left: 60px;
+	
+}
+
+.loginBtn{
+	width: 151px;
+	height: 41px;
+	border-radius: 39px;
+	box-shadow: 3px 3px 12px 0 rgba(0, 91, 170, 0.47);
+	background-color: #005baa;
+	margin-left: 120px;
+	margin-top:20px;
+	text-align: center;
+	outline:none;
+	color:#ffffff;
+	font-family: Helvetica;
+	font-size: 18px;
+	font-weight: bold;
+	font-stretch: normal;
+	font-style: normal;
+	letter-spacing: normal;	
+	display: inline-block;
+	border:0;
+
+}
+
+
+
+
+
+.input-field .prefix { color: #0f5ea8; }
+html, body {margin: 0; height: 100%; overflow: hidden}
+
+@media screen and (max-width:768px)
+{
+	html, body { overflow: scroll !important;}
+	
+	#mobiLogoImg {
+   /*  width: 200px !important; */
+     width: 140px !important;
+    margin: auto !important;
+    display: table !important;
+}
+
+
+}
+
+@media only screen and (max-device-width: 480px) {
+	
+
+
+.login-bg { 
+/* background: url('/MobiversaAdmin/resourcesNew1/assets/login_bg.gif') no-repeat center center fixed; */
+
+ background: url('/MobiversaAdmin/resourcesNew1/assets/portalBackground.jpg') no-repeat center center fixed;
+-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover; 
+}
+
+#mobiLogoImg{
+	/* width: 135px !important; */
+	width: 115px !important;
+    margin-left: 120px !important;
+    margin-top: 7px !important;
+    margin: auto !important;
+    display: table !important;
+}
+	
+
+.loginCard {	
+	width: 100%;
+	height: 312px;
+	margin-top: 40px;
+	margin-left: 2px;
+}
+.loginContent h1{
+	width: 83px;
+	height: 40px;
+	font-size: 34px;
+}
+.username {
+	
+	height: 16px;
+	font-size: 13px;
+	line-height: 1.23;
+	margin-bottom: 5px;
+	
+
+}
+.password {
+	height: 16px;
+	font-size: 13px;
+	line-height: 1.23;
+	margin-bottom: 5px;
+}
+ 
+.captchacontent{
+	/* margin-top:10px; */
+	margin-left: 10px;
+}
+
+#CaptchaDiv{
+	 /* font-size:14px; */
+	 padding:7px 20px !important;
+	  font-size:12px;
+	width: 172px;
+	height: 36px;
+
+}
+
+#txtCompare2 {
+	font-size:15px;
+}
+
+
+.captchButton{
+	
+	width: 62px;
+	height: 36px;
+	font-size:10px;
+	border-radius: 10px;
+}
+
+
+.desccard{
+	
+	width:100%;
+	height: 20px;
+	font-size: 8px;
+	line-height: 1.25;
+	margin-left: 0;
+	margin-top: 2px;
+}
+
+.loginBtn{
+	width: 94px;
+	height: 26px;
+	margin-left: 65px;
+	font-size: 12px;
+	line-height: 1.2;
+	margin: auto;
+    display: table;
+    margin-top: 12px;
+}
+
+
+
+}
+
+
+@media only screen and (max-device-width: 320px) {
+	
+	
+}

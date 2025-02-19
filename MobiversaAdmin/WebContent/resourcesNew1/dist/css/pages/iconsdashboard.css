@@ -1,0 +1,238 @@
+
+	
+	
+	.dashboard_menu{
+
+background-image: url(../../../assets/dashbaord.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+     background-position: center;
+
+}
+.umobile_menu{
+
+background-image: url(../../../assets/umobile.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+     background-position: center;
+
+}
+
+.paydee_menu{
+
+background-image: url(../../../assets/paydee.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 30px;
+    background-position: center;
+}
+
+.settlement_menu{
+
+background-image: url(../../../assets/settlement.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+.payout_menu{
+
+background-image: url(../../../assets/vendor_payouts.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+.failedtr_menu{
+
+background-image: url(../../../assets/failed_transaction.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+
+.reader_menu{
+
+background-image: url(../../../assets/reader.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+
+.threelines_menu{
+
+background-image: url(../../../assets/threelines.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+.wallet_menu{
+
+background-image: url(../../../assets/wallet.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+.graph_menu{
+
+background-image: url(../../../assets/graph.png);
+background-size: 23px 22px;
+ background-repeat:no-repeat;
+ margin-top: 20px;
+    background-position: center;
+}
+.ewallet_menu{
+
+ 
+
+background-image: url(../../../assets/Wallet_summary_blue.png);
+background-size: 23px 22px;
+background-repeat:no-repeat;
+margin-top: 20px;
+     background-position: center;
+
+ 
+
+}
+
+ 
+
+.fpxsummary_menu{
+
+ 
+
+background-image: url(../../../assets/fpx_summary.png);
+background-size: 23px 22px;
+background-repeat:no-repeat;
+margin-top: 30px;
+    background-position: center;
+}
+
+ 
+
+.ezysettle_summary_menu{
+
+ 
+
+background-image: url(../../../assets/easy_settle.png);
+background-size: 23px 22px;
+background-repeat:no-repeat;
+margin-top: 30px;
+    background-position: center;
+}
+
+ 
+
+.payout_summary_menu{
+
+ 
+
+background-image: url(../../../assets/payout_summary.png);
+background-size: 23px 22px;
+background-repeat:no-repeat;
+margin-top: 30px;
+    background-position: center;
+}
+
+ 
+
+.bnpl_summary_menu{
+
+ 
+
+background-image: url(../../../assets/Bnpl_logo.png);
+background-size: 23px 22px;
+background-repeat:no-repeat;
+margin-top: 30px;
+    background-position: center;
+}
+
+
+
+.statuscheck{
+ 
+background-image: url(../../../assets/status-check.svg);
+background-size: 23px 22px;
+background-repeat:no-repeat;
+margin-top: 20px;
+background-position: center;
+   
+}
+
+
+    .masterSearch{
+
+        background-image: url(../../../assets/mastersearch/Search.svg);
+        background-size: 23px 22px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        background-position: center;
+
+    }
+    .account_enquiry{
+        background-image: url(../../../assets/PayoutEnquiry.svg);
+        background-size: 23px 22px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        background-position: center;
+
+    }
+   /*  submerchant-Registration */
+    
+    .approve_submerchant{
+
+        background-image: url(../../../assets/submerchantregister/Risk_compliance.svg);
+        background-size: 23px 22px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        background-position: center;
+
+    }
+    
+     .operation_child_submerchant{
+
+        background-image: url(../../../assets/submerchantregister/SM-list.svg);
+        background-size: 23px 22px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        background-position: center;
+
+    }
+    
+     .operation_parent_submerchant{
+
+        background-image: url(../../../assets/submerchantregister/Operation_head_login.svg);
+        background-size: 23px 22px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        background-position: center;
+
+    }
+
+    .account_enquiry{
+
+        background-image: url(../../../assets/PayoutEnquiry.svg);
+        background-size: 23px 22px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        background-position: center;
+
+    }
+    
+    .txns_metrics{
+
+        background-image: url(../../../assets/Trans_metrics_new.svg);
+       	background-size: 25px 25px;
+        background-repeat:no-repeat;
+        margin-top: 20px;
+        margin: 0px 25px 0 0 !important;
+        background-position: center;
+
+    }
+    

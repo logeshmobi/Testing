@@ -1,0 +1,319 @@
+package com.mobiversa.payment.controller;
+
+import java.security.Principal;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mobiversa.common.bo.SettlementMDR;
+import com.mobiversa.payment.controller.bean.PageBean;
+import com.mobiversa.payment.controller.bean.PageBean.Module;
+import com.mobiversa.payment.controller.bean.PaginationBean;
+import com.mobiversa.payment.service.AdminService;
+import com.mobiversa.payment.service.AgentService;
+import com.mobiversa.payment.service.DashBoardService;
+import com.mobiversa.payment.service.MDRDetailsService;
+import com.mobiversa.payment.service.MerchantService;
+import com.mobiversa.payment.service.MobileUserService;
+import com.mobiversa.payment.service.PromotionService;
+import com.mobiversa.payment.service.SubAgentService;
+import com.mobiversa.payment.service.TransactionService;
+import com.mobiversa.payment.util.ResponseDetails;
+import com.mobiversa.payment.util.UMFileGenerateDetails;
+import com.mobiversa.payment.validator.AddAgentUserValidator;
+
+//import org.springframework.validation.Validator;
+@Controller
+@RequestMapping(value = SettlementUserController.URL_BASE)
+public class SettlementUserController extends BaseController {
+
+	@Autowired
+	private AdminService adminService;
+
+	@Autowired
+	private DashBoardService dashBoardService;
+
+	@Autowired
+	private MerchantService merchantService;
+
+	@Autowired
+	private MobileUserService mobileUserService;
+
+	@Autowired
+	private MobileUserService mobileUser;
+
+	@Autowired
+	private AgentService agentService;
+	
+	@Autowired
+	private MDRDetailsService mdrDetailsService;
+
+	@Autowired
+	private SubAgentService subAgentService;
+	@Autowired
+	private PromotionService promotionService;
+	@Autowired
+	private AddAgentUserValidator validator;
+
+	@Autowired
+	private TransactionService transactionService;
+
+	/* private static final String merchantModel = "merchant"; */
+
+	public static final String URL_BASE = "/settlementDataUser";
+	private static final Logger logger = Logger.getLogger(SettlementUserController.class);
+
+	/**
+	 * Default wildcard page to redirect invalid page mapping to the default page.
+	 * <p>
+	 * for example <code>/merchant/testing</code> will be caught in the
+	 * requestMapping and therefore user is redirected to display all merchant,
+	 * instead of showing a 404 page.
+	 * 
+	 * @return
+	 */
+	@RequestMapping(value = { "", "/", "/**/*" }, method = RequestMethod.GET)
+	public String defaultPage() {
+		logger.info("Default Page Merchant");
+		return "redirect:" + URL_BASE + "/list/1";
+	}
+
+	//Settlement Summary
+	@RequestMapping(value = { "/list/{currPage}" }, method = RequestMethod.GET)
+	public String settlement(final Model model,
+	@PathVariable final int currPage, final java.security.Principal principal) {
+		
+			logger.info("SettlementMDR");
+			PageBean pageBean = new PageBean("transactions list",
+					"SettlementUser/SettlementMDRList", Module.TRANSACTION,
+					"transaction/sideMenuTransaction");
+			model.addAttribute("pageBean", pageBean);
+			logger.info("SettlementMDR Summary:" + principal.getName());
+			PaginationBean<SettlementMDR> paginationBean = new PaginationBean<SettlementMDR>();
+			paginationBean.setCurrPage(currPage);
+
+			
+			
+			
+			transactionService.listSettlementMDRTransaction(paginationBean, null, null);
+			
+			
+			if (paginationBean.getItemList().isEmpty()
+					|| paginationBean.getItemList() == null
+					|| paginationBean.getItemList().size() == 0) {
+				model.addAttribute("responseData", "No Records found"); // table
+																		// response
+			} else {
+				model.addAttribute("responseData", null);
+			}
+			model.addAttribute("paginationBean", paginationBean);
+
+			return TEMPLATE_SETTLEMENTUSER;
+		
+		
+		
+		
+	}
+	
+	
+	
+	@RequestMapping(value = { "/searchSettlementMDR" }, method = RequestMethod.GET)
+	public String displayEzyLinkTransactionList(HttpServletRequest request,
+			final Model model,
+			@RequestParam final String date,
+			@RequestParam final String date1,
+			/*@RequestParam final String txnType,*/
+			@RequestParam(required = false, defaultValue = "1") final int currPage) {
+		
+		PageBean pageBean = new PageBean("transactions list",
+				"SettlementUser/SettlementMDRList", Module.TRANSACTION,
+				"transaction/sideMenuTransaction");
+		model.addAttribute("pageBean", pageBean);
+
+		PaginationBean<SettlementMDR> paginationBean = new PaginationBean<SettlementMDR>();
+		paginationBean.setCurrPage(currPage);
+
+		transactionService.listSettlementMDRTransaction(paginationBean, date, date1);
+		
+		model.addAttribute("paginationBean", paginationBean);
+
+		return TEMPLATE_SETTLEMENTUSER;
+
+	}
+	
+	@RequestMapping(value = "/exportSettlementMDR", method = RequestMethod.GET)
+	public ModelAndView getExcelEzyLink(@RequestParam final String date,
+			@RequestParam final String date1,
+			@RequestParam(required = false, defaultValue = "1") final int currPage,
+			final Model model,
+			@RequestParam(required = false) String export) {
+		
+		String txnType = null;
+		logger.info("Export Transaction Summary.."+txnType);
+		
+		PaginationBean<SettlementMDR> paginationBean = new PaginationBean<SettlementMDR>();
+		paginationBean.setCurrPage(currPage);
+		
+		
+		transactionService.listSettlementMDRTransaction(paginationBean, date, date1);
+		
+		if (paginationBean.getItemList().isEmpty()
+				|| paginationBean.getItemList() == null) {
+			model.addAttribute("responseData", "No Records found"); // table
+																	// response
+
+		} else {
+			model.addAttribute("responseData", null);
+		}
+		
+		List<SettlementMDR> list = paginationBean.getItemList();
+		
+		if (!(export.equals("PDF"))) {
+
+			return new ModelAndView("paydeeTxnExcel", "txnList", list);
+
+		} else {
+			return new ModelAndView("paydeeTxnPdf", "txnList", list);
+		}
+	}
+	
+	
+	@RequestMapping(value = { "/fileGenerate/{currPage}" }, method = RequestMethod.GET)
+	public String fileGenerate(final Model model,
+	@PathVariable final int currPage, final java.security.Principal principal) {
+		
+			logger.info("SettlementMDR");
+			PageBean pageBean = new PageBean("transactions list",
+					"SettlementUser/fileGenerationList", Module.TRANSACTION,
+					"transaction/sideMenuTransaction");
+			model.addAttribute("pageBean", pageBean);
+			logger.info("fileGenerate:" + principal.getName());
+
+			return TEMPLATE_SETTLEMENTUSER;
+		
+		
+		
+		
+	}
+	
+	
+	@RequestMapping(value = { "/generateFileCall" }, method = RequestMethod.GET)
+	public String regMDRDetails(HttpServletRequest request,
+			final Model model,
+			@RequestParam final String umFile,
+			@RequestParam final String mercFile,
+			@RequestParam final String mdrFile,
+			@RequestParam final String dedFile,
+			@RequestParam final String csvFile,
+			@RequestParam final String stPeriod,
+			@RequestParam final String date,
+			
+			@RequestParam(required = false, defaultValue = "1") final int currPage) {
+		
+		logger.info("generateFileCall");
+		
+		logger.info("umFile::"+umFile);
+		logger.info("mercFile::"+mercFile);
+		logger.info("mdrFile::"+mdrFile);
+		logger.info("dedFile::"+dedFile);
+		logger.info("csvFile::"+csvFile);
+		logger.info("stPeriod::"+stPeriod);
+		logger.info("date::"+date);
+		
+		PageBean pageBean = new PageBean("transactions list",
+				"SettlementUser/FileSuccess", Module.TRANSACTION,
+				"transaction/sideMenuTransaction");
+		model.addAttribute("pageBean", pageBean);
+		
+		UMFileGenerateDetails umdet = new UMFileGenerateDetails();
+		umdet.setCsvFile(csvFile);
+		umdet.setDedFile(dedFile);
+		umdet.setFrom(date);
+		umdet.setMdrFile(mdrFile);
+		umdet.setMercFile(mercFile);
+		umdet.setUmFile(umFile);
+		umdet.setStPeriod(stPeriod);
+		
+		String response = null;
+		logger.info("UM File Generation Request");
+		String serviceName = "AMBANK_SETTLEMENT";
+		ResponseDetails data = mdrDetailsService.sendSettlementMDRDetails(umdet, serviceName);
+		if (data != null) {
+				if (data.getResponseCode().equals("0000")) {
+					logger.info("UM File Generation Request Sent and recieved response");
+					response = "UM file Generation Done";
+				} else {
+					logger.info("Failed to send MDR Request details");
+					response = "UM file Generation Results in Failure";
+				}
+		}
+		
+		model.addAttribute("response",response);
+		return TEMPLATE_SETTLEMENTUSER;
+		
+	}
+	
+	
+	@RequestMapping(value = { "/changeStatus/{rrn}" }, method = RequestMethod.GET)
+	public String changeSettlementStatus(HttpServletRequest request,
+			final Model model,
+			@PathVariable final String rrn,
+			Principal principal, HttpServletResponse response,
+			@RequestParam(required = false, defaultValue = "1") final int currPage) {
+		
+		PageBean pageBean = new PageBean("transactions list",
+				"SettlementUser/changeSetStatus", Module.TRANSACTION,
+				"transaction/sideMenuTransaction");
+		model.addAttribute("pageBean", pageBean);
+		
+		logger.info("rrn::"+rrn);
+
+		SettlementMDR setData = new SettlementMDR();
+		
+		setData = transactionService.loadSettlementMDR(rrn);
+		
+		model.addAttribute("setData", setData);
+
+		return TEMPLATE_SETTLEMENTUSER;
+
+	}
+	
+	
+	@RequestMapping(value = { "/updateStatus" }, method = RequestMethod.POST)
+	public String changeSetStatus(@ModelAttribute("setData") final SettlementMDR setData,
+			final Model model, final java.security.Principal principal,
+			final HttpServletRequest request,
+			 @RequestParam(required = false, defaultValue = "1") final int currPage) {
+		
+		
+		PageBean pageBean = new PageBean("transactions list",
+				"SettlementUser/success", Module.TRANSACTION,
+				"transaction/sideMenuTransaction");
+		model.addAttribute("pageBean", pageBean);
+
+		logger.info("setData::"+setData.getStatus());
+		
+		int a = merchantService.updateStatusDetails(setData);
+		
+		model.addAttribute("setData", setData);
+		return TEMPLATE_SETTLEMENTUSER;
+		
+	}
+	
+	
+	
+	
+	
+	}

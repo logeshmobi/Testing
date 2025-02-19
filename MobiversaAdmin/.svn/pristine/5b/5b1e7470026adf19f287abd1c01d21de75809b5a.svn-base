@@ -1,0 +1,619 @@
+package com.mobiversa.payment.dao;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hibernate.criterion.Criterion;
+
+import com.mobiversa.common.bo.Agent;
+import com.mobiversa.common.bo.BizAppSettlement;
+import com.mobiversa.common.bo.BoostDailyRecon;
+import com.mobiversa.common.bo.CountryCurPhone;
+import com.mobiversa.common.bo.ForSettlement;
+import com.mobiversa.common.bo.FpxTransaction;
+import com.mobiversa.common.bo.MID;
+import com.mobiversa.common.bo.MasterMerchant;
+import com.mobiversa.common.bo.Merchant;
+import com.mobiversa.common.bo.MobiMDR;
+import com.mobiversa.common.bo.MobileUser;
+import com.mobiversa.common.bo.MotoVCDetails;
+import com.mobiversa.common.bo.PreAuthorization;
+import com.mobiversa.common.bo.Receipt;
+import com.mobiversa.common.bo.SettlementMDR;
+import com.mobiversa.common.bo.SubAgent;
+import com.mobiversa.common.bo.TID;
+import com.mobiversa.common.bo.TerminalDetails;
+import com.mobiversa.common.bo.Transaction;
+import com.mobiversa.common.bo.TransactionRequest;
+import com.mobiversa.common.bo.TransactionResponse;
+import com.mobiversa.common.bo.UMEcomTxnRequest;
+import com.mobiversa.common.bo.UMEcomTxnResponse;
+import com.mobiversa.common.dto.AgentResponseDTO;
+import com.mobiversa.common.dto.TerminalDTO;
+import com.mobiversa.payment.controller.bean.PaginationBean;
+import com.mobiversa.payment.dto.AgentVolumeData;
+import com.mobiversa.payment.util.UMEzyway;
+
+public interface TransactionDao extends BaseDAO {
+
+	// list of all transactions
+	public void listAllTransaction(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+			String date, String date1, String txnType);
+	
+	public void listAllTransactionDetails(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+			String date, String date1);
+
+	public TID getTID(Transaction transaction);
+
+	// this method is for listing all the transaction of particular mobileuser
+	public void listTransactionTIDUsers(PaginationBean<Transaction> paginationBean, ArrayList<Criterion> props);
+
+	// public void listTransaction(final PaginationBean<Transaction>
+	// paginationBean, final ArrayList<Criterion> mid);
+	public List<ForSettlement> listTransaction(final PaginationBean<ForSettlement> paginationBean, String mid);
+
+	public void getForSettlement(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props);
+	
+	public void searchForSettlement1(
+			PaginationBean<ForSettlement> paginationBean,
+			ArrayList<Criterion> props, String fromDate, String toDate,
+			String status,String tid, Merchant merchant);
+	
+	
+
+	public void getForSettlementnonmerchant(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props);
+
+	public void searchForSettlement(final String toDate, final String fromDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,ArrayList<Criterion> props);
+	
+	/*public void listAllTerminals(final String toDate, final String fromDate, final String merchantName,
+			final PaginationBean<ForSettlement> paginationBean);*/
+
+	public List<TerminalDetails> getTerminalDetails(String mid, String motoMid,String ezyrecMid);
+
+	public TransactionResponse loadTransactionResponse(String trx_id);
+
+	public TransactionRequest loadTransactionRequest(String trx_id);
+
+	public ForSettlement getForSettlement(String trxId);
+
+	public void loadMerchantByName(final PaginationBean<ForSettlement> paginationBean, String merchantName, String date);
+
+	public AgentResponseDTO loadAgentByName(String agentName);
+
+	public void loadTerminalByName(final PaginationBean<TerminalDTO> paginationBean, String businessName);
+	
+	// list of all transactions
+	public List<ForSettlement> exportAllTransaction(ArrayList<Criterion> props,String date, String date1, String txnType);
+	
+	public List<ForSettlement> exportAllUmTransaction(ArrayList<Criterion> props,String date, String date1, String txnType);
+	
+	public void listSearchTransactionDetails(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+			String date, String date1);
+	
+	public Receipt loadReceiptSignature(String trxId);
+	
+	//loadMerchantDet
+	public Merchant loadMerchantDet(String trxId);
+
+	public List<ForSettlement> subAgentVolume(ArrayList<Criterion> props,SubAgent subAgent);
+	
+	public List<ForSettlement> agentVolume(ArrayList<Criterion> props,String  agentName);
+	
+	//new method merchant volume agent login 26072016
+	
+	public List<ForSettlement> loadMerchantByVolume(ArrayList<Criterion> props ,String agentName);   /* final PaginationBean<ForSettlement> paginationBean*/
+	
+	
+	//New Change for PreAuth
+	
+			public void getPreAuthTxn(PaginationBean<PreAuthorization> paginationBean, ArrayList<Criterion> props);
+			
+			public void searchPreAuth(final String toDate, final String fromDate, final String tid, final String status,
+					final PaginationBean<PreAuthorization> paginationBean,ArrayList<Criterion> props);
+			
+			public PreAuthorization getPreAuthTxn(String trxId);
+			
+			
+			public void listPreAuthTransaction(PaginationBean<PreAuthorization> paginationBean, ArrayList<Criterion> props,
+					String date, String date1, String txnType);
+			
+			public void loadPreAuthByName(final PaginationBean<PreAuthorization> paginationBean, 
+					String merchantName, String date,String txnType);
+			
+			
+			//new method for contactName in transaction summary page admin & merchant login
+			
+			public   TerminalDetails getTerminalDetailsByTid(String tid);
+			
+			public   MobileUser getMobileUserByGpayTid(String tid);
+			
+			//new method demo 05-10-2016
+			
+			public List<ForSettlement> subAgentVolume1(ArrayList<Criterion> props,SubAgent subAgent);
+			
+	
+			
+			
+			
+			
+			//new method AgentVolume 06/01/2017	
+			public List<AgentVolumeData> agentVolumeData(String  agentName);
+			
+			
+			public List<AgentVolumeData> subAgentVolumeData(SubAgent agent);
+			
+			public List<AgentVolumeData> merchantVolumeData(String agentName);
+			
+			
+			
+			// merchant volume start method 10-01-2017
+			//public List<String> midByTransaction(String agentName);
+			
+			public List<AgentVolumeData> getMerchantByMid(String mid);
+			//public List<AgentVolumeData> getMerchantByMid(String mid,String motoMid);
+			
+			public List<AgentVolumeData> superAgentVolumeData(SubAgent agent,Agent AgId);
+			
+			
+			//public SubAgent loadSubAgentDetails1(Agent AgId);
+			
+			
+//merchant volume end	
+			
+			
+//all transaction export new method
+			
+			
+			public List<ForSettlement> listAllETransactionDetails(ArrayList<Criterion> props,
+					String date, String date1);
+
+			/*void getCashTransForSettlement(
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props);*/
+
+			public void getCardTransForSettlement(
+					PaginationBean<ForSettlement> paginationBean,
+					Merchant merchant, String txnType);
+
+			public void searchnonmerchantForSettlement(String fromDate, String toDate,
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props);
+
+			
+			public void searchForSettlementnew(String fromDate, String toDate,
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList);
+
+			public void searchForSettlementcash(String fromDate, String toDate,
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList);
+
+			
+
+			public void searchForSettlementcard(String fromDate, String toDate,
+					String tid, String status, PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList);
+
+			
+			public Merchant loadMerchantbyid(MID mid1);
+
+			public MID loadMid(String mid);
+
+			public void listAllTransactionDetailsbyAdmin(
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props, String date, String date1,String status);
+
+
+			public List<ForSettlement> exportAllTransactionbyAdmin(
+					ArrayList<Criterion> criterionList, String data,
+					String data1, String status);
+
+			
+
+			public void boostTransactionbyMerchant(String fromDate, String toDate, String tid,
+					String status,
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props, Merchant merchant);
+
+			/*void getBoostTransactionbyMerchant(
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props);*/
+			public void getAllTransactionbyMerchant(
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props,Merchant merchant);
+
+			public void searchAllForSettlement(
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props, String fromDate, String toDate,
+					String status,Merchant merchant);
+
+			public List<CountryCurPhone> loadCountryData();
+
+			public void searchcardDetails(String fromDate, String toDate, String tid,
+					String status,
+					PaginationBean<ForSettlement> paginationBean, Merchant merchant);
+
+			public void loadMerchantByName(
+					PaginationBean<ForSettlement> paginationBean, String mid,
+					String date, String txnType);
+
+			public void searchForSettlementMoto(
+					PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate,
+					String toDate, String status, Merchant merchant);
+
+			public List<MobileUser> getMobileUser(String tid);
+
+			public List<String> midByTransaction(String agentName);
+
+			public MobileUser getMobileUserByMotoTid(String motoTid);
+			
+			public MobileUser getMobileUserByAuthTid(String motoTid);
+
+			public void searchForSettlementEzyWay(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status,
+					String tid, Merchant merchant);
+
+			public void searchForSettlementEzyRec(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status,
+					String tid, Merchant merchant);
+
+			public void searchForSettlementEzyPass(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status,
+					String tid, Merchant merchant);
+
+			public List<TerminalDetails> getTerminalDetails(String merchantId);
+
+			public void MerchantTransactionSummByAdmin(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> props, String fromDate, String toDate, String status);
+
+			
+			public List<ForSettlement> MerchantExportTrans(ArrayList<Criterion> props, String fromDate, String toDate,
+					String status);
+
+			public void getCardTransactionForSettlement(PaginationBean<ForSettlement> paginationBean, Merchant merchant,
+					String txnType, String date, String date1, String status);
+
+			public List<AgentVolumeData> getMerchantVolumeByMID(String merchantID,String agID);
+
+			public String merchantCount(String agentName);
+			
+			public List<String> midByTransaction(String agentName, String offset);
+
+			public List<TerminalDetails> getAllTid(Merchant merchant);
+			public List<TerminalDetails> getGpayTid(Merchant merchant);
+			public List<MobileUser> getGpayTidbyFK(Merchant merchant);
+			public List<MobileUser> getAllGpayTid();
+			public void getMotoList(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> criterionList, String tid, String status,
+					String status2, Merchant merchant);
+
+			public void getAllUMTransactionbyMerchant(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,Merchant merchant);
+			public void getTransactionRequest(PaginationBean<TransactionRequest> paginationBean, ArrayList<Criterion> props);
+
+			public void getTransactionResponse(PaginationBean<TransactionResponse> paginationBean, ArrayList<Criterion> props);
+
+			
+			public void getTransactionEnquiry(PaginationBean<TransactionRequest> paginationBean, String fromDate,
+					String toDate, String mid, String tid);
+
+			public List<MID> loadAllmid();
+
+			public List<TerminalDetails> loadAlltid();
+			
+			public void searchForSettlementEzyRecplus(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status, String tid,
+					Merchant merchant);
+			
+			public void searchForSettlementGrabpay(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status, String tid,
+					Merchant merchant);
+
+			public void searchUMForSettlement(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+					String fromDate, String toDate, String status, Merchant merchant);
+
+			public void getUMMidTransForSettlement(PaginationBean<ForSettlement> paginationBean, String mid,
+					String txnType);
+
+			public List<TerminalDetails> getTerminalDetails(Merchant merchant);
+			
+			public List<TerminalDetails> getEzywireTerminalDetails(Merchant merchant);
+
+			public void listAllUmTransaction(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+					String date, String date1, String txnType);
+			
+			public void listAllUmEzywireTransaction(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+					String date, String date1, String txnType);
+
+			public void loadUmMerchantByName(PaginationBean<ForSettlement> paginationBean, String mid, String date,
+					String txnType);
+
+			public void searchAllForSettlement(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status, String tid,
+					Merchant merchant);
+
+			public void searchForSettlementMotoByTid(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate, String toDate, String status, String tid,
+					Merchant merchant);
+
+			public List<Merchant> getMerchantDataByAgent(BigInteger agid);
+
+			public List<String> loadmidBymerchant(Long merchantid);
+
+			public List<TransactionRequest> exportTransactionExpiry(ArrayList<Criterion> criterionList,
+					String fromDate1, String toDate1, String mid, String tid);
+
+			public void listUMEzywayTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+			
+			public void listUMEzyauthTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+			
+			public void listUMMotoTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+			
+			public void listUMLinkTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+			
+			public void listUMVccTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+
+			public void listUMEzywayTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umEzywayMid, String txnType);
+			
+			public void listUMMotoTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+			
+			public void listUMLinkTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+			
+			public void listUMVccTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+			
+			public void listUMEzywayTransactionEnq(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umEzywayMid, String txnType);
+			
+			public void listUMMotoTransactionEnq(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+			
+			public void listUMVccTransactionEnq(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+
+			public UMEcomTxnRequest loadUMEzywayTransactionRequest(String id);
+
+			public UMEcomTxnResponse loadUMEzywayTransactionResponse(String id);
+
+
+			void exportUMEzywayTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1,String umEzywayMid, String txnType);
+			
+			void exportUMMotoTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1,String umMotoMid, String txnType);
+			
+			void exportUMVccTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1,String umMotoMid, String txnType);
+
+			void exportUMEzywayTransactionEnq(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String umEzywayMid, String txnType);
+			
+			void exportUMMotoTransactionEnq(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String umMotoMid, String txnType);
+			
+			void exportUMVccTransactionEnq(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String umMotoMid, String txnType);
+
+			void exportUMEzywayTransactionAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+			
+			void exportUMMotoTransactionAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+			
+			void exportUMLinkTransactionAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+			
+			void exportUMVccTransactionAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+
+			void listUMEzywayTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String txnType);
+			
+			void listUMMotoTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String txnType);
+			
+			void listUMLinkTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String txnType);
+			
+			void listUMVccTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String txnType);
+
+
+			void exportUMEzywayTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+			
+			
+			void exportUMMotoTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+			
+			void exportUMLinkTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+			
+			void exportUMVccTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+
+			
+			public void motoVC(PaginationBean<MotoVCDetails> paginationBean, String data, String date1, String motoMid) throws Exception;
+
+
+			public List<MotoVCDetails> getActiveMoto(String mid);
+
+			public MotoVCDetails motoVCById(String id);
+
+			public void exportUMEzyauthTransactionAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+
+			/*public List<AgentVolumeData> getMerchantVolByMid(String mid);*/
+			
+			public void listBoostTransaction(PaginationBean<BoostDailyRecon> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+
+			public void listUMEzyauthMerchantTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid , String txnType);
+
+			public void exportUMEzyauthTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+
+			public BoostDailyRecon loadBoostSettlement(String from);
+
+			public void listBoostSettlement(PaginationBean<BoostDailyRecon> paginationBean, String date);
+
+			public SettlementMDR loadSettlement(String from, String to);
+
+			public void listSettlement(PaginationBean<SettlementMDR> paginationBean, String from, String to);
+
+			public void listUMMotoTransactionByAgent(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, StringBuffer strUm, String txnType);
+
+			public void exportUMMotoTransactionAgent(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, StringBuffer strUm, String txnType);
+
+			public List<AgentVolumeData> getMerchantVolByMid(String mid, String type);
+
+			public List<AgentVolumeData> getAgentVolumeData(String agentName, StringBuffer str, StringBuffer strUm,
+					long id);
+
+			public Merchant getMerchantTypeByID(String id);
+
+			public List<AgentVolumeData> agentVolumeData1(String agentName);
+
+			public List<AgentVolumeData> getMerchantByMid1(String mid);
+
+			public void searchAllForsettlementTransaction(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+
+			public void listAllForsettlementTransaction(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String txnType);
+
+			void searchAllUmEzywireTransaction(PaginationBean<ForSettlement> paginationBean, ArrayList<Criterion> props,
+					String date, String date1, String txnType);
+
+			public void exportUMLinkTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String data, String date1, String umMotoMid, String txnType);
+
+			public List<AgentVolumeData> agentVolumeUM(StringBuffer str);
+
+			public List<AgentVolumeData> agentVolumeForsettle(StringBuffer str);
+
+			public List<AgentVolumeData> getMerchantByMidList(StringBuffer str);
+
+			public List<AgentVolumeData> getMerchantByMid1List(StringBuffer str);
+
+			Merchant loadMerchantByID(BigInteger merchantId);
+
+			public void listmobiliteSettlement(PaginationBean<SettlementMDR> paginationBean, String from, String to);
+
+			public SettlementMDR loadmobiliteSettlement(String from, String to);
+
+			public List<AgentVolumeData> getHotelMerchantByMid(String mid);
+
+			public TransactionRequest loadTxnDetailsByID(BigInteger bigInteger);
+
+			public BizAppSettlement loadbizappSettlement(String from, String to);
+
+
+			public List<AgentVolumeData> getHotelMerchantVolByUMid(StringBuffer uMid);
+
+			void listFPXTransaction(PaginationBean<FpxTransaction> paginationBean, String fromDate, String toDate);
+
+			void listFPXTransactionByMid(PaginationBean<FpxTransaction> paginationBean, Merchant midDetails,
+					 String fromDate, String toDate);
+
+			public void listMerchantFPXTransactionByMid(PaginationBean<FpxTransaction> paginationBean,
+					Merchant midDetails, String fromDate, String toDate);
+
+			public List<AgentVolumeData> agentTotalVolume(StringBuffer str);
+
+			public void listAllUmTransactionDetailsbyAdmin(PaginationBean<ForSettlement> paginationBean,
+					ArrayList<Criterion> criterionList, String fromDate1, String toDate1, String status);
+
+			public List<AgentVolumeData> getMerchantInTxnSummary(StringBuffer str);
+
+			void listbizappSettlementByMerchant(PaginationBean<BizAppSettlement> paginationBean, Merchant merchant,
+					String date);
+
+			void listbizappSettlement(PaginationBean<BizAppSettlement> paginationBean, String date, String date1);
+
+			BizAppSettlement loadLatestbizappSettlement();
+
+			void listLatestbizappSettlement(PaginationBean<BizAppSettlement> paginationBean);
+
+			SettlementMDR loadLatestmobiliteSettlement();
+
+			void listLatestmobiliteSettlement(PaginationBean<SettlementMDR> paginationBean);
+
+			public SettlementMDR loadLatestSettlement();
+
+			public void listLatestSettlement(PaginationBean<SettlementMDR> paginationBean);
+
+			List<TerminalDetails> getGpayTerminalDetails(Merchant merchant);
+
+			void listUMEzyrecTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String umEzyrecMid, String txnType);
+
+			void exportUMEzyrecTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String umEzyrecMid, String txnType);
+
+			void listUMEzyrecTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String txnType);
+
+			void exportUMEzyrecTransactionAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+
+			void listUMEzyrecTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String txnType);
+
+			void exportUMEzyrecTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String txnType);
+
+			void listUMEzywayTransactionByAgent(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, StringBuffer strUm, String txnType);
+
+			void exportUMEzywayTransactionAgent(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, StringBuffer strUm, String txnType);
+
+			List<MasterMerchant> getMasterMerchantDataByAgent(String agid);
+
+			public List<AgentVolumeData> getMerchantBymmId(String mid);
+
+			public List<AgentVolumeData> getMerchantBymmId1(String mid);
+
+			void listMobiliteLinkTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String mid);
+
+			void exportMobiliteLinkTransaction(PaginationBean<UMEzyway> paginationBean,
+					ArrayList<Criterion> criterionList, String date, String date1, String mid);
+
+		
+			public void listAllUmTransactionDetails(PaginationBean<ForSettlement> paginationBean,
+					Merchant merchant, String fromDate, String toDate) ;
+
+			void listMerchantFPXSettlementByMid(PaginationBean<FpxTransaction> paginationBean, Merchant merchant,
+					String from, String to);
+
+			void listUMEzyLinkSSTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String umSsMotoMid, String txnType);
+
+			void exportUMLinkSSTransaction(PaginationBean<UMEzyway> paginationBean, ArrayList<Criterion> criterionList,
+					String date, String date1, String umSsMotoMid, String txnType);
+
+			void listSettlementMDRTransaction(PaginationBean<SettlementMDR> paginationBean, String date1, String date2);
+
+			SettlementMDR loadSettlementMDR(String rrn);
+			
+			//Newly added on 12042021- Santhosh
+			public MobiMDR loadMobiMdr(String mid);
+			
+			//Newly added on 13042021- Santhosh
+			public String totalSettleAmount(String from,String to,String mid);
+
+}

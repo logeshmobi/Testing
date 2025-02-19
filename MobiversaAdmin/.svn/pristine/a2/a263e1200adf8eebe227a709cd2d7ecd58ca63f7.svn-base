@@ -1,0 +1,101 @@
+package com.mobiversa.payment.util;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class test {
+	public static void main(String[] args) {
+		
+		List<String> listMonth = new ArrayList<String>();
+		listMonth.add("A");
+		listMonth.add("A");
+		listMonth.add("A");
+		listMonth.add("B");
+		listMonth.add("B");
+		listMonth.add("C");
+		
+		System.out.println(listMonth.contains("B"));
+		
+		List<String> amountUM = new ArrayList();
+		Map<String, String> monthandamt = new HashMap<>(); 
+		monthandamt.put("5", "0.00");
+		monthandamt.put("6", "2.00");
+		monthandamt.put("7", "123.00");
+		monthandamt.put("8", "0.00");
+		
+		System.out.println("monthandamt keys"+monthandamt.keySet());
+		
+//		monthandamt = new HashMap<>(); 
+//		monthandamt.put("May", "0.00");
+//		monthandamt.put("Jun", "2.00");
+//		monthandamt.put("July", "123.00");
+//		monthandamt.put("Aug", "0.00");
+//		System.out.println("monthandamt keys after"+monthandamt.keySet());
+		
+		for(String key :monthandamt.keySet()) {
+			System.out.println(key);
+			amountUM.add(key);
+			
+		}
+		System.out.println("amt : "+amountUM.toString());
+//		Calendar cal =  Calendar.getInstance();
+//		cal.add(Calendar.MONTH, 1);
+//		
+//		int month4 = cal.get(Calendar.MONTH) + 0;
+//		int month = cal.get(Calendar.MONTH) - 1;
+//		int month2 = cal.get(Calendar.MONTH) - 2;
+//		int month3 = cal.get(Calendar.MONTH) -3;
+//		
+//	System.out.println(" previousMonthYear1: "+month4+month+month2+month3);
+//		
+//	int cDate = 0;
+//	Date dt = new Date();
+//	cDate = dt.getMonth() + 1;
+//
+//	System.out.println("cDate: "+cDate);
+//	List<Integer> listMonth = getAllMonth(cDate);
+//	
+//	System.out.println("listMonth : "+listMonth);
+//	String month1 ="";
+//	for(Integer i : listMonth) {
+//		month1 = month1+","+i;
+//	}
+//	System.out.println("listMonth : "+month1);
+//	
+//	month1= month1.replaceFirst(",", "");
+//	System.out.println("listMonth : "+month1);
+	
+		
+		  }
+	
+	private static List<Integer> getAllMonth(int month) {
+		
+		List<Integer> listMonth = new ArrayList<Integer>();
+		for (int i = 0; i <4 ; i++) {
+			if (month == 0) {
+				
+				listMonth.add(12);
+			} else if (month == -1) {
+				
+				listMonth.add(11);
+			} else if (month == -2) {
+				
+				listMonth.add(10);
+			} else {
+				
+				listMonth.add(month);
+			}
+			month--;
+		}
+		return listMonth;
+	}
+	
+	}
+	
+	
+	
+	
+	
+

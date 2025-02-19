@@ -1,0 +1,124 @@
+@font-face {
+  font-family: 'proxima_novaregular';
+  src: url('../fonts/proximanova-regular-webfont.woff2') format('woff2'),
+    url('../fonts/proximanova-regular-webfont.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI';
+  font-size: 16px;
+  background-color: #E5E5E5;
+}
+
+.mainBg {
+  padding-top: 100px;
+}
+
+
+
+
+img.exyImg {
+  position: absolute;
+  top: -70px;
+  width: 140px;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+.otpModal .modal-title {
+  padding-top: 0;
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.otpModal .modal-body {
+  padding: 40px;
+}
+
+.otpModal .modal-body p {
+  font-size: 24px;
+}
+
+.otpModal .modal-body p span {
+  font-weight: bold;
+}
+
+.fs-14 {
+  font-size: 14px;
+}
+.fs-24 {
+  font-size: 24px;
+}
+
+.btnPrimary {
+  background-color: #005BAA;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 4px;
+}
+label {
+  color: #848484;
+}
+.otpInput input {
+  background-color: #F4F3F8;
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  margin: 0 2px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 0px rgba(0,0,0,0.1);
+}
+input:focus {
+  outline: none;
+}
+a.link {
+  color: #005BAA;
+}
+.textGrey {
+  color: #848484;
+}
+a:hover { text-decoration: none;}
+.merchantDet {
+  font-size: 18px;
+}
+.merchantDet > div {
+  margin-bottom: 10px;
+}
+.merchantDet .leftLbl {
+  color: #707070;
+  width: 50%;
+  padding-right: 10px;
+  text-align: right;
+}
+.merchantDet .rightLbl {
+  color: #1D1D1D;
+  padding-left: 10px;
+}
+.actionTab {
+  background-color: #F0F0F0;
+}
+.actionTab p {
+  color: #707070;
+  font-size: 24px;
+}
+
+#modalOne input, #modalOne select {
+  border: none;
+  width: 300px;
+  height: 50px;
+  background: #EAEAEA;
+  border-radius: 4px;
+}
+.iti__selected-flag:focus {
+  outline: none;
+}

@@ -1,0 +1,3718 @@
+package com.mobiversa.payment.service;
+
+import java.math.BigInteger;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.mobiversa.common.bo.BizAppSettlement;
+import com.mobiversa.common.bo.BoostDailyRecon;
+import com.mobiversa.common.bo.CountryCurPhone;
+import com.mobiversa.common.bo.ForSettlement;
+import com.mobiversa.common.bo.FpxTransaction;
+import com.mobiversa.common.bo.MID;
+import com.mobiversa.common.bo.MasterMerchant;
+import com.mobiversa.common.bo.Merchant;
+import com.mobiversa.common.bo.MobiLiteMerchant;
+import com.mobiversa.common.bo.MobileUser;
+import com.mobiversa.common.bo.MotoVCDetails;
+import com.mobiversa.common.bo.PreAuthorization;
+import com.mobiversa.common.bo.Receipt;
+import com.mobiversa.common.bo.SettlementMDR;
+import com.mobiversa.common.bo.SubAgent;
+import com.mobiversa.common.bo.TID;
+import com.mobiversa.common.bo.TerminalDetails;
+import com.mobiversa.common.bo.Transaction;
+import com.mobiversa.common.bo.TransactionRequest;
+import com.mobiversa.common.bo.TransactionResponse;
+import com.mobiversa.common.bo.UMEcomTxnRequest;
+import com.mobiversa.common.bo.UMEcomTxnResponse;
+import com.mobiversa.common.dto.AgentResponseDTO;
+import com.mobiversa.common.dto.TerminalDTO;
+import com.mobiversa.common.dto.TransactionDTO;
+import com.mobiversa.payment.controller.bean.PaginationBean;
+import com.mobiversa.payment.dao.MobileUserDao;
+import com.mobiversa.payment.dao.TransactionDao;
+import com.mobiversa.payment.dto.AgentVolumeData;
+import com.mobiversa.payment.util.PropertyLoad;
+import com.mobiversa.payment.util.UMEzyway;
+@Service
+public class TransactionService {
+	
+	@Autowired
+	private TransactionDao transactionDAO;
+
+	@Autowired
+	private MobileUserDao mobileuserDAO;
+	private static final Logger logger = Logger
+			.getLogger(TransactionService.class);
+	
+	/*
+	 * @Autowired private ReportDataDAO reportDataDAO;
+	 */
+
+	// load transactions by pk
+
+	public Transaction loadTransactionByPk(final Long id) {
+		Transaction transaction = transactionDAO.loadEntityByKey(
+				Transaction.class, id);
+		if (transaction == null) {
+			throw new RuntimeException("Transaction Not found. ID:: " + id);
+		}
+		return transaction;
+	}
+
+	// @javax.transaction.Transactional
+	public void loadMerchantName(final PaginationBean<ForSettlement> paginationBean,
+			final String merchantName, final String date, String txnType) {
+		transactionDAO.loadMerchantByName(paginationBean, merchantName, date,
+				txnType);
+	}
+	
+	public void loadUmMerchantByName(final PaginationBean<ForSettlement> paginationBean,
+			final String merchantName, final String date, String txnType) {
+		transactionDAO.loadUmMerchantByName(paginationBean, merchantName, date,
+				txnType);
+	}
+	public ForSettlement loadMerchantName(String merchantName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Merchant loadMerchantbymid(final String mid) {
+		/* System.out.print("loadmobilemerchant: "+mid); */
+		MID mid1 = transactionDAO.loadMid(mid);
+
+		return transactionDAO.loadMerchantbyid(mid1);
+	}
+	
+	public List<AgentVolumeData> agentVolumeData1(String agentName) {
+		System.out.println("Inside  agentVolumeData1");
+
+		return transactionDAO.agentVolumeData1(agentName);
+	}
+	/*
+	 * @javax.transaction.Transactional public void
+	 * loadLocationName(PaginationBean<ForSettlement> paginationBean,final
+	 * String Location) {
+	 * transactionDAO.loadMerchantByLocation(paginationBean,Location); // TODO
+	 * Auto-generated method stub
+	 * 
+	 * }
+	 */
+
+	// to display list of all transactions
+	// @javax.transaction.Transactional
+	public void listAllTransaction(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String data, final String date1, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listAllTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+	}
+	
+	
+	public void listAllUMTransaction(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String data, final String date1, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listAllUmTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+	}
+	public void searchAllUmEzywireTransaction(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String data, final String date1, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.searchAllUmEzywireTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+	}
+	
+	public void listAllUmEzywireTransaction(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String data, final String date1, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listAllUmEzywireTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+	}
+	public void listAllForsettlementTransaction(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String data, final String date1, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listAllForsettlementTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+	}
+	
+	public void listSettlementMDRTransaction(
+			final PaginationBean<SettlementMDR> paginationBean,
+			final String data, final String date1) {
+		
+		transactionDAO.listSettlementMDRTransaction(paginationBean, data,
+				date1);
+	}
+	
+	public void listFPXTransaction(PaginationBean<FpxTransaction> paginationBean, String fromDate,String toDate) {
+		String from = null;
+		String to = null;
+		
+		if (((fromDate == null ) || (toDate == null )) ||
+				(fromDate.equals("") || (toDate.equals("")))) {
+
+			Date date1 =new Date();
+			Calendar calendar = Calendar.getInstance();
+			date1 =  calendar.getTime();
+			int year=calendar.getWeekYear();     
+			long mon = date1.getMonth()+1;
+			int fromDay=date1.getDate()-1;
+			int toDay=date1.getDate()+1;
+			String dateorg2=fromDay+"/"+mon+"/"+year;
+			String dateorg1=toDay+"/"+mon+"/"+year;
+			
+		
+			try {
+				from=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg2));
+				System.out.println("fromDate   "+from);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + from);
+			
+			try {
+				to=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg1));
+				System.out.println("toDate   "+to);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + to);
+			
+
+		} else {
+
+			from = fromDate;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + fromDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+	
+			to = toDate;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+				logger.info("date format:" + toDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from+":::"+to);
+		
+		transactionDAO.listFPXTransaction(paginationBean,from,to);
+	}
+	
+	
+	public void listFPXTransactionByMid(PaginationBean<FpxTransaction> paginationBean,Merchant midDetails, String fromDate,String toDate) {
+		String from = null;
+		String to = null;
+		
+		if (((fromDate == null ) || (toDate == null )) ||
+				(fromDate.equals("") || (toDate.equals("")))) {
+
+			Date date1 =new Date();
+			Calendar calendar = Calendar.getInstance();
+			date1 =  calendar.getTime();
+			int year=calendar.getWeekYear();     
+			long mon = date1.getMonth()+1;
+			int fromDay=date1.getDate()-1;
+			int toDay=date1.getDate()+1;
+			String dateorg2=fromDay+"/"+mon+"/"+year;
+			String dateorg1=toDay+"/"+mon+"/"+year;
+			
+		
+			try {
+				from=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg2));
+				System.out.println("fromDate   "+from);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + from);
+			
+			try {
+				to=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg1));
+				System.out.println("toDate   "+to);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + to);
+			
+
+		} else {
+
+			from = fromDate;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + fromDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+			
+			to = toDate;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+				logger.info("date format:" + toDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from+":::"+to);
+		
+		transactionDAO.listFPXTransactionByMid(paginationBean,midDetails,from,to);
+	}
+	
+	
+	public void listMerchantFPXTransactionByMid(PaginationBean<FpxTransaction> paginationBean,Merchant midDetails, String fromDate, String toDate) {
+		String from = null;
+		String to = null;
+		
+		if (((fromDate == null ) || (toDate == null )) ||
+				(fromDate.equals("") || (toDate.equals("")))) {
+
+			Date date1 =new Date();
+			Calendar calendar = Calendar.getInstance();
+			date1 =  calendar.getTime();
+			int year=calendar.getWeekYear();     
+			long mon = date1.getMonth()+1;
+			int fromDay=date1.getDate()-1;
+			int toDay=date1.getDate()+1;
+			String dateorg2=fromDay+"/"+mon+"/"+year;
+			String dateorg1=toDay+"/"+mon+"/"+year;
+			
+		
+			try {
+				from=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg2));
+				System.out.println("fromDate   "+from);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + from);
+			
+			try {
+				to=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg1));
+				System.out.println("toDate   "+to);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + to);
+			
+
+		} else {
+
+			from = fromDate;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + fromDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+			
+			to = toDate;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+				logger.info("date format:" + toDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from+":::"+to);
+		
+		transactionDAO.listMerchantFPXTransactionByMid(paginationBean,midDetails,from,to);
+	}
+	public void searchAllForsettlementTransaction(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String data, final String date1, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.searchAllForsettlementTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+	}
+	
+	// loading tid by pk
+
+	public TID loadTidByPk(final Long id) {
+		TID tid = transactionDAO.loadEntityByKey(TID.class, id);
+		if (tid == null) {
+			throw new RuntimeException("TID Not found. ID:: " + id);
+		}
+		return tid;
+	}
+
+	// loading mid based on pk of mid id
+	public MID loadMIDByPk(final long id) {
+		MID mid = transactionDAO.loadEntityByKey(MID.class, id);
+		if (mid == null) {
+			throw new RuntimeException("MID Not found. ID:: " + id);
+		}
+		return mid;
+	}
+
+	// to view list of transactions based on mobileuser
+
+	// @javax.transaction.Transactional
+	public void listTransactionTID(
+			final PaginationBean<Transaction> paginationBean,
+			final Merchant merchant) {
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		if (merchant != null) {
+
+			@SuppressWarnings("rawtypes")
+			List allMobileUsers = mobileuserDAO.listMobileUsers(merchant);
+
+			if ((allMobileUsers != null) && (allMobileUsers.size() > 0)) {
+
+				criterionList
+						.add(Restrictions.in("mobileUser", allMobileUsers));
+
+			}
+
+		}
+
+		transactionDAO.listTransactionTIDUsers(paginationBean, criterionList);
+	}
+
+	// to view list of transactions based on mobileuser
+	// @javax.transaction.Transactional
+	public List<ForSettlement> listTransactionTID(
+			final PaginationBean<ForSettlement> paginationBean, final String mid) {
+
+		return transactionDAO.listTransaction(paginationBean, mid);
+		// transactionDAO.listTransactionTIDUsers(paginationBean,
+		// criterionList);
+	}
+
+	// to display list of transactions related to a TID
+
+	public Transaction listTransactionsByTid(
+			final PaginationBean<TransactionDTO> paginationBean,
+			final String tid) {
+		/*
+		 * ArrayList < Criterion > criterionList = new ArrayList < Criterion > (
+		 * ) ; criterionList . add ( Restrictions . eq ( "tid" , tid ) ) ;
+		 * Transaction trxn = new Transaction ( ) ;
+		 * 
+		 * return transactionDAO . listTransactionsByTid ( paginationBean ) ,
+		 * tid ) ;
+		 * 
+		 * / / TODO Auto - generated method stub
+		 */
+		return null;
+	}
+
+	// OLD CODE
+	// @javax.transaction.Transactional
+	/*
+	 * public void getForSettlement(final PaginationBean<ForSettlement>
+	 * paginationBean, final Merchant merchant) {
+	 * //System.out.println("testttttt getForSettlement"); ArrayList<Criterion>
+	 * criterionList = new ArrayList<Criterion>();
+	 * 
+	 * criterionList.add(Restrictions.eq("mid",
+	 * merchant.getMid().getMid().toString()));
+	 * transactionDAO.getForSettlement(paginationBean, criterionList); }
+	 */
+	// NEW CODE
+	public void getForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		//System.out.println("mid: " + merchant.getMid().getMid());
+		
+		/*Disjunction orExp=Restrictions.disjunction();
+		orExp.add(Restrictions.eq("mid", merchant.getMid().getMid()));
+		orExp.add(Restrictions.eq("motoMid", merchant.getMid().getMid()));
+		orExp.add(Restrictions.eq("ezyrecMid", merchant.getMid().getEzyrecMid()));
+		orExp.add(Restrictions.eq("ezywayMid", merchant.getMid().getEzywayMid()));
+		orExp.add(Restrictions.eq("ezypassMid", merchant.getMid().getEzypassMid()));*/
+		/*criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));*/
+		
+		transactionDAO.getAllTransactionbyMerchant(paginationBean,
+				criterionList, merchant);
+		// transactionDAO.getForSettlement(paginationBean, criterionList);
+	}
+	public void getUMForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		
+		
+		transactionDAO.getAllUMTransactionbyMerchant(paginationBean,
+				criterionList, merchant);
+		
+	}
+	// @javax.transaction.Transactional
+	public void getCashTransForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		
+		
+		if(merchant.getMid().getMid()!=null)
+		{
+			System.out.println("mid: "+merchant.getMid().getMid().toString());
+			
+		}
+		if(merchant.getMid().getMotoMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getMotoMid().toString());
+			
+		}
+		if(merchant.getMid().getEzypassMid()!=null)
+		{
+			System.out.println("ezypass mid: "+merchant.getMid().getEzypassMid().toString());
+			
+		}
+		
+		criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+				 merchant.getMid().getEzypassMid()}));
+		
+		criterionList.add(Restrictions.eq("txnType", "CASH"));
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		System.out.println("getCashForSettlement");
+	}
+
+	public void getBoostTransForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		
+		if(merchant.getMid().getMid()!=null)
+		{
+			System.out.println("mid: "+merchant.getMid().getMid().toString());
+			
+		}
+		if(merchant.getMid().getMotoMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getMotoMid().toString());
+			
+		}
+		if(merchant.getMid().getEzypassMid()!=null)
+		{
+			System.out.println("ezypass mid: "+merchant.getMid().getEzypassMid().toString());
+			
+		}
+		
+		
+		criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+				 merchant.getMid().getEzypassMid()}));
+		
+		criterionList.add(Restrictions.eq("txnType", "BOOST"));
+		criterionList.add(Restrictions.in("status", new String[] { "BP", "BPC",
+				"BPA", "BPS" }));
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		System.out.println("getboostForSettlement");
+	}
+
+	public void getMotoTransForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		if(merchant.getMid().getMotoMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getMotoMid());
+		}
+		
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMotoMid()));
+		
+		//criterionList.add(Restrictions.eq("txnType", "MOTO"));
+		//criterionList.add(Restrictions.eq("txnType", "RECURRING"));
+		criterionList.add(Restrictions.in("txnType", new String[] { "MOTO", "RECURRING"}));
+		criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		System.out.println("getmotoForSettlement");
+	}
+
+	public void getEzyWayTransForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		if(merchant.getMid().getEzywayMid()!=null)
+		{
+			System.out.println("Ezyway mid: "+merchant.getMid().getEzywayMid());
+		}
+		
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzywayMid()));
+		
+		//criterionList.add(Restrictions.eq("txnType", "MOTO"));
+		//criterionList.add(Restrictions.eq("txnType", "RECURRING"));
+	//	criterionList.add(Restrictions.in("txnType", new String[] { "MOTO", "RECURRING"}));
+		criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		System.out.println("getEzywayForSettlement");
+	}
+	
+	
+	
+	
+	public void searchTransactionForSettlement(String fromDate,String toDate,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant,String txnType) {
+		System.out.println("TXN TYPE: "+txnType);
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if(txnType.equals("EZYWAY")) {
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzywayMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			criterionList.add(Restrictions.eq("txnType", "EZYWAY"));
+			System.out.println(merchant.getMid().getEzywayMid());
+		}else if(txnType.equals("EZYREC")) {
+			System.out.println("ezyrec trnasction: ");
+			criterionList.add(Restrictions.eq("txnType", "EZYREC"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzyrecMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			System.out.println(merchant.getMid().getEzyrecMid());
+		}else if(txnType.equals("EZYPASS")) {
+			criterionList.add(Restrictions.eq("txnType", "EZYPASS"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzypassMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			System.out.println(merchant.getMid().getEzypassMid());
+		}else if(txnType.equals("MOTO")) {
+			criterionList.add(Restrictions.eq("txnType", "MOTO"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getMotoMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			System.out.println(merchant.getMid().getMotoMid());
+		}else if(txnType.equals("BOOST")) {
+			criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+					 merchant.getMid().getEzypassMid(),merchant.getMid().getEzyrecMid()}));
+			criterionList.add(Restrictions.eq("txnType", "BOOST"));
+			criterionList.add(Restrictions.in("status", new String[] { "BP", "BPC","BPA", "BPS" }));
+		}else if(txnType.equals("CASH")) {
+			criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),
+					merchant.getMid().getMotoMid() ,
+					 merchant.getMid().getEzypassMid(),merchant.getMid().getEzyrecMid()}));
+			
+			if (fromDate != null && toDate != null) {
+				criterionList.add(Restrictions.between("timeStamp", fromDate,toDate));
+			}
+			String status = "CT";
+			criterionList.add(Restrictions.eq("txnType", "CASH"));
+			criterionList.add(Restrictions.in("status", new String[] { "CT", "CV" }));
+			
+			
+			
+		}
+		
+		
+		
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		System.out.println("getTransactionForSettlement");
+	}
+	
+	public void getTransactionForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant,String txnType) {
+		System.out.println("Get Trans -: "+txnType);
+		String fromDate=null,toDate=null;
+		
+		Date date =new Date();
+		
+		//Date fromDate1 = new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(date));
+		
+		Calendar calendar = Calendar.getInstance();
+         date =  calendar.getTime();
+		//Date date = new Date();
+		
+		int year=calendar.getWeekYear();
+       // int year=2017;
+		long mon = date.getMonth()+1;
+		int day=date.getDate()+1;
+		int daybefore=date.getDate()-20;
+		String fromDateToSearch=null;
+		String toDateToSearch=null;
+		String dateorg2=day+"/"+mon+"/"+year;
+		String dateorg1=daybefore+"/"+mon+"/"+year;
+		logger.info("date to find: "+dateorg1+" "+dateorg2);
+		try {
+			toDateToSearch=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg2));
+			fromDateToSearch=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg1));
+		} catch (ParseException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		logger.info("check date and year : " +fromDateToSearch+"  "+toDateToSearch );
+		
+		logger.info("TxnType : " +txnType+"::mid::"+ merchant.getMid().getMid()
+				+"::getMotoMid::"+merchant.getMid().getMotoMid()
+				+"::getMotoMid::"+ merchant.getMid().getMotoMid()
+				+"::getMotoMid::"+merchant.getMid().getMotoMid() );
+		
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if(txnType.equals("EZYWAY")) {
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzywayMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			criterionList.add(Restrictions.eq("txnType", "EZYWAY"));
+			System.out.println(merchant.getMid().getEzywayMid());
+		} else if (txnType.equals("EZYREC")) {
+			criterionList.add(Restrictions.eq("txnType", "EZYREC"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzyrecMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C", "S" }));
+			System.out.println(merchant.getMid().getEzyrecMid());
+		}else if (txnType.equals("RECPLUS")) {
+			logger.info(txnType+" mid: "+ merchant.getMid().getEzyrecMid());
+			criterionList.add(Restrictions.eq("txnType", "RECPLUS"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzyrecMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C", "S" }));
+			System.out.println(merchant.getMid().getEzyrecMid());
+		}else if(txnType.equals("EZYPASS")) {
+			criterionList.add(Restrictions.eq("txnType", "EZYPASS"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzypassMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			System.out.println(merchant.getMid().getEzypassMid());
+		}else if(txnType.equals("MOTO")) {
+			criterionList.add(Restrictions.eq("txnType", "MOTO"));
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getMotoMid()));
+			criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+			System.out.println(merchant.getMid().getMotoMid());
+		}else if(txnType.equals("BOOST")) {
+			criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+					 merchant.getMid().getEzypassMid(),merchant.getMid().getEzywayMid(),merchant.getMid().getEzyrecMid(),
+					 merchant.getMid().getUmMid(), merchant.getMid().getUmMotoMid(),merchant.getMid().getUmEzywayMid(),
+					 merchant.getMid().getUmEzyrecMid(), merchant.getMid().getUmEzypassMid()}));
+			criterionList.add(Restrictions.eq("txnType", "BOOST"));
+			criterionList.add(Restrictions.in("status", new String[] { "BP", "BPC","BPA", "BPS" }));
+		}else if(txnType.equals("CASH")) {
+			criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+					 merchant.getMid().getEzypassMid(),merchant.getMid().getEzywayMid(),merchant.getMid().getEzyrecMid(),
+					 merchant.getMid().getUmMid(), merchant.getMid().getUmMotoMid(),merchant.getMid().getUmEzywayMid(),
+					 merchant.getMid().getUmEzyrecMid(), merchant.getMid().getUmEzypassMid()}));
+			criterionList.add(Restrictions.eq("txnType", "CASH"));
+		}else if(txnType.equals("GRABPAY")) {
+			logger.info(" TXN_TYPE: "+txnType);
+			logger.info("mid: "+merchant.getMid().getMid()+" "+merchant.getMid().getMotoMid()+" "+merchant.getMid().getEzypassMid()+" "+
+					merchant.getMid().getEzyrecMid());
+			criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+					 merchant.getMid().getEzypassMid(),merchant.getMid().getEzywayMid(),merchant.getMid().getEzyrecMid(),
+					 merchant.getMid().getUmMid(), merchant.getMid().getUmMotoMid(),merchant.getMid().getUmEzywayMid(),
+					 merchant.getMid().getUmEzyrecMid(), merchant.getMid().getUmEzypassMid()}));
+			criterionList.add(Restrictions.eq("txnType", "GRABPAY"));
+			//criterionList.add(Restrictions.in("status", new String[] { "GPC", "GPS","GRF", "GBC","GPF","GPP" }));
+		}
+		
+		criterionList.add(Restrictions.between("timeStamp",fromDateToSearch, toDateToSearch));
+		
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		//System.out.println("getTransactionForSettlement");
+	}
+	
+
+	
+	
+	public void getEzypassTransForSettlement(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		if(merchant.getMid().getEzypassMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getEzypassMid());
+		}
+		
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzypassMid()));
+		// String[] status={"BP","BPC","BPA","BPS"};
+		criterionList.add(Restrictions.eq("txnType", "EZYPASS"));
+		criterionList.add(Restrictions.in("status", new String[] { "A", "C","S" }));
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		// System.out.println(paginationBean.getItemList().size());
+		System.out.println("getezypassForSettlement");
+	}
+	
+	public void getCardTransForSettlement(
+			PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant,String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+//		transactionDAO.getCardTransForSettlement(paginationBean, merchant
+//				.getMid().getMid());
+		
+		transactionDAO.getCardTransForSettlement(paginationBean, merchant, txnType);
+
+	}
+	
+	
+	public void getMobiliteEzylinkTxn(
+			PaginationBean<UMEzyway> paginationBean,
+			final MobiLiteMerchant merchant) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+	
+		//transactionDAO.getMobiliteEzylinkTxn(paginationBean, merchant);
+
+	}
+	
+	
+	//new for all card Transaction list - 21-02-2019
+	
+		public void getCardTransactionForSettlement(
+				PaginationBean<ForSettlement> paginationBean,
+				final Merchant merchant,String txnType,String date,String date1,String status) {
+			ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+			/*String mid=null;
+			if(txnType.equals("EZYWIRE")) {
+				mid=merchant.getMid().getMid();
+			}else if(txnType.equals("EZYMOTO")){
+				mid=merchant.getMid().getMotoMid();
+			}else if(txnType.equals("EZYREC")){
+				mid=merchant.getMid().getEzyrecMid();
+			}else if(txnType.equals("EZYPASS")){
+				mid=merchant.getMid().getEzypassMid();
+			}else if(txnType.equals("EZYWAY")){
+				mid=merchant.getMid().getEzywayMid();
+			}*/
+			transactionDAO.getCardTransactionForSettlement(paginationBean, merchant, txnType,date,date1,status);
+
+		}
+		
+
+	public void getUMMidTransForSettlement(
+			PaginationBean<ForSettlement> paginationBean,
+			final String mid,String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		
+		transactionDAO.getUMMidTransForSettlement(paginationBean, mid, txnType);
+
+	}
+	
+	public String getMonth(int m) {
+
+		// System.out.println(" Data :"+m);
+		String mon = "";
+		switch (m) {
+		case 1:
+			mon = "JAN";
+			break;
+		case 2:
+			mon = "FEB";
+			break;
+		case 3:
+			mon = "MAR";
+			break;
+		case 4:
+			mon = "APR";
+			break;
+		case 5:
+			mon = "MAY";
+			break;
+		case 6:
+			mon = "JUN";
+			break;
+		case 7:
+			mon = "JUL";
+			break;
+		case 8:
+			mon = "AUG";
+			break;
+		case 9:
+			mon = "SEP";
+			break;
+		case 10:
+			mon = "OCT";
+			break;
+		case 11:
+			mon = "NOV";
+			break;
+		case 12:
+			mon = "DEC";
+			break;
+
+		default:
+			mon = "";
+			break;
+		}
+
+		return mon;
+
+	}
+	
+	private static List<Integer> getAllMonth(int month) {
+		System.out.println("month debug... "+month);
+		List<Integer> listMonth = new ArrayList<Integer>();
+		for (int i = 0; i <4 ; i++) {
+			if (month == 0) {
+				System.out.println("debug 0");
+				listMonth.add(12);
+			} else if (month == -1) {
+				System.out.println("debug -1");
+				listMonth.add(11);
+			} else if (month == -2) {
+				System.out.println("debug -2");
+				listMonth.add(10);
+			} else {
+				System.out.println("debug else ");
+				listMonth.add(month);
+			}
+			month--;
+		}
+		return listMonth;
+	}
+	
+	
+
+	
+	/*public void getCardNewTransForSettlement(
+			PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		List<Object[]>resultList= (List<Object[]>)session.createCriteria(ForSettlement.class, "f") 
+                .add(Restrictions.eq("aliasOfTableA.columnAA", "AAA")) 
+				.add(Restrictions.eq("f.MID", mid))
+				.add(Restrictions.eq("f.TXN_TYPE", mid))
+				.add(Restrictions.in("f.STATUS", ('A','S','C','R','P'))) 
+				.createCriteria("f.TRX_ID" , "t")
+               
+			   .add(Restrictions.eq("aliasOfTableB.columnBB", "BBB"))
+				
+                
+                .setProjection( Projections.projectionList()
+                        .add( Projections.property(" f.TIME_STAMP") )
+						.add( Projections.property("f.TIME") )
+						.add( Projections.property("f.STATUS") )
+						.add( Projections.property("f.STAN") )
+						.add( Projections.property("f.AMOUNT") )
+						.add( Projections.property("f.LOCATION") )
+						.add( Projections.property("f.MID") )
+						.add( Projections.property("f.TRX_ID") )
+						.add( Projections.property("f.TID") )
+						.add( Projections.property("f.TXN_TYPE") )
+						.add( Projections.property("t.MASKED_PAN"))
+                       
+                ).list();
+		
+		
+		transactionDAO.getCardTransForSettlement(paginationBean, merchant
+				.getMid().getMid());
+
+	}*/
+
+	// @javax.transaction.Transactional
+	public void getForSettlementnonmerchant(
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getForSettlement");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		System.out.println("inside getforsettlementnonmerchant() "
+				+ merchant.getMid().getMid());
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));
+		transactionDAO.getForSettlementnonmerchant(paginationBean,
+				criterionList);
+	}
+
+	public void searchForSettlementMoto(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMotoMid()));
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		/*
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 */
+		// transactionDAO.searchForSettlement(fromDate ,toDate ,tid, status,
+		// paginationBean,criterionList);
+		
+		/*transactionDAO.getMotoList(paginationBean, criterionList,
+				fromDate, toDate, status, merchant);*/
+		transactionDAO.searchForSettlementMotoByTid(paginationBean, criterionList,
+				fromDate, toDate, status,tid, merchant);
+	}
+	
+	
+	public void searchUMForSettlementMoto(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMotoMid()));
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		/*
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 */
+		// transactionDAO.searchForSettlement(fromDate ,toDate ,tid, status,
+		// paginationBean,criterionList);
+		
+		/*transactionDAO.getMotoList(paginationBean, criterionList,
+				fromDate, toDate, status, merchant);*/
+		transactionDAO.searchForSettlementMoto(paginationBean, criterionList,
+				fromDate, toDate, status, merchant);
+	}
+	
+	
+	
+	
+	
+	public void searchForSettlementEzyWay(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzywayMid()));
+
+		if (fromDate != null && toDate != null) {
+			
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		
+		transactionDAO.searchForSettlementEzyWay(paginationBean, criterionList,
+				fromDate, toDate, status,tid, merchant);
+	}
+	
+	public void searchForSettlementEzyPass(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzypassMid()));
+
+		if (fromDate != null && toDate != null) {
+			
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		
+		transactionDAO.searchForSettlementEzyPass(paginationBean, criterionList,
+				fromDate, toDate, status,tid, merchant);
+	}
+	
+	public void searchForSettlementEzyRec(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzyrecMid()));
+
+		if (fromDate != null && toDate != null) {
+			
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		
+		transactionDAO.searchForSettlementEzyRec(paginationBean, criterionList,
+				fromDate, toDate, status,tid, merchant);
+	}
+	public void searchForSettlementEzyRecplus(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getEzyrecMid()));
+
+		if (fromDate != null && toDate != null) {
+			
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		
+		transactionDAO.searchForSettlementEzyRecplus(paginationBean, criterionList,
+				fromDate, toDate, status,tid, merchant);
+	}
+	public void searchBoostForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		if(merchant.getMid().getMid()!=null)
+		{
+			System.out.println("mid: "+merchant.getMid().getMid().toString());
+			
+		}
+		if(merchant.getMid().getMotoMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getMotoMid().toString());
+			
+		}
+		if(merchant.getMid().getEzypassMid()!=null)
+		{
+			System.out.println("ezypass mid: "+merchant.getMid().getEzypassMid().toString());
+			
+		}
+		
+		criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+				 merchant.getMid().getEzypassMid()}));
+		
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		criterionList.add(Restrictions.eq("txnType", "BOOST"));
+		/*
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 */
+		transactionDAO.searchForSettlement(fromDate ,toDate ,tid, status,
+		 paginationBean,criterionList);
+		/*transactionDAO
+				.searchForSettlement(paginationBean, criterionList, fromDate,
+						toDate, status);*/
+	}
+	// @javax.transaction.Transactional
+	public void searchForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		
+
+		if (fromDate != null && toDate != null) {
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		/*
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 */
+		// transactionDAO.searchForSettlement(fromDate ,toDate ,tid, status,
+		// paginationBean,criterionList);
+		transactionDAO.searchForSettlement1(paginationBean, criterionList, fromDate,
+						toDate, status,tid, merchant);
+		
+		/*transactionDAO
+		.searchcardDetails(fromDate, toDate, tid, status, paginationBean,  merchant.getMid().getMid());*/
+	}
+	
+	public void searchCardForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		/*criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));*/
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		/*transactionDAO.searchAllForSettlement(paginationBean, criterionList, fromDate,
+						toDate, status, merchant);
+		*/
+		transactionDAO.searchAllForSettlement(paginationBean, criterionList, fromDate,
+				toDate, status,tid, merchant);
+		
+	}
+	
+	public void searchCardUMForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		/*criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));*/
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		transactionDAO.searchAllForSettlement(paginationBean, criterionList, fromDate,
+						toDate, status, merchant);
+		
+		/*transactionDAO.searchAllForSettlement(paginationBean, criterionList, fromDate,
+				toDate, status,tid, merchant);*/
+		
+	}
+	
+	
+	
+	public void searchUMForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.searchUMForSettlement(paginationBean, criterionList, fromDate,
+						toDate, status, merchant);
+		
+	}
+	
+	/*public void searchCardForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+	
+		transactionDAO.searchcardDetails(fromDate, toDate, tid, status, paginationBean,  merchant);
+	}*/
+
+	public void searchUMCardForSettlement(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+	
+		transactionDAO.searchcardDetails(fromDate, toDate, tid, status, paginationBean,  merchant);
+	}
+	// @javax.transaction.Transactional
+	public void searchForSettlementnew(final String fromDate,
+			final String toDate,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));
+
+		if (fromDate != null && toDate != null) {
+
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+
+		transactionDAO.searchForSettlementnew(fromDate, toDate, paginationBean,
+				criterionList);
+	}
+
+	public void searchForSettlementcash(final String fromDate,
+			final String toDate,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		/*criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));*/
+
+		if(merchant.getMid().getMid()!=null)
+		{
+			System.out.println("mid: "+merchant.getMid().getMid().toString());
+			
+		}
+		if(merchant.getMid().getMotoMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getMotoMid().toString());
+			
+		}
+		if(merchant.getMid().getEzypassMid()!=null)
+		{
+			System.out.println("ezypass mid: "+merchant.getMid().getEzypassMid().toString());
+			
+		}
+		
+		criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+				 merchant.getMid().getEzypassMid(),merchant.getMid().getEzyrecMid(),merchant.getMid().getEzywayMid()}));
+		
+		if (fromDate != null && toDate != null) {
+
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		String status = "CT";
+	//criterionList.add(Restrictions.eq("status", status));
+		
+		criterionList.add(Restrictions.eq("txnType", "CASH"));
+		criterionList.add(Restrictions.in("status", new String[] { "CT", "CV" }));
+
+		transactionDAO.searchForSettlementcash(fromDate, toDate,
+				paginationBean, criterionList);
+	}
+
+	/*public void searchForSettlementcard(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			System.out.println("tid !!!!!!!!!!!!!!!" + tid);
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			System.out.println("status !!!!!!!!!!!!!!!!!!!!!" + status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 
+
+		transactionDAO.searchForSettlementcard(fromDate, toDate, tid, status,
+				paginationBean, criterionList);
+
+	}*/
+
+	public void searchForSettlementBoost(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		if(merchant.getMid().getMid()!=null)
+		{
+			System.out.println("mid: "+merchant.getMid().getMid().toString());
+			
+		}
+		if(merchant.getMid().getMotoMid()!=null)
+		{
+			System.out.println("moto mid: "+merchant.getMid().getMotoMid().toString());
+			
+		}
+		if(merchant.getMid().getEzywayMid()!=null)
+		{
+			System.out.println("ezypass mid: "+merchant.getMid().getEzypassMid().toString());
+			
+		}
+		if(merchant.getMid().getUmMid()!=null)
+		{
+			System.out.println("UMMID mid: "+merchant.getMid().getUmMid().toString());
+			
+		}
+		if(merchant.getMid().getUmMotoMid()!=null)
+		{
+			System.out.println("ummoto mid: "+merchant.getMid().getUmMotoMid().toString());
+			
+		}
+		if(merchant.getMid().getUmEzywayMid()!=null)
+		{
+			System.out.println("umezyway mid: "+merchant.getMid().getUmEzywayMid().toString());
+			
+		}
+		
+		criterionList.add(Restrictions.in("mid", new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid() ,
+				 merchant.getMid().getEzypassMid(),merchant.getMid().getUmMid(),merchant.getMid().getUmMotoMid(),merchant.getMid().getUmEzywayMid(),merchant.getMid().getEzyrecMid(),merchant.getMid().getEzywayMid()}));
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			System.out.println("tid !!!!!!!!!!!!!!!" + tid);
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			System.out.println("status !!!!!!!!!!!!!!!!!!!!!" + status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		/*
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 */
+
+		transactionDAO.boostTransactionbyMerchant(fromDate, toDate, tid,
+				status, paginationBean, criterionList,merchant);
+
+	}
+	
+	//grabpaysearch
+	public void searchForGrabpay(final String fromDate,
+			final String toDate, final String tid, final String status,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getGpayMid()));
+
+		if (fromDate != null && toDate != null) {
+			
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			/* System.out.println("tid !!!!!!!!!!!!!!!"+tid); */
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+			/* System.out.println("status !!!!!!!!!!!!!!!!!!!!!"+status); */
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		
+		transactionDAO.searchForSettlementGrabpay(paginationBean, criterionList,
+				
+				fromDate, toDate, status,tid, merchant);
+	}
+
+
+	// @javax.transaction.Transactional
+	public void searchnonmerchantForSettlement(final String fromDate,
+			final String toDate,
+			final PaginationBean<ForSettlement> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+				.toString()));
+
+		if (fromDate != null && toDate != null) {
+			// System.out.println("Date!!!!!!!!!!!!!!!!!!"+fromDate+"  "+toDate);
+			// criterionList.add(Restrictions.between("date", fromDate,
+			// toDate));
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+
+		/*
+		 * if(devId != null){ criterionList.add(Restrictions.eq("devId",
+		 * devId)); }
+		 */
+		transactionDAO.searchnonmerchantForSettlement(fromDate, toDate,
+				paginationBean, criterionList);
+	}
+	
+	public MobileUser getMobileUserByMotoTid(final String motoTid) {
+		return transactionDAO.getMobileUserByMotoTid(motoTid);
+	}
+	
+	public MobileUser getMobileUserByAuthTid(final String motoTid) {
+		return transactionDAO.getMobileUserByAuthTid(motoTid);
+	}
+	
+	
+	
+	public List<MobileUser> getMobileUser(final String motoTid) {
+		return transactionDAO.getMobileUser(motoTid);
+	}
+	// @javax.transaction.Transactional
+	public List<TerminalDetails> getTerminalDetails(final String mid,String motoMid,String ezyrecMid) {
+		return transactionDAO.getTerminalDetails(mid,motoMid,ezyrecMid);
+	}
+	public List<TerminalDetails> getTerminalDetails(final String mid) {
+		return transactionDAO.getTerminalDetails(mid);
+	}
+
+	public List<TerminalDetails> getTerminalDetails(final Merchant merchant) {
+		return transactionDAO.getTerminalDetails(merchant);
+	}
+	
+	public List<TerminalDetails> getEzywireTerminalDetails(final Merchant merchant) {
+		return transactionDAO.getEzywireTerminalDetails(merchant);
+	}
+	
+	
+	public List<TerminalDetails> getGpayTerminalDetails(final Merchant merchant) {
+		return transactionDAO.getGpayTerminalDetails(merchant);
+	}
+
+
+	// @javax.transaction.Transactional
+	public TransactionResponse loadTransactionResponse(String trx_id) {
+		return transactionDAO.loadTransactionResponse(trx_id);
+	}
+
+	// @javax.transaction.Transactional
+	public TransactionRequest loadTransactionRequest(String trx_id) {
+		return transactionDAO.loadTransactionRequest(trx_id);
+	}
+
+	// @javax.transaction.Transactional
+	public ForSettlement getForSettlement(String trxId) {
+		return transactionDAO.getForSettlement(trxId);
+	}
+
+	// @javax.transaction.Transactional
+	public AgentResponseDTO loadAgentName(String agentName) {
+		return transactionDAO.loadAgentByName(agentName);
+	}
+
+	// @javax.transaction.Transactional
+	public void loadTerminalName(
+			final PaginationBean<TerminalDTO> paginationBean,
+			String businessName) {
+		transactionDAO.loadTerminalByName(paginationBean, businessName);
+	}
+
+	// to display list of all transactions
+	// @javax.transaction.Transactional
+	public List<ForSettlement> exportAllTransaction(final String data,
+			final String data1, String txnType) {
+		// System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		return transactionDAO.exportAllTransaction(criterionList, data, data1,
+				txnType);
+	}
+	
+	public List<ForSettlement> exportAllUmTransaction(final String data,
+			final String data1, String txnType) {
+		// System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		return transactionDAO.exportAllUmTransaction(criterionList, data, data1,
+				txnType);
+	}
+
+	// @javax.transaction.Transactional
+	public void listAllTransactionDetails(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String date1, final String date2, final String status) {
+		// System.out.println("Inside  listAllTransaction:::::"+date1+year1+"     "+date2+year2+"   Status :"+status+"TEST");
+		// System.out.println("Inside  listAllTransaction:::::"+date1+"     "+date2+"   Status :"+status+"TEST");
+		// String data= null;
+
+		System.out.println("inside listAllTransactionDetails service..");
+		/* logger.info("inside listAllTransactionDetails service.."); */
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (date1 != null && date2 != null) {
+			// System.out.println(" Data date :"+date1+ date2);
+			criterionList.add(Restrictions.between("timeStamp", date1, date2));
+		}
+		/*
+		 * if(date1 != null && date2 != null){
+		 * System.out.println(" Data date :"+date1+ date2);
+		 * criterionList.add(Restrictions.between("date", date1, date2)); }
+		 */
+		/*
+		 * if(year1 != null && year2 != null){
+		 * System.out.println(" Data year:"+year1 + year2);
+		 * criterionList.add(Restrictions.between("txnYear", year1, year2)); }
+		 */
+
+		if (status != null && !status.isEmpty()) {
+			// System.out.println(" Data status:"+status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+		// System.out.println(" Data :"+criterionList.size());
+		/*
+		 * if(criterionList.size() < 1){
+		 * System.out.println(" criterionList null");
+		 * transactionDAO.listAllTransactionDetails(paginationBean, null, date1,
+		 * date2); }else{
+		 */
+		// System.out.println(" criterionList not null");
+		transactionDAO.listAllTransactionDetails(paginationBean, criterionList,
+				date1, date2);
+		// }
+	}
+
+	// @javax.transaction.Transactional
+	public void listSearchTransactionDetails(
+			final PaginationBean<ForSettlement> paginationBean,
+			final String date1, final String date2, final String year1,
+			final String year2, final String status) {
+		// System.out.println("Inside  listAllTransaction:::::"+date1+"     "+date2);
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (date1 != null && date2 != null) {
+			criterionList.add(Restrictions.between("date", date1, date2));
+		}
+		if (year1 != null && year2 != null) {
+			criterionList.add(Restrictions.between("txnYear", year1, year2));
+		}
+		if (status != null) {
+
+			criterionList.add(Restrictions.eq("status", status));
+		}
+		// transactionDAO.listSearchTransactionDetails(paginationBean,
+		// criterionList, date1, date2);
+		transactionDAO.listAllTransactionDetails(paginationBean, criterionList,
+				date1, date2);
+	}
+
+	// @javax.transaction.Transactional
+	public Receipt getReceiptSignature(String trx_id) {
+		return transactionDAO.loadReceiptSignature(trx_id);
+	}
+
+	// loadMerchantDetails
+	// @javax.transaction.Transactional
+	public Merchant loadMerchantDetails(String trx_id) {
+		return transactionDAO.loadMerchantDet(trx_id);
+	}
+
+	// agent volume summary new method 08/08/2016
+	// @javax.transaction.Transactional
+	public List<ForSettlement> agentVolume(String agentName) {
+		// System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+		return transactionDAO.agentVolume(criterionList, agentName);
+	}
+
+	public List<ForSettlement> subAgentVolume(final SubAgent subAgent) {
+		// System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		/*
+		 * if(agent != null){ criterionList.add(Restrictions.eq("agent",
+		 * agent)); }
+		 */
+
+		return transactionDAO.subAgentVolume(criterionList, subAgent);
+	}
+
+	// new method merchant volume agent login 26072016
+
+	// @javax.transaction.Transactional
+	public List<ForSettlement> loadMerchantByVolume(final String merchantName) { /*
+																				 * final
+																				 * PaginationBean
+																				 * <
+																				 * ForSettlement
+																				 * >
+																				 * paginationBean
+																				 * ,
+																				 */
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (merchantName != null) {
+			criterionList.add(Restrictions.eq("agent", merchantName));
+		}
+		return transactionDAO.loadMerchantByVolume(criterionList, merchantName);
+	}
+
+	// New Preauth change
+
+	// @javax.transaction.Transactional
+	public void getPreAuthTxn(
+			final PaginationBean<PreAuthorization> paginationBean,
+			final Merchant merchant) {
+		// System.out.println("testttttt getPreAuthTxn");
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		String mid=null;
+		String motoMid=null;
+		String ezyrecMid=null;
+		String umMid=null;
+
+		/*if(!type.equals("MOTO")){
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getMid()
+					.toString()));
+			criterionList.add(Restrictions.isNull(("txnType")));
+		}else{
+			criterionList.add(Restrictions.eq("mid", merchant.getMid().getMotoMid().toString()));
+			criterionList.add(Restrictions.eq("txnType","MOTO"));
+		}*/
+		System.out.println("check preauth and ezyauth trxn");
+	
+		System.out.println("mid: "+merchant.getMid().getMid()+" motomid: "+merchant.getMid().getMotoMid()
+				+" ezyrecMid: "+merchant.getMid().getEzyrecMid());
+		
+		if(merchant.getMid().getMid()!=null) {
+			mid=merchant.getMid().getMid();
+		}
+		if(merchant.getMid().getMotoMid()!=null) {
+			motoMid=merchant.getMid().getMotoMid();
+		}
+		if(merchant.getMid().getEzyrecMid()!=null) {
+			ezyrecMid=merchant.getMid().getEzyrecMid();
+		}
+		if(merchant.getMid().getUmMid()!=null) {
+			umMid=merchant.getMid().getUmMid();
+		}
+		criterionList.add(Restrictions.in("mid", new String[] {mid,motoMid,ezyrecMid,umMid}));
+		
+		criterionList.add(Restrictions.ne("status","M"));
+		//criterionList.add(Restrictions.isNull(("txnType")));
+		transactionDAO.getPreAuthTxn(paginationBean, criterionList);
+	}
+
+	// @javax.transaction.Transactional
+	public void searchPreAuth(final String fromDate, final String toDate,
+			final String tid, final String status,
+			final PaginationBean<PreAuthorization> paginationBean) {
+		// System.out.println("In Service toDate and fromDate :" + toDate +
+		// ": and :" + fromDate + ": TID :" + tid + ": Status:" + status);
+
+		System.out.println("date: "+fromDate+" "+toDate);
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (fromDate != null && toDate != null) {
+			criterionList.add(Restrictions.between("timeStamp", fromDate,
+					toDate));
+		}
+		if (tid != null && (!tid.equals(""))) {
+			criterionList.add(Restrictions.eq("tid", tid));
+		}
+		if (status != null && (!status.equals(""))) {
+		
+			criterionList.add(Restrictions.ne("status", "M"));
+		}
+		/*if (txnType.equals("MOTO")) {
+			criterionList.add(Restrictions.eq("txnType", txnType));
+		}else{
+			criterionList.add(Restrictions.isNull("txnType"));
+		}*/
+		transactionDAO.searchPreAuth(fromDate, toDate, tid, status,
+				paginationBean, criterionList);
+	}
+
+	// @javax.transaction.Transactional
+	public PreAuthorization getPreAuthTxn(String trxId) {
+		return transactionDAO.getPreAuthTxn(trxId);
+	}
+	
+	
+	public TransactionRequest loadTxnDetailsByID(BigInteger bigInteger) {
+		return transactionDAO.loadTxnDetailsByID(bigInteger);
+	}
+
+	// @javax.transaction.Transactional
+	public void listPreAuthTransaction(
+			final PaginationBean<PreAuthorization> paginationBean,
+			final String data, final String date1,String txnType) {
+		System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listPreAuthTransaction(paginationBean, criterionList,
+				data, date1,txnType);
+	}
+
+	// @javax.transaction.Transactional
+	public void loadPreAuthByName(
+			final PaginationBean<PreAuthorization> paginationBean,
+			final String merchantName, final String date, final String txnType) {
+		transactionDAO.loadPreAuthByName(paginationBean, merchantName, date,txnType);
+	}
+
+	// new method for contactName in transaction summary page admin & merchant
+	// login
+	// @javax.transaction.Transactional
+	public TerminalDetails getTerminalDetailsByTid(final String tid) {
+		return transactionDAO.getTerminalDetailsByTid(tid);
+	}
+	
+	public MobileUser getMobileUserByGpayTid(final String tid) {
+		return transactionDAO.getMobileUserByGpayTid(tid);
+	}
+	
+	public SettlementMDR loadSettlementMDR(final String rrn) {
+		return transactionDAO.loadSettlementMDR(rrn);
+	}
+
+	// new method 05-10-2016 demo
+	public List<ForSettlement> subAgentVolume1(final SubAgent subAgent) {
+		// System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		/*
+		 * if(agent != null){ criterionList.add(Restrictions.eq("agent",
+		 * agent)); }
+		 */
+
+		return transactionDAO.subAgentVolume(criterionList, subAgent);
+	}
+
+	// start agent volume
+	// @javax.transaction.Transactional
+	public List<AgentVolumeData> agentVolumeData(String agentName) {
+		System.out.println("Inside  agentVolumeData");
+		/*
+		 * System.out.println("Inside  agentVolumeData" + agentName);
+		 * 
+		 * ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		 * criterionList.add(Restrictions.eq("username", agentName));
+		 */
+
+		return transactionDAO.agentVolumeData(agentName);
+	}
+	
+	
+	
+	public List<AgentVolumeData> getAgentVolumeData(String agentName,StringBuffer str,StringBuffer strUm,long id ) {
+		System.out.println("Inside  agentVolumeData");
+		/*
+		 * System.out.println("Inside  agentVolumeData" + agentName);
+		 * 
+		 * ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		 * criterionList.add(Restrictions.eq("username", agentName));
+		 */
+
+		return transactionDAO.getAgentVolumeData(agentName,str,strUm,id);
+	}
+
+	// @javax.transaction.Transactional
+	public List<AgentVolumeData> subAgentVolumeData(SubAgent agentName) {
+
+		return transactionDAO.subAgentVolumeData(agentName);
+	}
+
+	// @javax.transaction.Transactional
+	public List<AgentVolumeData> merchantVolumeData(final String merchantName) { /*
+																				 * final
+																				 * PaginationBean
+																				 * <
+																				 * ForSettlement
+																				 * >
+																				 * paginationBean
+																				 * ,
+																				 */
+
+		// ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		/*
+		 * if(merchantName != null) { criterionList.add(Restrictions.eq("agent",
+		 * merchantName)); }
+		 */
+		return transactionDAO.merchantVolumeData(merchantName);
+	}
+
+	// new method for merchant volume
+	// @javax.transaction.Transactional
+	
+	public String merchantCount(String agentName) {
+		return transactionDAO.merchantCount(agentName);
+	}
+	
+	public List<Merchant> getMerchantDataByAgent(BigInteger agid) {
+		return transactionDAO.getMerchantDataByAgent(agid);
+	}
+	
+	public List<MasterMerchant> getMasterMerchantDataByAgent(String agid) {
+		return transactionDAO.getMasterMerchantDataByAgent(agid);
+	}
+	
+	public List<String> loadmidBymerchant(Long merchantid) {
+		return transactionDAO.loadmidBymerchant(merchantid);
+	}
+	
+	public List<AgentVolumeData> getMerchantVolByMid(String mid) {
+		return transactionDAO.getMerchantByMid(mid);
+	}
+	
+	public List<AgentVolumeData> getMerchantVolByMid1(String mid) {
+		return transactionDAO.getMerchantByMid1(mid);
+	}
+	
+	
+	public List<AgentVolumeData> getMerchantVolBymmId(String mid) {
+		return transactionDAO.getMerchantBymmId(mid);
+	}
+	
+	public List<AgentVolumeData> getMerchantVolBymmId1(String mid) {
+		return transactionDAO.getMerchantBymmId1(mid);
+	}
+	
+	public List<AgentVolumeData> getHotelMerchantVolByMid(String mid) {
+		return transactionDAO.getHotelMerchantByMid(mid);
+	}
+	
+	public List<AgentVolumeData> getHotelMerchantVolByUMid(StringBuffer uMid) {
+		return transactionDAO.getHotelMerchantVolByUMid(uMid);
+	}
+	
+	
+	
+	
+	
+	/*public List<AgentVolumeData> merchantVolumeDataByAgent(
+			final String merchantName,final Long agId) { 
+										 * final PaginationBean<ForSettlement>
+										 * paginationBean,
+										 
+
+		List<AgentVolumeData> listAVD = new ArrayList<AgentVolumeData>();
+
+		//List<String> listMid = transactionDAO.midByTransaction(merchantName);
+		List<String> listMid = transactionDAO.midByTransaction(merchantName);
+		
+		for (String mid : listMid) {
+			logger.info("MerchantId: "+mid);
+			List<AgentVolumeData> listAVD1 = new ArrayList<AgentVolumeData>();
+		//	listAVD1 = transactionDAO.getMerchantByMid(String.valueOf(agId));
+			listAVD1 = transactionDAO.getMerchantByMid(String.valueOf(mid));
+			for (AgentVolumeData avd : listAVD1) {
+				System.out.println("Merchant Id: " + avd.getAgId());
+				System.out.println("MerchantName: " + avd.getAgentName());
+				//System.out.println("Txn Type :" + avd.getTxnType());
+				System.out.println("Amount : " + avd.getAmount());
+				System.out.println("Month :" + avd.getDate());
+
+				listAVD.add(avd);
+			}
+		}
+		if(mid[1]!=null){
+			System.out.println("motoMid: "+mid[1]);
+			List<AgentVolumeData> listAVD1 = new ArrayList<AgentVolumeData>();
+			listAVD1 = transactionDAO.getMerchantByMid(mid[1]);
+			for (AgentVolumeData avd : listAVD1) {
+				System.out.println("Merchant agentId: " + avd.getAgId());
+				System.out.println("Merchant agentName: " + avd.getAgentName());
+				System.out.println("Amount : " + avd.getAmount());
+				System.out.println("Month :" + avd.getDate());
+
+				listAVD.add(avd);
+			}
+		}
+		return listAVD;
+	}*/
+
+	//new trying
+	public List<AgentVolumeData> merchantVolumeDataByAgent(
+			final String merchantName,final Long agId,String index) { /*
+										 * final PaginationBean<ForSettlement>
+										 * paginationBean,
+										 */
+
+		List<AgentVolumeData> listAVD = new ArrayList<AgentVolumeData>();
+		
+
+		//List<String> listMid = transactionDAO.midByTransaction(merchantName);
+		List<String> listMid = transactionDAO.midByTransaction(merchantName,index);
+		
+		StringBuffer str = new StringBuffer();
+		int j =0;
+		for (String mid : listMid) {
+	    	
+	    	if(j == 0) {
+	    		str.append("\'");
+   			str.append(mid);
+   			str.append("\'");
+   			j++;
+	    	}else {		    	
+		    	str.append(",\'");
+   			str.append(mid);
+   			str.append("\'");
+	    	}
+	    }
+		
+		
+		List<AgentVolumeData> listAVD1 = new ArrayList<AgentVolumeData>();
+		listAVD1 = transactionDAO.getMerchantByMidList(str);
+		List<AgentVolumeData> listUMAVD = new ArrayList<AgentVolumeData>();
+		listUMAVD = transactionDAO.getMerchantByMid1List(str);
+		
+		//Method to get current and last three months name
+				int cDate = 0;
+				Date dt = new Date();
+				cDate = dt.getMonth() + 1;
+				List<Integer> listMonth = getAllMonth(cDate);
+				List<String> date = new ArrayList<String>();
+
+				for (int i = 0 ; i < listMonth.size(); i++) {
+					date.add(getMonth(cDate));
+					cDate--;
+				}
+
+
+		for (String mid : listMid) {
+			logger.info("MerchantId: "+mid);
+			BigInteger merchantId=new BigInteger(mid);
+			Merchant merchant = transactionDAO.loadMerchantByID(merchantId);
+			AgentVolumeData finalVolumeData = new AgentVolumeData();
+			
+
+			List<String> amountUM = new ArrayList<String>();
+
+			List<String> amountFOR = new ArrayList<String>();
+			int count = 0;
+			int count1 = 0;
+			
+			
+			logger.info("listUMAVD.size()  :"+listUMAVD.size() );
+			for(int i=0 ; i < listUMAVD.size();i++) {
+				logger.info("listUMAVD.size()  : " + listUMAVD.size() );
+				logger.info("i  : " +i); 
+				
+				if(listUMAVD.get(i).getAgId().equals(mid)) {
+					logger.info("listUMAVD.get(i).getAgId()  : " +listUMAVD.get(i).getAgId()); 
+					logger.info("mid  : " + mid );
+					int date1 = Integer.parseInt(listUMAVD.get(i).getMonth());
+//					logger.info("date1  : " + date1 );
+//					logger.info("month  : " + listMonth.get(count).intValue());
+					while (listMonth.get(count).intValue() != date1) {
+//						dateUM.add(getMonth(listMonth.get(count).intValue()));
+						amountUM.add("0.00");
+						count++;
+
+					}// else{
+//					dateUM.add(getMonth(date1));
+					Double d = new Double(listUMAVD.get(i).getAmount1());
+					d = d / 100;
+
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String output = myFormatter.format(d);
+					amountUM.add(output);
+					count++;
+					
+					
+				}
+				
+			}
+			
+			
+			logger.info("listAVD1.size()  : "+listAVD1.size());
+				for (int k = 0; k < listAVD1.size(); k++) {
+					
+					logger.info("listUMAVD.size()  : " + listAVD1.size() );
+					logger.info("k  : " +k); 
+				
+//				logger.info("Second loop  : " + listAgentVolumeData1.get(k).getAgId());
+
+				if (listAVD1.get(k).getAgId().equals(mid)) {
+					
+					
+					logger.info("listAVD1.get(k).getAgId()  : " +listAVD1.get(k).getAgId()); 
+					int date1 = Integer.parseInt(listAVD1.get(k).getMonth());
+//					logger.info("month  : " + date1 + " : " + listMonth.get(count1).intValue());
+					while (listMonth.get(count1).intValue() != date1) {
+//						dateFOR.add(getMonth(listMonth.get(count1).intValue()));
+						amountFOR.add("0.00");
+						count1++;
+
+					} // else{
+//					dateFOR.add(getMonth(date1));
+					Double d = new Double(listAVD1.get(k).getAmount1());
+					d = d / 100;
+
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String output = myFormatter.format(d);
+					amountFOR.add(output);
+					count1++;
+
+				}
+
+			}
+				
+			
+
+				// UM Amount String List to Long list
+				logger.info("List UMTxn String Amount ::" + amountUM);
+				logger.info("List UMTxn String Amount Size ::" + amountUM.size());
+				
+				for (int y = amountUM.size() ;  y < 4 ; y++) {
+					amountUM.add("0.00");
+				}
+				logger.info("After List UMTxn String Amount Size ::" + amountUM.size());
+				
+				List<Double> forLongAmountUM = new ArrayList<Double>(amountUM.size());
+				for (String s : amountUM)
+					forLongAmountUM.add(Double.parseDouble(s));
+//				logger.info("List UMTxn Long Amount ::" + forLongAmountUM);
+//				logger.info("List UMTxn Long Amount Size ::" + forLongAmountUM.size());
+
+				// forSettlement Amount String List to Long list
+				logger.info("List forTxn String Amount ::" + amountFOR);
+				logger.info("List forTxn String Amount Size ::" + amountFOR.size());
+				
+				for (int z = amountFOR.size() ;  z < 4 ;z++) {
+					amountFOR.add("0.00");
+				}
+				logger.info("After List forTxn String Amount Size ::" + amountFOR.size());
+				
+				List<Double> forLongAmount = new ArrayList<Double>(amountFOR.size());
+				for (String s : amountFOR)
+					forLongAmount.add(Double.parseDouble(s));
+//				logger.info("List forTxn Long Amount ::" + forLongAmount);
+//				logger.info("List forTxn Long Amount Size ::" + forLongAmount.size());
+				
+				
+				
+				//Add two long list value and convert string list
+				
+				int len = 0;
+				if(forLongAmountUM.size() > forLongAmount.size()) {
+					len = forLongAmountUM.size();
+				}else {
+					len = forLongAmount.size();
+				}
+				
+				List<Double> newAmount = new ArrayList<Double>(len);
+				for (int i =0; i< len ; i++) {
+					Double Amount = forLongAmount.get(i) + forLongAmountUM.get(i);
+//					logger.info("List Amount ::"+Amount);
+					newAmount.add(Amount);
+				}
+				
+//				logger.info("List newAmount Long Amount ::"+newAmount);
+//				logger.info("List newAmount Long Amount Size ::"+newAmount.size());
+				
+				
+				List<String> newAmountString = new ArrayList<String>(newAmount.size());
+				for(Double s : newAmount) 
+					newAmountString.add(String.valueOf(s));
+					logger.info("List newAmount String Amount ::"+newAmountString);
+					logger.info("List newAmount String Amount Size ::"+newAmountString.size());
+					
+					
+					finalVolumeData.setAgId(merchant.getId().toString());
+					finalVolumeData.setAgentName(merchant.getBusinessName());
+					finalVolumeData.setAmount(newAmountString);
+					finalVolumeData.setDate(date);
+					
+					logger.info("Controller agId : " + finalVolumeData.getAgId());
+					logger.info("Controller agentName : " + finalVolumeData.getAgentName());
+					logger.info("Controller amount : " + finalVolumeData.getAmount());
+					logger.info("Controller date : " + finalVolumeData.getDate());
+					
+					listAVD.add(finalVolumeData);
+			
+		}
+		
+		return listAVD;
+	}
+	
+	
+	
+	
+	
+	
+	public List<AgentVolumeData> getMerchantVolumeByMID(
+			final String merchantID,final Long agId) {
+
+		
+		List<AgentVolumeData> listAVD1 = new ArrayList<AgentVolumeData>();
+			listAVD1 = transactionDAO.getMerchantVolumeByMID(merchantID,String.valueOf(agId));
+			
+			return listAVD1;
+	}
+
+	
+	
+	
+	// new method for all transaction export 09052017
+
+	public List<ForSettlement> listEAllTransactionDetails(final String date1,
+			final String date2, final String status) {
+
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (date1 != null && date2 != null) {
+			// System.out.println(" Data date :"+date1+ date2);
+			criterionList.add(Restrictions.between("timeStamp", date1, date2));
+		}
+
+		if (status != null && !status.isEmpty()) {
+			// System.out.println(" Data status:"+status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+		// criterionList.add();
+		return transactionDAO.listAllETransactionDetails(criterionList, date1,
+				date2);
+
+	}
+
+	public List<ForSettlement> exportAllTransactionByAdmin(final String data,
+			final String data1, String status) {
+		// System.out.println("Inside  listAllTransaction");
+		// String data= null;
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		return transactionDAO.exportAllTransactionbyAdmin(criterionList, data,
+				data1, status);
+
+	}
+
+	public void listAllTransactionDetailsbyAdmin(
+			PaginationBean<ForSettlement> paginationBean, String fromDate1,
+			String toDate1, String status) {
+		System.out.println(fromDate1 + toDate1 + status);
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (fromDate1 != null && toDate1 != null) {
+			// System.out.println(" Data date :"+date1+ date2);
+			criterionList.add(Restrictions.between("timeStamp", fromDate1,
+					toDate1));
+		}
+		if (status != null && !status.isEmpty()) {
+			// System.out.println(" Data status:"+status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		transactionDAO.listAllTransactionDetailsbyAdmin(paginationBean,
+				criterionList, fromDate1, toDate1, status);
+
+	}
+	
+	public void listAllUmTransactionDetailsbyAdmin(
+			PaginationBean<ForSettlement> paginationBean, String fromDate1,
+			String toDate1, String status) {
+		System.out.println(fromDate1 + toDate1 + status);
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (fromDate1 != null && toDate1 != null) {
+			// System.out.println(" Data date :"+date1+ date2);
+			criterionList.add(Restrictions.between("timeStamp", fromDate1,
+					toDate1));
+		}
+		if (status != null && !status.isEmpty()) {
+			// System.out.println(" Data status:"+status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		transactionDAO.listAllUmTransactionDetailsbyAdmin(paginationBean,
+				criterionList, fromDate1, toDate1, status);
+
+	}
+	
+	public void listAllUmTransactionDetails(
+			PaginationBean<ForSettlement> paginationBean, Merchant merchant,String date,String date1 ) {
+	
+		transactionDAO.listAllUmTransactionDetails(paginationBean,
+				merchant,date ,date1);
+
+	}
+	
+	
+	public void getTransactionRequest(
+			PaginationBean<TransactionRequest> paginationBean, String fromDate1,
+			String toDate1, String status) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+
+		transactionDAO.getTransactionRequest(paginationBean, criterionList);
+
+	}
+	
+	
+	public void getTransactionEnquiry(PaginationBean<TransactionRequest> paginationBean,String fromDate,String toDate,
+			String mid,String tid) {
+		
+		transactionDAO.getTransactionEnquiry(paginationBean,fromDate,toDate,mid,tid);
+
+	}
+	
+	public void getTransactionResponse(
+			PaginationBean<TransactionResponse> paginationBean, String fromDate1,
+			String toDate1, String status) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+
+
+		transactionDAO.getTransactionResponse(paginationBean, criterionList);
+
+	}
+	
+	
+	public void MerchantTransactionSummByAdmin(
+			PaginationBean<ForSettlement> paginationBean, String fromDate1,
+			String toDate1, String status) {
+		System.out.println(fromDate1 + toDate1 + status);
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (fromDate1 != null && toDate1 != null) {
+			// System.out.println(" Data date :"+date1+ date2);
+			criterionList.add(Restrictions.between("timeStamp", fromDate1,
+					toDate1));
+		}
+		if (status != null && !status.isEmpty()) {
+			// System.out.println(" Data status:"+status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		transactionDAO.MerchantTransactionSummByAdmin(paginationBean,
+				criterionList, fromDate1, toDate1, status);
+
+	}
+	public List<ForSettlement> MerchantExportTrans(String fromDate1,
+			String toDate1, String status) {
+		System.out.println(fromDate1 + toDate1 + status);
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		if (fromDate1 != null && toDate1 != null) {
+			// System.out.println(" Data date :"+date1+ date2);
+			criterionList.add(Restrictions.between("timeStamp", fromDate1,
+					toDate1));
+		}
+		if (status != null && !status.isEmpty()) {
+			// System.out.println(" Data status:"+status);
+			criterionList.add(Restrictions.eq("status", status));
+		}
+
+		return transactionDAO.MerchantExportTrans(criterionList, fromDate1, toDate1, status);
+		 
+
+	}
+	
+	
+
+	public List<CountryCurPhone> loadCountryCurrency() {
+		return transactionDAO.loadCountryData();
+	}
+
+	public List<TerminalDetails> getAllTid(Merchant currentMerchant) {
+		return transactionDAO.getAllTid(currentMerchant);
+	}
+
+	public List<TerminalDetails> getGpayTid(Merchant currentMerchant) {
+		return transactionDAO.getGpayTid(currentMerchant);
+	}
+	
+	public List<MobileUser> getGpayTidbyFK(Merchant currentMerchant) {
+		return transactionDAO.getGpayTidbyFK(currentMerchant);
+	}
+	public List<String> getGpayTidbymerchantFK(Merchant currentMerchant) {
+		List<MobileUser> listM = transactionDAO.getGpayTidbyFK(currentMerchant);
+		List<String> listgTid = new ArrayList<String>();
+		if(listM != null) {
+		for(MobileUser m : listM) {
+			if(m.getGpayTid() !=null) {
+				if(!m.getGpayTid().isEmpty()) {
+					listgTid.add(m.getGpayTid());
+				}
+				
+			}
+			
+		}
+		}
+		return listgTid;
+	}
+	
+	public List<String> getAllGpayTidbymerchantFK() {
+		List<MobileUser> listM = transactionDAO.getAllGpayTid();
+		List<String> listgTid = new ArrayList<String>();
+		if(listM != null) {
+		for(MobileUser m : listM) {
+			if(m.getGpayTid() !=null) {
+				if(!m.getGpayTid().isEmpty()) {
+					listgTid.add(m.getGpayTid());
+				}
+				
+			}
+			
+		}
+		}
+		return listgTid;
+	}
+
+	public List<TerminalDetails> loadAlltid() {
+		// TODO Auto-generated method stub
+		return transactionDAO.loadAlltid();
+	}
+	
+	public List<MID> loadAllmid() {
+		return transactionDAO.loadAllmid();
+	}
+
+	public void updateTxnStatus(ForSettlement settle) {
+		transactionDAO.saveOrUpdateEntity(settle);
+	}
+
+	public List<TransactionRequest> exportTransactionExpiry(String fromDate1, String toDate1, String mid, String tid) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		return transactionDAO.exportTransactionExpiry(criterionList, fromDate1,toDate1,mid,tid);
+	}
+
+	public void listUMEzywayTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzywayTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void listUMEzyauthTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzyauthTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void listUMMotoTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMMotoTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	
+	public void listUMEzyrecTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzyrecTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	
+	public void listUMLinkTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMLinkTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	
+	public void listUMVccTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMVccTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void listUMMotoTransactionByAgent(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			StringBuffer strUm, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMMotoTransactionByAgent(paginationBean, criterionList, data,
+				date1,strUm, txnType);
+		
+	}
+	
+	public void listUMEzywayTransactionByAgent(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			StringBuffer strUm, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzywayTransactionByAgent(paginationBean, criterionList, data,
+				date1,strUm, txnType);
+		
+	}
+
+	public void listUMEzywayTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umEzywayMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzywayTransaction(paginationBean, criterionList, data,
+				date1,umEzywayMid, txnType);
+		
+	}
+	public void listUMMotoTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMMotoTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void listUMEzyrecTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umEzyrecMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzyrecTransaction(paginationBean, criterionList, data,
+				date1,umEzyrecMid, txnType);
+		
+	}
+	
+	public void listUMLinkTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMLinkTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	
+	public void listUMEzyLinkSSTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umSsMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzyLinkSSTransaction(paginationBean, criterionList, data,
+				date1,umSsMotoMid, txnType);
+		
+	}
+	
+	public void listMobiliteLinkTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String tid) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listMobiliteLinkTransaction(paginationBean, criterionList, data,
+				date1,tid);
+		
+	}
+	
+	public void listUMVccTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMVccTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	
+	public void listUMEzyauthMerchantTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1, String umMotoMid,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzyauthMerchantTransaction(paginationBean, criterionList, data,
+				date1 ,umMotoMid, txnType);
+		
+	}
+	
+	public void listUMEzywayTransactionEnq(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umEzywayMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzywayTransactionEnq(paginationBean, criterionList, data,
+				date1,umEzywayMid, txnType);
+		
+	}
+	
+	public void listUMMotoTransactionEnq(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMMotoTransactionEnq(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void listUMVccTransactionEnq(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMVccTransactionEnq(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void listUMEzywayTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzywayTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1,txnType);
+		
+	}
+	public void listUMMotoTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMMotoTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1,txnType);
+		
+	}
+	
+	public void listUMEzyrecTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMEzyrecTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1,txnType);
+		
+	}
+	
+	public void listUMLinkTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMLinkTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1,txnType);
+		
+	}
+	
+	public void listUMVccTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listUMVccTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1,txnType);
+		
+	}
+	
+	public void exportUMEzywayTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umEzywayMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzywayTransaction(paginationBean, criterionList, data,
+				date1,umEzywayMid, txnType);
+		
+	}
+	
+	public void exportUMMotoTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMMotoTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	
+	public void exportMobiliteLinkTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String tid) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportMobiliteLinkTransaction(paginationBean, criterionList, data,
+				date1,tid);
+		
+	}
+	
+	public void exportUMEzyrecTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umEzyrecMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzyrecTransaction(paginationBean, criterionList, data,
+				date1,umEzyrecMid, txnType);
+		
+	}
+	
+	public void exportUMLinkTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMLinkTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void exportUMLinkSSTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umSsMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMLinkSSTransaction(paginationBean, criterionList, data,
+				date1,umSsMotoMid, txnType);
+		
+	}
+	
+	
+	
+	public void exportUMVccTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMVccTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void exportUMEzyauthTransaction(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid,String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzyauthTransaction(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	
+	public void exportUMEzywayTransactionAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzywayTransactionAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	public void exportUMEzyauthTransactionAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzyauthTransactionAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void exportUMMotoTransactionAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMMotoTransactionAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	
+	public void exportUMEzyrecTransactionAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzyrecTransactionAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void exportUMLinkTransactionAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMLinkTransactionAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void exportUMVccTransactionAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMVccTransactionAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void exportUMMotoTransactionAgent(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			StringBuffer strUm, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMMotoTransactionAgent(paginationBean, criterionList, data,
+				date1,strUm, txnType);
+		
+	}
+	
+	public void exportUMEzywayTransactionAgent(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			StringBuffer strUm, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzywayTransactionAgent(paginationBean, criterionList, data,
+				date1,strUm, txnType);
+		
+	}
+	
+	
+	
+	public void exportUMEzywayTransactionEnq(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umEzywayMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzywayTransactionEnq(paginationBean, criterionList, data,
+				date1,umEzywayMid, txnType);
+		
+	}
+	
+	public void exportUMMotoTransactionEnq(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMMotoTransactionEnq(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void exportUMVccTransactionEnq(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String umMotoMid, String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMVccTransactionEnq(paginationBean, criterionList, data,
+				date1,umMotoMid, txnType);
+		
+	}
+	
+	public void exportUMEzywayTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzywayTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void exportUMMotoTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMMotoTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public void exportUMEzyrecTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMEzyrecTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	
+	public void exportUMLinkTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMLinkTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	
+	public void exportUMVccTxnEnqByAdmin(PaginationBean<UMEzyway> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.exportUMVccTxnEnqByAdmin(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+
+
+
+	public UMEcomTxnRequest loadUMEzywayTransactionRequest(String id) {
+		return transactionDAO.loadUMEzywayTransactionRequest(id);
+	}
+	
+	public UMEcomTxnResponse loadUMEzywayTransactionResponse(String id) {
+		return transactionDAO.loadUMEzywayTransactionResponse(id);
+	}
+
+	public void addVC(MotoVCDetails vc) {
+		transactionDAO.saveOrUpdateEntity(vc);
+	}
+	
+	public void motoVC(PaginationBean<MotoVCDetails> paginationBean, String data, String date1,
+			String motoMid) throws Exception {
+		transactionDAO.motoVC(paginationBean, data,date1,motoMid);
+		
+	}
+
+	public List<MotoVCDetails> getActiveMoto(String mid) {
+		return transactionDAO.getActiveMoto(mid);
+	}
+
+	public MotoVCDetails motoVCById(String id) {
+		// TODO Auto-generated method stub
+		return transactionDAO.motoVCById(id);
+	}
+
+	
+	public void updateUMTxnRes(UMEcomTxnResponse ChargeBack) {
+		transactionDAO.saveOrUpdateEntity(ChargeBack);
+	}
+	
+	public void listBoostTransaction(PaginationBean<BoostDailyRecon> paginationBean, String data, String date1,
+			String txnType) {
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		transactionDAO.listBoostTransaction(paginationBean, criterionList, data,
+				date1, txnType);
+		
+	}
+	
+	public String getVCTid(String mid) {
+		
+		String tid;
+		
+		logger.info("Moto VC MID: "+mid);
+		
+		tid = PropertyLoad.getFileData().getProperty("MOTOVC_"+mid);
+		
+		logger.info("Moto VC TID: "+tid);
+		
+		return tid;
+	}
+
+	public void getGrabTransactionForSettlement(PaginationBean<ForSettlement> paginationBean,
+			List<String> terminalDetailsList, String date, String date1) {
+		
+
+		
+		logger.info("Inside getGrabTransactionForSettlement : " + date + "  " + date1);
+		String from = null;
+		String to = null;
+		String year1 = null;
+		String year2 = null;
+		ArrayList<UMEzyway> fss = new ArrayList<UMEzyway>();
+		String sql = null;
+	
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+			to = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+
+		logger.info("checkd date: "+from+" : "+to);
+		
+		
+		
+		ArrayList<Criterion> criterionList = new ArrayList<Criterion>();
+		
+		String[] array = new String[terminalDetailsList.size()];
+		int index = 0;
+		for (Object value : terminalDetailsList) {
+		  logger.info("tid: "+(String) value);
+		  array[index] = (String) value;
+		  index++;
+		}
+		
+		
+//			logger.info(" TXN_TYPE: "+txnType);
+//			logger.info("tid: "+array);
+			criterionList.add(Restrictions.in("tid", array));
+			criterionList.add(Restrictions.eq("txnType", "GRABPAY"));
+			criterionList.add(Restrictions.in("status", new String[] { "GPC", "GPS","GRF", "GPT","GPP" }));
+		
+		criterionList.add(Restrictions.between("timeStamp", from, to));
+		
+		transactionDAO.getForSettlement(paginationBean, criterionList);
+		
+		
+//		 System.out.println(paginationBean.getItemList().size());
+		//System.out.println("getTransactionForSettlement");
+	
+		
+	}
+	
+
+
+	public BoostDailyRecon loadBoostSettlement(String date) {
+		
+		String from = null;
+		
+		if ((date == null )|| (date.equals(""))) {
+
+			Date dt = new Date();
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from);
+		
+		return transactionDAO.loadBoostSettlement(from);
+	}
+
+	public void listBoostSettlement(PaginationBean<BoostDailyRecon> paginationBean, String date) {
+		String from = null;
+		
+		if ((date == null )|| (date.equals(""))) {
+
+			Date dt = new Date();
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from);
+		
+		transactionDAO.listBoostSettlement(paginationBean,from);
+		
+	}
+
+	public SettlementMDR loadSettlement(String date,String date1) {
+
+
+		String from = null;
+		String to = null;
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+			to = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+
+		logger.info("checkd date: "+from+" : "+to);
+		
+		return transactionDAO.loadSettlement(from,to);
+		
+	}
+	
+	public SettlementMDR loadLatestSettlement() {
+		return transactionDAO.loadLatestSettlement();
+		
+	}
+	
+	public SettlementMDR loadmobiliteSettlement(String date,String date1) {
+
+
+		String from = null;
+		String to = null;
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+			
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+			
+			to = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from+"::"+to);
+		
+		return transactionDAO.loadmobiliteSettlement(from,to);
+		
+	}
+	
+	
+	public SettlementMDR loadLatestmobiliteSettlement() {
+
+		return transactionDAO.loadLatestmobiliteSettlement();
+		
+	}
+	
+	
+	
+	public BizAppSettlement loadLatestbizappSettlement() {
+		
+		return transactionDAO.loadLatestbizappSettlement();
+		
+	}
+
+	public void listSettlement(PaginationBean<SettlementMDR> paginationBean, String date,String date1) {
+		String from = null;
+		String to = null;
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+			to = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+
+		logger.info("checkd date: "+from+" : "+to);
+		
+		transactionDAO.listSettlement(paginationBean,from,to);
+	}
+	
+	
+	public void listLatestSettlement(PaginationBean<SettlementMDR> paginationBean) {
+		
+		
+		transactionDAO.listLatestSettlement(paginationBean);
+	}
+	
+	public void listmobiliteSettlement(PaginationBean<SettlementMDR> paginationBean, String date,String date1) {
+		String from = null;
+		String to = null;
+		
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+
+			//logger.info("Inside   listAllTransaction 12131313: " + date + "     " + date1);
+			/*SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM");
+			from = dateFormat.format(dt);
+			from = from + "-01";
+			logger.info("change date format:" + from);*/
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+			to = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+
+		logger.info("checkd date: "+from+" : "+to);
+		transactionDAO.listmobiliteSettlement(paginationBean,from,to);
+	}
+	
+	public void listLatestmobiliteSettlement(PaginationBean<SettlementMDR> paginationBean) {
+				
+		transactionDAO.listLatestmobiliteSettlement(paginationBean);
+	}
+	
+	public void listbizappSettlement(PaginationBean<BizAppSettlement> paginationBean, String date,String date1) {
+		String from = null;
+		String to = null;
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			
+			//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("dd/MM/yyyy");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+			
+
+		} else {
+
+			from = date;
+			to = date1;
+			/*SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}*/
+
+
+		}
+
+
+		logger.info("checkd date: "+from+"::"+to);
+		
+		transactionDAO.listbizappSettlement(paginationBean,from,to);
+	}
+	
+	public List<AgentVolumeData> agentVolumeUM(StringBuffer str) {
+		// TODO Auto-generated method stub
+		return transactionDAO.agentVolumeUM(str);
+	}
+
+	public List<AgentVolumeData> agentVolumeForsettle(StringBuffer str) {
+		// TODO Auto-generated method stub
+		return transactionDAO.agentVolumeForsettle(str);
+	}
+	
+	public List<AgentVolumeData> agentTotalVolume(StringBuffer str) {
+		// TODO Auto-generated method stub
+		return transactionDAO.agentTotalVolume(str);
+	}
+	
+	public List<AgentVolumeData> merchantVolumeDataInTxnSummary(final String merchantName,
+			final Long agId,String index) {
+		
+List<AgentVolumeData> listAVD = new ArrayList<AgentVolumeData>();
+		
+
+		//List<String> listMid = transactionDAO.midByTransaction(merchantName);
+		List<String> listMid = transactionDAO.midByTransaction(merchantName,index);
+		
+		StringBuffer str = new StringBuffer();
+		int j =0;
+		for (String mid : listMid) {
+	    	
+	    	if(j == 0) {
+	    		str.append("\'");
+   			str.append(mid);
+   			str.append("\'");
+   			j++;
+	    	}else {		    	
+		    	str.append(",\'");
+   			str.append(mid);
+   			str.append("\'");
+	    	}
+	    }
+		
+		
+		List<AgentVolumeData> listAVD1 = new ArrayList<AgentVolumeData>();
+		
+		listAVD1 = transactionDAO.getMerchantInTxnSummary(str);
+		
+		
+		//Method to get current and last three months name
+		int cDate = 0;
+		Date dt = new Date();
+		cDate = dt.getMonth() + 1;
+		List<Integer> listMonth = getAllMonth(cDate);
+		List<String> date = new ArrayList<String>();
+
+		for (int i = 0 ; i < listMonth.size(); i++) {
+			date.add(getMonth(cDate));
+			cDate--;
+		}
+		
+		
+		for (String mid : listMid) {
+			logger.info("MerchantId: "+mid);
+			BigInteger merchantId=new BigInteger(mid);
+			Merchant merchant = transactionDAO.loadMerchantByID(merchantId);
+			AgentVolumeData finalVolumeData = new AgentVolumeData();
+			
+
+			List<String> amountFOR = new ArrayList<String>();
+			int count1 = 0;
+			
+			
+			logger.info("listAVD1.size()  : "+listAVD1.size());
+			for (int k = 0; k < listAVD1.size(); k++) {
+				
+				logger.info("listUMAVD.size()  : " + listAVD1.size() );
+				logger.info("k  : " +k); 
+			
+//			logger.info("Second loop  : " + listAgentVolumeData1.get(k).getAgId());
+
+			if (listAVD1.get(k).getAgId().equals(mid)) {
+				
+				
+				logger.info("listAVD1.get(k).getAgId()  : " +listAVD1.get(k).getAgId()); 
+				int date1 = Integer.parseInt(listAVD1.get(k).getMonth());
+//				logger.info("month  : " + date1 + " : " + listMonth.get(count1).intValue());
+				while (listMonth.get(count1).intValue() != date1) {
+//					dateFOR.add(getMonth(listMonth.get(count1).intValue()));
+					amountFOR.add("0.00");
+					count1++;
+
+				} // else{
+//				dateFOR.add(getMonth(date1));
+				Double d = new Double(listAVD1.get(k).getAmount1());
+				d = d / 100;
+
+				String pattern = "###0.00";
+				DecimalFormat myFormatter = new DecimalFormat(pattern);
+				String output = myFormatter.format(d);
+				amountFOR.add(output);
+				count1++;
+				
+				
+				
+				
+
+			}
+			
+			}
+			
+			
+			for (int z = amountFOR.size() ;  z < 4 ;z++) {
+				amountFOR.add("0.00");
+			}
+			
+			finalVolumeData.setAgId(merchant.getId().toString());
+			finalVolumeData.setAgentName(merchant.getBusinessName());
+			finalVolumeData.setAmount(amountFOR);
+			finalVolumeData.setDate(date);
+			
+			listAVD.add(finalVolumeData);
+
+		}
+		
+		return listAVD;
+	}
+	
+	public void listbizappSettlementByMerchant(PaginationBean<BizAppSettlement> paginationBean,Merchant merchant,String date) {
+		String from = null;
+		
+		if ((date == null )|| (date.equals(""))) {
+
+			Date dt = new Date();
+			
+			//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+
+		} else {
+
+			from = date;
+			/*SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}*/
+
+
+		}
+
+		logger.info("checkd date: "+from);
+			
+		transactionDAO.listbizappSettlementByMerchant(paginationBean,merchant,from);
+	}
+	
+	
+	public BizAppSettlement loadbizappSettlement(String date,String date1) {
+
+
+		String from = null;
+		String to = null;
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			
+			//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+			from = dateFormat.format(dt);
+			//logger.info("change date format:" + from);
+			//from = from + "-01";
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("dd/MM/yyyy");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+			
+
+		} else {
+
+			from = date;
+			to = date1;
+			/*SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}*/
+
+
+		}
+
+		logger.info("checkd date: "+from+":::"+to);
+		
+		return transactionDAO.loadbizappSettlement(from,to);
+		
+	}
+	
+	public void listLatestbizappSettlement(PaginationBean<BizAppSettlement> paginationBean) {
+		
+		transactionDAO.listLatestbizappSettlement(paginationBean);
+	}
+	
+	
+	public void listMerchantFPXSettlementByMid(PaginationBean<FpxTransaction> paginationBean,Merchant midDetails, String fromDate, String toDate) {
+		String from = null;
+		String to = null;
+		
+		if (((fromDate == null ) || (toDate == null )) ||
+				(fromDate.equals("") || (toDate.equals("")))) {
+
+			Date date1 =new Date();
+			Calendar calendar = Calendar.getInstance();
+			date1 =  calendar.getTime();
+			int year=calendar.getWeekYear();     
+			long mon = date1.getMonth()+1;
+			int fromDay=date1.getDate()-1;
+			int toDay=date1.getDate()+1;
+			String dateorg2=fromDay+"/"+mon+"/"+year;
+			String dateorg1=toDay+"/"+mon+"/"+year;
+			
+		
+			try {
+				from=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg2));
+				System.out.println("fromDate   "+from);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + from);
+			
+			try {
+				to=new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd/MM/yyyy").parse(dateorg1));
+				System.out.println("toDate   "+to);
+			} catch (ParseException e1) {
+				e1.printStackTrace();
+			}
+			logger.info("change date format:" + to);
+			
+
+		} else {
+
+			from = fromDate;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + fromDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+			
+			to = toDate;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+				logger.info("date format:" + toDate);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+
+		}
+
+		logger.info("checkd date: "+from+":::"+to);
+		
+		transactionDAO.listMerchantFPXSettlementByMid(paginationBean,midDetails,from,to);
+	}
+	
+
+
+}

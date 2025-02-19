@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<bean id="SettlementDetailsCSV" class="com.mobiversa.payment.excel.SettlementDetailsCSV" />
+
+	<bean id="SettlementDetailsPdf" class="com.mobiversa.payment.excel.SettlementDetailsPdf" />
+	
+	<bean id="EzySettleListExcel" class="com.mobiversa.payment.excel.EzySettleListExcel" />
+	
+	<bean id="M1PayListExcel" class="com.mobiversa.payment.excel.M1PayListExcel" />
+	
+	<bean id="BnplListExcel" class="com.mobiversa.payment.excel.BnplListExcel" />
+	
+	<bean id="PaydeeTxnSuccess" class="com.mobiversa.payment.excel.PaydeeTxnSuccess" />
+	
+	<bean id="txnUMAuthExcel" class="com.mobiversa.payment.excel.UMMerchantAuthExcel" />
+	
+	<bean id="txnListUMMerchantAllExcel" class="com.mobiversa.payment.excel.UMMerchantAllTxnExcel" />
+	
+	 <bean id="txnListUMEzywayExcel" class="com.mobiversa.payment.excel.UMMerchantEzywayExcel" />
+     
+    <bean id="SettlementSummaryExcel" class="com.mobiversa.payment.excel.SettlementSummaryExcel" />
+    
+     <bean id="txnListMerchantGrabExcel" class="com.mobiversa.payment.excel.MerchantGrabExcel" />
+     
+     <bean id="txnListMerchantBoostExcel" class="com.mobiversa.payment.excel.MerchantBoostExcel" />
+
+<!--	below is for only boost not included for fpx karuppusamy-->
+     <bean id="txnListMerchantBoostWithoutFPXExcel" class="com.mobiversa.payment.excel.RefactoredBoostExcelWithoutFPx" />
+
+      <bean id="txnListMerchantM1payExcel" class="com.mobiversa.payment.excel.MerchantM1payExcel" />
+     	 
+     <bean id="txnListMerchantBNPLExcel" class="com.mobiversa.payment.excel.MerchantBNPLExcel" />
+    
+    <bean id="PayoutSummaryExcel" class="com.mobiversa.payment.excel.PayoutSummaryExcel" />
+    
+    <bean id="PayoutSummaryPdf" class="com.mobiversa.payment.excel.PayoutSummaryPdf" />
+    
+    <bean id="SettlementSummaryPdf" class="com.mobiversa.payment.excel.SettlementSummaryPdf" />
+  	
+  	<bean id="paydeeTxnExcel" class="com.mobiversa.payment.excel.PaydeeTxnExcelView" />
+
+	<bean id="paydeeTxnPdf" class="com.mobiversa.payment.excel.PaydeeTxnPDFView" />
+	
+	<bean id="UMMerchantWireExcel" class="com.mobiversa.payment.excel.UMMerchantWireTxnExcel" />
+	
+	<bean id="BoostTxnExcel" class="com.mobiversa.payment.excel.BoostAdminTxnExcel" />
+
+	<bean id="BoostTxnPdf" class="com.mobiversa.payment.excel.BoostAdminTxnPDF" />
+	
+	<!--Failed Transactions of Ezyway-->
+	<bean id="txnListUMMerchantFailExcel" class="com.mobiversa.payment.excel.UMMerchantFailExcel" />
+	
+	<bean id="txnListUMWireFailExcel" class="com.mobiversa.payment.excel.UMMerchantWireFailExcel" />
+	
+	
+	<bean id="grapPayTxnExcel" class="com.mobiversa.payment.excel.GrabPayTxnExcel" />
+
+	<bean id="grapPayTxnPdf" class="com.mobiversa.payment.excel.GrabPayTxnPDF" />
+	
+	<!--  rksettlement-->
+	<bean id="SettlementsumExcel" class="com.mobiversa.payment.excel.SettlementsumExcel" />
+	
+    <!--  rksettlement-->
+	<bean id="SettlementsumPdf" class="com.mobiversa.payment.excel.SettlementsumPdf" />
+	
+	
+	<!--  dineshboostsettlement-->
+	<bean id="BoostSettlementsumMerchantExcel" class="com.mobiversa.payment.excel.BoostSettlementsumMerchantExcel" />
+	
+	<!--  dineshboostsettlement-->
+	<bean id="BoostSettlementsumMerchantPdf" class="com.mobiversa.payment.excel.BoostSettlementsumMerchantPdf" />
+	
+	
+	<!--  dineshgrabpaysettlement-->
+	<bean id="GrabpaySettlementsumMerchantExcel" class="com.mobiversa.payment.excel.GrabpaySettlementsumMerchantExcel" />
+	
+	<!--  dineshgrabpaysettlement-->
+	<bean id="GrabpaySettlementsumMerchantPdf" class="com.mobiversa.payment.excel.GrabpaySettlementsumMerchantPdf" />
+	
+	<!--  rkboostecom -->
+    <bean id="BoostEcomTxnExcel" class="com.mobiversa.payment.excel.BoostAdminTxnExcel" />
+    <bean id="BoostEcomTxnPdf" class="com.mobiversa.payment.excel.BoostAdminTxnPDF" />
+    <!--  rkboostecom -->
+    <bean id="BoostQRTxnExcel" class="com.mobiversa.payment.excel.BoostAdminTxnExcel" />
+    <bean id="BoostQRTxnPdf" class="com.mobiversa.payment.excel.BoostAdminTxnPDF" />
+    
+    <!-- rksubmerchant -->
+    <bean id="txnsubMerchantExcel" class="com.mobiversa.payment.excel.SubMerchantSummaryExcelView" />
+     
+	
+	<!-- Grabpay Qr  for PDF and Excel -->
+	
+	<bean id="grapPayqrTxnExcel" class="com.mobiversa.payment.excel.GrabPayTxnExcel" />
+
+	<bean id="grapPayqrTxnPdf" class="com.mobiversa.payment.excel.GrabPayTxnPDF" />
+	
+	<!-- Grabpay Ecom  for PDF and Excel -->
+	
+	<bean id="grapPayecomTxnExcel" class="com.mobiversa.payment.excel.GrabPayTxnExcel" />
+
+    <bean id="grapPayecomTxnPdf" class="com.mobiversa.payment.excel.GrabPayTxnPDF" />
+	
+	<bean id="preauthTxnExcel" class="com.mobiversa.payment.excel.PreauthTxnExcelView" />
+
+	<bean id="preauthTxnPdf" class="com.mobiversa.payment.excel.PreauthTxnPDFView" />
+	
+	<bean id="preauthMerTxnExcel" class="com.mobiversa.payment.excel.PreauthMerchantTxnExcel" />
+
+	<bean id="preauthMerTxnPdf" class="com.mobiversa.payment.excel.PreauthMerchantTxnPDF" />
+	
+	<bean id="umAdminTxnExcel" class="com.mobiversa.payment.excel.UMAdminTxnExcelView" />
+
+	<bean id="umAdminTxnPdf" class="com.mobiversa.payment.excel.UMAdminTxnPdfView" />
+  	
+     <bean id="recurrMerchantExcel" class="com.mobiversa.payment.excel.MerchantRecurringExcel" />
+    <bean id="recurrMerchantPdf" class="com.mobiversa.payment.excel.MerchantRecurringPdf" />
+    
+    <bean id="recurringTxnListExcel" class="com.mobiversa.payment.excel.RecurringTxnListExcel" />
+    <bean id="recurringTxnListPdf" class="com.mobiversa.payment.excel.RecurringTxnListPdf" />
+    
+    <bean id="motoTxnReqListExcel" class="com.mobiversa.payment.excel.MotoTxnReqListExcel" />
+    <bean id="motoTxnReqListPdf" class="com.mobiversa.payment.excel.MotoTxnReqListPdf" />
+    
+	<bean id="txnListExcel" class="com.mobiversa.payment.excel.TxnListExcelView" />
+	
+    <bean id="txnAllListExcel" class="com.mobiversa.payment.excel.TxnAllListExcelView" />
+	
+
+	<bean id="txnListExcel1" class="com.mobiversa.payment.excel.PaydeeMerchantTxnExcel" /><!-- 
+		merchant transaction summary merchant login -->
+		
+	<bean id="txnMerchantMotoExcel" class="com.mobiversa.payment.excel.PaydeeMerchantMotoExcel" />
+		
+	<bean id="txnListUMExcel" class="com.mobiversa.payment.excel.UMMerchantTxnExcel" />
+		
+	<bean id="txnListUMPdf" class="com.mobiversa.payment.excel.UMMerchantTxnPdf" />
+
+	<!--	newly added for ewallet pdf files karuppusamy -->
+
+	<bean id="EwalletMerchantTxnPdf" class="com.mobiversa.payment.excel.EwalletMerchantTxnPdf" />
+
+
+	
+	<bean id="txnListMotoUMExcel" class="com.mobiversa.payment.excel.UMMerchantMotoTxnExcel" />
+		
+	<bean id="txnListMotoUMPdf" class="com.mobiversa.payment.excel.UMMerchantMotoTxnPdf" />
+	
+	<bean id="txnListMobiliteUMExcel" class="com.mobiversa.payment.excel.UMMobiliteMerchantMotoTxnExcel" />
+		
+	<bean id="txnListMobiliteUMPdf" class="com.mobiversa.payment.excel.UMMobiliteMerchantMotoTxnPdf" />
+	
+	<bean id="txnListVCExcel" class="com.mobiversa.payment.excel.VCExcelView" />
+	
+	<bean id="txnListVCPdf" class="com.mobiversa.payment.excel.VCPdfView" />
+	
+	<bean id="hotelMerchantUmExcel" class="com.mobiversa.payment.excel.HotelMerchantUMExcel" />
+	<bean id="hotelMerchantUmPdf" class="com.mobiversa.payment.excel.HotelMerchantUMPdf" />
+	
+	<bean id="txnUMCBExcel" class="com.mobiversa.payment.excel.UMChargeBackExcel" />
+	
+	<bean id="txnUMCBPdf" class="com.mobiversa.payment.excel.UMChargeBackPDF" />
+	
+	
+	<bean id="txnUMAuthPdf" class="com.mobiversa.payment.excel.UMMerchantAuthPdf" />
+	
+	<bean id="umAdminAuthExcel" class="com.mobiversa.payment.excel.UMAdminAuthExcel" />
+	
+	<bean id="umAdminAuthPdf" class="com.mobiversa.payment.excel.UMAdminAuthPdf" />
+		
+	
+	
+	<bean id="settlementMDRExcel" class="com.mobiversa.payment.excel.settlementMDRExcel" />
+		
+	<bean id="settlementMDRPdf" class="com.mobiversa.payment.excel.settlementMDRPdf" />
+	
+	<bean id="mobiliteSettlementMDRExcel" class="com.mobiversa.payment.excel.mobiliteSettlementMDRExcel" />
+		
+	<bean id="mobiliteSettlementMDRPdf" class="com.mobiversa.payment.excel.mobiliteSettlementMDRPdf" />
+	
+	<bean id="fpxSettlementMDRExcel" class="com.mobiversa.payment.excel.fpxSettlementMDRExcel" />
+		
+	<bean id="fpxSettlementMDRPdf" class="com.mobiversa.payment.excel.fpxSettlementMDRPdf" />
+	
+	<bean id="merchantGpvAgentExcel" class="com.mobiversa.payment.excel.MerchantGPVForSuperAgentExcel" />
+		
+	<bean id="merchantGpvAgentPdf" class="com.mobiversa.payment.excel.MerchantGPVForSuperAgentPDF" />
+	
+	<bean id="merchantGpvAgentExcel1" class="com.mobiversa.payment.excel.MerchantGPVForAgentExcel" />
+		
+	<bean id="merchantGpvAgentPdf1" class="com.mobiversa.payment.excel.MerchantGPVForAgentPDF" />
+	
+	
+	<bean id="fpxTxnExcel" class="com.mobiversa.payment.excel.fpxTxnExcel" />
+		
+	<bean id="fpxTxnPdf" class="com.mobiversa.payment.excel.fpxTxnPdf" />
+
+	<bean id="fpxMerchantTxnExcel" class="com.mobiversa.payment.excel.fpxMerchantTxnExcel" />
+		
+	<bean id="fpxMerchantTxnPdf" class="com.mobiversa.payment.excel.fpxMerchantTxnPdf" />
+	
+	<bean id="FpxenqMerchantTxnExcel" class="com.mobiversa.payment.excel.fpxenqMerchantTxnExcel" />
+		
+	<bean id="FpxenqMerchantTxnPdf" class="com.mobiversa.payment.excel.fpxenqMerchantTxnPdf" />
+	
+	
+	
+	
+	
+	
+	
+	
+	<bean id="fpxSettlementMerchantTxnExcel" class="com.mobiversa.payment.excel.fpxSettlementMerchantTxnExcel" />
+		
+	<bean id="fpxSettlementMerchantTxnPdf" class="com.mobiversa.payment.excel.fpxSettlementMerchantTxnPdf" />
+	
+
+	<bean id="bizappSettlementMDRExcel" class="com.mobiversa.payment.excel.bizappSettlementMDRExcel" />
+		
+	<bean id="bizappSettlementMDRPdf" class="com.mobiversa.payment.excel.bizappSettlementMDRPdf" />
+	
+	<bean id="bizappMerchantTxnExcel" class="com.mobiversa.payment.excel.bizappMerchantSummaryExcel" />
+		
+	<bean id="bizappMerchantTxnPdf" class="com.mobiversa.payment.excel.bizappMerchantSummaryPdf" />
+	
+	
+	<bean id="umAdminEnqExcel" class="com.mobiversa.payment.excel.UMAdminEnquiryExcel" />
+
+	<bean id="umAdminEnqPdf" class="com.mobiversa.payment.excel.UMAdminEnquiryPdf" />
+	
+	<bean id="txnUMEnqExcel" class="com.mobiversa.payment.excel.UMMerchantEnquiryExcel" />
+		
+	<bean id="txnUMEnqPdf" class="com.mobiversa.payment.excel.UMMerchantEnquiryPdf" />
+	
+	<bean id="PreauthfeeExcel" class="com.mobiversa.payment.excel.PreauthFeeExcel" />
+		
+	<bean id="PreauthfeePdf" class="com.mobiversa.payment.excel.PreAuthFeePdf" />
+	
+	
+	
+
+
+	<bean id="txnListPdf" class="com.mobiversa.payment.excel.PaydeeMerchantTxnPdf" /><!-- 
+		transaction summary merchant login -->
+		
+	<bean id="txnMerchantMotoPdf" class="com.mobiversa.payment.excel.PaydeeMerchantMotoPdf" />
+
+	<bean id="txnListPdf1" class="com.mobiversa.payment.excel.TxnListPdfView1" /><!-- 
+		transaction summary admin login -->
+
+
+	<bean id="txnAListPdf" class="com.mobiversa.payment.excel.AllTxnListPdfView" />
+
+	<bean id="txnAListExcel" class="com.mobiversa.payment.excel.AllTxnListExcelView" />
+	
+	<bean id="txnUmListPdf" class="com.mobiversa.payment.excel.AllUmTxnListPdfView" />
+
+	<bean id="txnUmListExcel" class="com.mobiversa.payment.excel.AllUmTxnListExcelView" />
+	
+	<bean id="enquiryListPdf" class="com.mobiversa.payment.excel.EnquiryListPdfView" />
+
+	<bean id="enquiryListExcel" class="com.mobiversa.payment.excel.EnquiryListExcelView" />
+	
+	
+	<!--Merchant Trans Summary  -->
+	<bean id="merchanttxnListPdf" class="com.mobiversa.payment.excel.MerchantTxnListPdfView" />
+
+	<bean id="merchanttxnListExcel" class="com.mobiversa.payment.excel.MerchantTxnListExcelView" />
+
+	<!-- BOOST TRANSACTION -->
+	<bean id="txnBListPdf" class="com.mobiversa.payment.excel.BoostTxnListPdfView" />
+
+	<bean id="txnBListExcel" class="com.mobiversa.payment.excel.BoostTxnListExcelView" />
+
+
+	<bean id="txnMListPdf" class="com.mobiversa.payment.excel.MonthlyTxnListPdfView" />
+
+	<bean id="txnMListExcel" class="com.mobiversa.payment.excel.MonthlyTxnListExcelView" />
+
+
+	<bean id="txnMobileUserPdf" class="com.mobiversa.payment.excel.MobileUserPdfView" />
+
+	<bean id="txnMobileUserExcel" class="com.mobiversa.payment.excel.MobileUserExcelView" />
+
+
+	<bean id="txnMerchantPdf" class="com.mobiversa.payment.excel.MerchantSummaryPdfView" />
+
+	<bean id="txnMerchantExcel" class="com.mobiversa.payment.excel.MerchantSummaryExcelView" />
+	
+	<bean id="payLaterMerchantExcel" class="com.mobiversa.payment.excel.PayLaterMerchantExcel" />
+
+	<bean id="payLaterMerchantPdf" class="com.mobiversa.payment.excel.PayLaterMerchantPdf" />
+	
+	<bean id="EzywireplusTxnExcel" class="com.mobiversa.payment.excel.PaydeeTxnExcelView" />
+  
+  <bean id="EzywireplusTxnPdf" class="com.mobiversa.payment.excel.PaydeeTxnPDFView" />
+	
+  <bean id="txnListSplitUMExcel" class="com.mobiversa.payment.excel.UMMerchantMotoTxnExcel" />
+  
+  <bean id="txnListSplitUMPdf" class="com.mobiversa.payment.excel.UMMerchantMotoTxnPdf" />
+     
+  <bean id="fpxSettlement" class="com.mobiversa.payment.excel.fpxSettlement" />
+	
+	<bean id="FpxMonthlySettlementReport" class="com.mobiversa.payment.excel.FpxMonthlySettlementReport" />
+	
+	<bean id="BoostMonthlySettlementReport" class="com.mobiversa.payment.excel.BoostMonthlySettlementReport" />
+	
+	<bean id="subMerchantExcel" class="com.mobiversa.payment.excel.subMerchantExcel" />
+	
+	<bean id="fpxfailedtxnsummaryExcel" class="com.mobiversa.payment.excel.fpxfailedtxnsummaryExcel" />
+	
+	<bean id="txnAgentMerchantExcel" class="com.mobiversa.payment.excel.MerchantSummaryAgentExcelView" /> 
+	
+	<bean id="EzySettleListMerchant" class="com.mobiversa.payment.excel.EzySettleListMerchant" />
+
+	<bean id="DuitNowTxnsExcel" class="com.mobiversa.payment.excel.DuitNowTxnsExcel" />
+
+  <bean id="DuitNowTxnsPdf" class="com.mobiversa.payment.excel.DuitNowTxnsPdf" />
+	
+	<bean id="FpxListMerchant" class="com.mobiversa.payment.excel.FpxTxnsMerchantPdf" />
+  
+	<bean id="txnListMotoUMNewPdf" class="com.mobiversa.payment.excel.UMMerchantMotoTxnNewPdf" />
+	
+	 <bean id="PayoutLoginSummaryExcel" class="com.mobiversa.payment.excel.PayoutLoginSummaryExcel" />
+</beans>

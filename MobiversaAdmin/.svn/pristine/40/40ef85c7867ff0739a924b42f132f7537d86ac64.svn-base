@@ -1,0 +1,107 @@
+package com.mobiversa.payment.controller.bean;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
+
+public class PaginationBean<T> {
+
+	private int currPage;
+	// default to 12
+	private int itemsPerPage = 1500;
+	private List<T> itemList;
+	private long totalRowCount = 0;
+
+	public final int getStartIndex() {
+		return ((currPage * itemsPerPage) - itemsPerPage);
+	}
+
+	public final int getTableViewRowNumber(final int row) {
+		return getStartIndex() + row;
+	}
+
+	public final int getCurrPage() {
+		return currPage;
+	}
+
+	public final void setCurrPage(final int currPage) {
+		this.currPage = currPage;
+	}
+
+	public final int getItemsPerPage() {
+		return itemsPerPage;
+	}
+
+	/**
+	 * Set the total number of items to query, default to 15
+	 * 
+	 * @param itemsPerPage
+	 */
+	public final void setItemsPerPage(final int itemsPerPage) {
+		this.itemsPerPage = itemsPerPage;
+	}
+
+	public final List<T> getItemList() {
+		return itemList;
+	}
+
+	public final void setItemList(final List<T> itemList) {
+		this.itemList = itemList;
+	}
+
+	public final long getTotalRowCount() {
+		return totalRowCount;
+	}
+
+	public final void setTotalRowCount(final long totalRowCount) {
+		this.totalRowCount = totalRowCount;
+	}
+
+	public final int getTotalOfPages() {
+		if (itemList == null) {
+			return 0;
+		}
+
+		return new Long(Math.round(Math.ceil((1d * totalRowCount) / itemsPerPage))).intValue();
+	}
+
+	public final boolean isNextPageAvailable() {
+		return currPage < getTotalOfPages();
+	}
+
+	public final boolean isPreviousPageAvailable() {
+		return currPage == 1 ? false : currPage <= getTotalOfPages();
+	}
+
+	private static final int totalPagination = 5;
+
+	public final ArrayList<Integer> getPaginationNumbers() {
+
+		TreeSet<Integer> list = new TreeSet<Integer>();
+		int startPoint = getCurrPage();
+		list.add(startPoint);
+		// int totalNumberOfNext = getTotalOfPages() - getCurrPage();
+		int totalNumberofPrevious = getCurrPage() - 1;
+		// add two previous page first
+		for (int q = Math.min(totalNumberofPrevious, 2); q > 0; q--) {
+			list.add(--startPoint);
+		}
+
+		startPoint = getCurrPage();
+		for (int q = (totalPagination - list.size()); ((q > 0) && (startPoint < getTotalOfPages())); q--) {
+			list.add(++startPoint);
+		}
+
+		for (int q = totalPagination; (list.size() != totalPagination) && (list.first() != 1); q--) {
+			list.add(list.first() - 1);
+		}
+		return new ArrayList<Integer>(list);
+	}
+
+	@Override
+	public String toString() {
+		return "PaginationBean [currPage=" + currPage + ", itemsPerPage=" + itemsPerPage + ", totalRowCount="
+				+ totalRowCount + "]";
+	}
+
+}

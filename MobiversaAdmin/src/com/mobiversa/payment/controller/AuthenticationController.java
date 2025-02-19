@@ -1,0 +1,381 @@
+package com.mobiversa.payment.controller;
+
+import java.util.Arrays;
+import java.util.Collection;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mobiversa.common.bo.Agent;
+import com.mobiversa.common.bo.AgentUserRole;
+import com.mobiversa.common.bo.AuditTrail;
+import com.mobiversa.common.bo.BankUserRole;
+import com.mobiversa.common.bo.Merchant;
+import com.mobiversa.common.bo.MerchantUserRole;
+import com.mobiversa.common.bo.MobiLiteMerchant;
+import com.mobiversa.common.bo.User;
+import com.mobiversa.payment.dto.Response;
+import com.mobiversa.payment.service.AdminService;
+import com.mobiversa.payment.service.AgentService;
+import com.mobiversa.payment.service.MerchantService;
+import com.mobiversa.payment.util.PropertyLoader;
+
+@SuppressWarnings("unused")
+@Controller
+@RequestMapping(value = { "/auth" })
+public class AuthenticationController extends BaseController {
+
+	@Autowired
+	private AdminService adminService;
+	@Autowired
+	private MerchantService merchantService;
+	@Autowired
+	private AgentService agentService;
+
+	private static Logger logger = Logger.getLogger(AuthenticationController.class);
+	private boolean invalidateHttpSession = true;
+
+	@RequestMapping(value = { "/", "", "/**" })
+	public String getRedirect() {
+		return "redirect:/auth/login";
+	}
+
+	@RequestMapping(value = "/login", method = RequestMethod.GET)
+	public String login(final Model model, final HttpServletRequest request) {
+		/*
+		 * logger.info("redirecting user to login screen from:" +
+		 * request.getRequestURI());
+		 */
+		HttpSession session = request.getSession();
+		// logger.info("current session id: in /login \n"+session.getId());
+
+		// Determine the role of logged in user
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		Collection<? extends GrantedAuthority> authList = auth.getAuthorities();
+
+		logger.info("********  authendication before null *****************");
+
+		if ((authList != null)) {
+			/*
+			 * logger.info("inside if authenticationcontroller" + request.getRequestURI());
+			 */
+
+			logger.info("********  authendication after null *****************");
+
+			logger.info("authList list:" + authList.toString());
+
+			if (authList.contains(new SimpleGrantedAuthority(MerchantUserRole.BANK_MERCHANT.name()))) {
+				Merchant user = (Merchant) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				String merchant = user.getUsername(); // get logged in
+
+				model.addAttribute("merchant", merchant);
+				logger.info("######## Logging in as MERCHANT in authentication controller ##### ");
+				return "redirect:/merchant/merchantweb";
+
+			}
+
+//			else if (authList.contains(new SimpleGrantedAuthority(MerchantUserRole.TEST_PAYOUT.name()))) {
+//
+//				logger.info("######## Test Payout controller ##### ");
+//				Merchant user = (Merchant) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//				String merchant = user.getUsername(); // get logged in
+//				model.addAttribute("merchant", merchant);
+//				logger.info("######## Test Payout controller ##### ");
+//				return "redirect:/merchants/testPayout";
+//
+//				
+//			}
+//			 
+
+			else if (authList.contains(new SimpleGrantedAuthority(MerchantUserRole.MOBILITE_MERCHANT.name()))) {
+				logger.info("3");
+				MobiLiteMerchant user = (MobiLiteMerchant) SecurityContextHolder.getContext().getAuthentication()
+						.getPrincipal();
+				String merchant = user.getUsername(); // get logged in
+
+				model.addAttribute("merchant", merchant);
+				logger.info("######## Logging in as MOBILITE MERCHANT in authentication controller ##### ");
+				return "redirect:/mobilitemerchant/mobilitemerchantweb";
+
+			}
+
+			/*
+			 * else if (authList.contains(new SimpleGrantedAuthority(
+			 * MerchantUserRole.SETTLEMENT_USER.name()))) { SettlementUser user =
+			 * (SettlementUser) SecurityContextHolder.getContext()
+			 * .getAuthentication().getPrincipal(); String merchant = user.getUsername(); //
+			 * get logged in
+			 * 
+			 * 
+			 * 
+			 * model.addAttribute("merchant", merchant); logger.
+			 * info("######## Logging in as SETTLEMENT USER in authentication controller ##### "
+			 * ); return "redirect:/settlementuser/settlementuserweb";
+			 * 
+			 * 
+			 * }
+			 */
+
+			else if (authList.contains(new SimpleGrantedAuthority(MerchantUserRole.NON_MERCHANT.name()))) {
+				Merchant user = (Merchant) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				String nonmerchant = user.getUsername(); // get logged in
+
+				model.addAttribute("nonmerchant", nonmerchant);
+				logger.info("######## Logging in as NON_MERCHANT  in authentication controller ##### ");
+				return "redirect:/nonmerchant/nonmerchantweb";
+
+			} else if (authList.contains(new SimpleGrantedAuthority(AgentUserRole.AGENT_USER.name()))) {
+				logger.info("agent");
+
+				Agent user = (Agent) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+				String agent = user.getUsername(); // get logged in
+
+				logger.info("agentlogin" + agent);
+				String agentUsername = PropertyLoader.getFile().getProperty("SUPER_AGENTNAME");
+				String hotelMerchantname = PropertyLoader.getFile().getProperty("HOTEL_MERCHANTNAME");
+
+				String toypayMerchantname = PropertyLoader.getFile().getProperty("TOYPAY_MERCHANTNAME");
+
+				/*
+				 * String settlementuserName = PropertyLoader.getFile().getProperty(
+				 * "SETTLEMENT_USERNAME");
+				 */
+
+				logger.info("agent user name:" + agentUsername);
+				logger.info("hotelMerchantname:" + hotelMerchantname);
+				logger.info("toypayMerchantname:" + toypayMerchantname);
+				logger.info("agent type " + user.getAgType());
+				logger.info("User get Contact " + user.getContact());
+				
+				// logger.info("SETTLEMENT_USERNAME:" + settlementuserName);
+
+				/*
+				 * if(agent.equals(settlementuserName)) { return
+				 * "/superagent/settlementUserlogin"; }
+				 */
+
+				if ((!(user.getContact() == null)) && user.getContact().equals("SP")) {
+					logger.info("setlemntportal ");
+					return "redirect:/superagent/settlementUserlogin";
+				}
+				// rk added - 11/07/22
+				if ((!(user.getContact() == null)) && user.getContact().equals("PP")) {
+					logger.info("payoutportal ");
+					return "redirect:/superagent/payoutUserlogin";
+				}
+
+				if (agent.equals(agentUsername)) {
+					logger.info("superagent ");
+					return "redirect:/superagent/agentlogin";
+				}
+
+				if (agent.equals(hotelMerchantname)) {
+					logger.info("hotelMerchantname ");
+					return "redirect:/superagent/hotelMerchantlogin";
+				}
+
+				if (agent.equals(toypayMerchantname)) {
+					logger.info("toypayMerchantname ");
+					return "redirect:/superagent/toypayMerchantlogin";
+				}
+				
+				//payout Test
+				else if((!(user.getContact() == null ))&&user.getContact().equals("MPT")){
+					logger.info(" ********* Logging in TEST Payout ********* ");
+					return "/merchants/testPayout";
+				}
+//				if (user.getAgType().equals("TEST_PAY")) {
+//					logger.info("Test Payout here ");
+//					return "redirect:/merchants/testPayout";
+//				}
+				
+				// DG Merchant changes
+				String dgUserName = PropertyLoader.getFile().getProperty("DG_TECK_USER_NAME");
+				logger.info(" Dragon tech UserName : " +dgUserName);
+				
+				String[] dgUserNames = dgUserName.split(",");
+				for (int i = 0; i < dgUserNames.length; i++) {
+				    dgUserNames[i] = dgUserNames[i].trim();
+				}
+				if (Arrays.asList(dgUserNames).contains(agent)) {
+					logger.info("Logged In as : " + agent + ", Displaying the DG Teck Page" + "Agent id:"
+							+ String.valueOf(user.getId()));
+					return "redirect:/agent/listmerchant/" + String.valueOf(user.getId())+"/"+1;
+				}
+
+				logger.info("agent name " + agent);
+				model.addAttribute("agent", agent);
+				logger.info("######## Logging in as AGENT in authentication controller ##### ");
+				return "redirect:/agent/agentweb";
+			} else if (authList.contains(new SimpleGrantedAuthority(BankUserRole.BANK_ADMIN.name()))
+					|| authList.contains(new SimpleGrantedAuthority(BankUserRole.BANK_USER.name()))) {
+
+				logger.info("#######AuthenticationController.login() bank Logging in as Admin ###### ");
+				return "redirect:/bank/user";
+			}
+		}
+
+		return "/admin/login";
+
+	}
+
+	@RequestMapping(value = "/login/error", method = RequestMethod.GET)
+	public String loginError(final Model model, final HttpServletRequest request, HttpServletResponse response) {
+		logger.info("at login credentials error request map");
+
+		HttpSession session = request.getSession();
+
+		String username = (String) request.getAttribute("username");
+		String password = (String) request.getAttribute("password");
+
+		logger.info("Wrong -- useranme: " + username + " : password: " + password);
+		request.setAttribute("username", username);
+		request.setAttribute("password", password);
+
+		session.removeAttribute("txtCompare1");
+		session.removeAttribute("txtCompare2");
+
+		return "/admin/loginerror";
+
+	}
+
+	@RequestMapping(value = "/login/expired", method = RequestMethod.GET)
+	public String loginexpired(final Model model, final HttpServletRequest request, HttpServletResponse response) {
+		logger.info("at login expired request map");
+		HttpSession session = request.getSession();
+		String userName = (String) session.getAttribute("userName");
+		String userRole = (String) session.getAttribute("userRole");
+		logger.info("Current expiring session id: /loginexpired: \n" + session.getId());
+		// logger.info("session expired check:1" + session.getId());
+		// logger.info("logout time "+new Date(session.getCreationTime())+new
+		// Date(session.getLastAccessedTime()));
+
+		if (invalidateHttpSession) {
+			session = request.getSession(false);
+
+			if (session != null) {
+				session.invalidate();
+				model.asMap().clear();
+
+				session = request.getSession(true);
+
+			}
+
+		}
+		SecurityContextHolder.clearContext();
+
+		logger.info("new session id: " + session.getId());
+
+		session.removeAttribute("txtCompare1");
+		session.removeAttribute("txtCompare2");
+
+		return "/admin/login";
+
+	}
+
+	@RequestMapping(value = "/login/errorCaptcha", method = RequestMethod.GET)
+	public String loginErrorCaptcha(final Model model, final HttpServletRequest request) {
+		logger.info("at login captcha and credentials error request map");
+
+		HttpSession session = request.getSession();
+
+		session.removeAttribute("txtCompare1");
+		session.removeAttribute("txtCompare2");
+
+		return "/admin/login";
+
+	}
+
+	@RequestMapping(value = "/logout", method = RequestMethod.GET, consumes = "application/json")
+	public @ResponseBody Response logout(final Model model, final HttpServletRequest request) {
+
+		HttpSession session = request.getSession();
+		String userName = (String) session.getAttribute("userName");
+		String userRole = (String) session.getAttribute("userRole");
+		// String userRole =request.getParameter("userRole");
+		logger.info("at logout request map username: " + userName + " " + userRole);
+		AuditTrail auditTrail = null;
+		Response response = null;
+		if (userRole.equals("BANK_ADMIN")) {
+			auditTrail = adminService.updateAuditTrailByAdmin(userName, userName, "logout");
+		} else if ((userRole.equals("BANK_MERCHANT"))) {
+			auditTrail = merchantService.updateAuditTrailByMerchant(userName, userName, "logout");
+		} else if ((userRole.equals("AGENT_USER"))) {
+			auditTrail = agentService.updateAuditTrailByAgent(userName, userName, "logout");
+		} else if ((userRole.equals("NON_MERCHANT"))) {
+			auditTrail = merchantService.updateAuditTrailByNonMerchant(userName, userName, "logout");
+		}
+
+		session.removeAttribute("txtCompare1");
+		session.removeAttribute("txtCompare2");
+
+		return new Response(auditTrail.getStatus().toString());
+
+	}
+
+	// logout code
+	/*
+	 * @RequestMapping(value = "/logout", method = RequestMethod.GET) public String
+	 * logout(final Model model, final HttpServletRequest request) {
+	 * 
+	 * HttpSession session = request.getSession(); String userName = (String)
+	 * session.getAttribute("userName"); String userRole = (String)
+	 * session.getAttribute("userRole");
+	 * logger.info("at logout request map username: " + session.getId() + userName);
+	 * 
+	 * // logger.info("logout time "+new Date(session.getCreationTime())+new //
+	 * Date(session.getLastAccessedTime()));
+	 * 
+	 * if (invalidateHttpSession) { session = request.getSession(false);
+	 * 
+	 * if (session != null) { session.invalidate(); session =
+	 * request.getSession(true);
+	 * 
+	 * } } SecurityContextHolder.clearContext();
+	 * 
+	 * logger.info("at logout request map username: " + session.getId() + userName);
+	 * if (session == null || !request.isRequestedSessionIdValid()) {
+	 * logger.info("inside session.invalidate"); if (userRole.equals("BANK_ADMIN"))
+	 * {
+	 * 
+	 * AuditTrail auditTrail = adminService.updateAuditTrailByAdmin( userName,
+	 * userName, "logout"); } else if ((userRole.equals("BANK_MERCHANT"))) {
+	 * AuditTrail auditTrail = merchantService .updateAuditTrailByMerchant(userName,
+	 * userName, "logout"); }
+	 * 
+	 * else if((userRole.equals("AGENT_USER"))) { AuditTrail
+	 * auditTrail=merchantService.updateAuditTrailByMerchant(userName, userName,
+	 * "logout"); }
+	 * 
+	 * }
+	 * 
+	 * return "redirect:/auth/login";
+	 * 
+	 * } public boolean isInvalidateHttpSession() { return invalidateHttpSession; }
+	 * public void setInvalidateHttpSession(boolean invalidateHttpSession) {
+	 * this.invalidateHttpSession = invalidateHttpSession; }
+	 */
+
+	@RequestMapping(value = "/forgot-password", method = RequestMethod.GET)
+	public ModelAndView displayResetPassword(ModelAndView modelAndView, User user) {
+		logger.info("/forgot-password to rest password");
+		modelAndView.addObject("user", user);
+		modelAndView.setViewName("forgotPassword");
+		return modelAndView;
+	}
+
+}

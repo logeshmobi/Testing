@@ -1,0 +1,82 @@
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@taglib prefix="sec" uri="http://www.springframework.org/security/tags"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<meta
+	content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+	name="viewport">
+
+	
+<body >
+<div class="container-fluid">    
+  <div class="row">
+	 <div class="card border-radius">
+        <div class="card-content padding-card">
+<form:form method="get" id="form1" name="form1" commandName="txnDet"
+		action="${pageContext.request.contextPath}/admmerchant/merdashBoard" >
+
+	
+		  <div class="d-flex align-items-center justify-content-center">
+
+<p><h3 style="color: blue;font-weight: bold;text-align:center;text-transform:uppercase;">${responseData}</h3><br></p></div>
+
+				<div class="row">
+
+					  <div class="d-flex align-items-center">
+						
+						
+							<h3 class="card-title"> BNPL Payment has been Cancelled</h3>
+							</div>
+							<table class="table table-striped" width="100%">
+								<tbody>
+								
+									<tr>
+										<td><label class="control-label">Transaction Date/Time:</label></td>
+										<td>${txnDet.expectedDate}</td>
+										
+									</tr>
+
+									
+									<tr>
+										<td><label class="control-label">Amount</label></td>
+										<td>${txnDet.amount}</td>
+										
+									</tr>							
+								
+
+								</tbody>
+							</table>
+							
+							
+				
+						</div>
+<div class="row">
+						<div class="input-field col s12 m6 l6 ">
+
+											<button type="submit" class="btn btn-primary">Done</button>
+										</div>
+									</div>
+									
+									</form:form>
+					</div>
+				</div>
+
+			
+				
+			</div>
+			
+		</div>
+
+	
+	
+	
+	
+	
+	</body>
+	</html>
+	
+	

@@ -1,0 +1,2708 @@
+package com.mobiversa.payment.dao;
+
+import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Disjunction;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.mobiversa.common.bo.CommonStatus;
+import com.mobiversa.common.bo.EzyRecurringPayment;
+import com.mobiversa.common.bo.FileUpload;
+import com.mobiversa.common.bo.KeyManager;
+import com.mobiversa.common.bo.MID;
+import com.mobiversa.common.bo.Merchant;
+import com.mobiversa.common.bo.MerchantDetails;
+import com.mobiversa.common.bo.MerchantStatusHistory;
+import com.mobiversa.common.bo.MerchantUserRole;
+import com.mobiversa.common.bo.MobiLiteMerchant;
+import com.mobiversa.common.bo.MobiLiteTerminal;
+import com.mobiversa.common.bo.MotoTxnDetails;
+import com.mobiversa.common.bo.SettlementMDR;
+import com.mobiversa.common.bo.TerminalDetails;
+import com.mobiversa.common.bo.TransactionRequest;
+import com.mobiversa.payment.controller.bean.PaginationBean;
+import com.mobiversa.payment.dto.MerchantGPVData;
+import com.mobiversa.payment.util.MobiliteTrackDetails;
+
+@Component
+@Repository
+@Transactional(readOnly = true, rollbackFor = Exception.class)
+public class MerchantDaoImpl extends BaseDAOImpl implements MerchantDao {
+
+	@Override
+	@Transactional(readOnly = false)
+	public void listMerchantUser(final PaginationBean<Merchant> paginationBean, final ArrayList<Criterion> props) 
+	{
+		logger.info("MerchantDaoImpl:listMerchantUser");
+		super.getPaginationItemsByPage(paginationBean, Merchant.class, props, Order.desc("activateDate"));
+
+	}
+	
+	@Override
+	public TransactionRequest listMerchantCardDetails(final BigInteger TxnID) {
+		//logger.info("MID: "+TxnID);
+		return (TransactionRequest) getSessionFactory().createCriteria(TransactionRequest.class).add(Restrictions.eq("txnId", TxnID))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	@Override
+	public EzyRecurringPayment loadMerchantRecurring(final Long recID) {
+		logger.info("MerchantDaoImpl:loadMerchant");
+		return (EzyRecurringPayment) getSessionFactory().createCriteria(EzyRecurringPayment.class)
+				.add(Restrictions.eq("id", recID))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	@Override
+	@Transactional(readOnly = false)
+	public void listRecurringMerchantUser(final PaginationBean<EzyRecurringPayment> paginationBean, final ArrayList<Criterion> props) 
+	{
+		//logger.info("MerchantDaoImpl:listMerchantUser");
+		super.getPaginationItemsByPage(paginationBean, EzyRecurringPayment.class, props, Order.desc("timeStamp"));
+
+	}
+	
+	@Override
+	@Transactional(readOnly = false)
+	public void listMotoTxnReqMerchantUser(final PaginationBean<MotoTxnDetails> paginationBean, final ArrayList<Criterion> props) 
+	{
+		//logger.info("MerchantDaoImpl:listMerchantUser");
+		//super.getPaginationItemsByPage(paginationBean, MotoTxnDetails.class, props, Order.desc("timestamp"));
+
+	}
+	
+	public void loadReqMotoData(final PaginationBean<MotoTxnDetails> paginationBean,String fromDate,String toDate,String status) {
+
+		ArrayList<MotoTxnDetails> forSettlementList = new ArrayList<MotoTxnDetails>();
+
+		
+		
+		/*List<Object[]> resultSet = (List<Object[]>) super.getSessionFactory().createCriteria(Merchant.class, "m")
+				.createCriteria("mid.MERCHANT_FK", "mi")
+				.createCriteria("for_settlement.mid", "f").
+				add(Restrictions.))
+				.setProjection(Projections.projectionList().add(Projections.property("m.Id"))
+				.add(Projections.property("mi.MERCHANT_FK")).add(Projections.property("f.mid")))
+				.list();*/
+		logger.info("fromDate: "+fromDate+" toDate: "+toDate);
+		String sql=null;
+		Query sqlQuery =null;
+		if(fromDate!=null && toDate!=null && status!=null) {
+			if(status.equals("I")) {
+				 sql="select f.MID,m.BUSINESS_NAME,f.TIME_STAMP,f.`STATUS`,f.AMOUNT,f.TID from MERCHANT m "
+					 		+ "inner join MID mi on m.ID=mi.MERCHANT_FK inner join MOTO_TXN_DETAILS f "
+					 		+ "on f.MID=mi.MOTO_MID or f.MID=mi.EZYREC_MID where f.TIME_STAMP between :fromDate and :toDate "
+					 		+ "and f.`STATUS` is null order by f.TIME_STAMP desc";
+					  sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+						sqlQuery.setString("fromDate", fromDate);
+						sqlQuery.setString("toDate", toDate);
+						/*sqlQuery.setString("status", status);*/
+			}else {
+				 sql="select f.MID,m.BUSINESS_NAME,f.TIME_STAMP,f.`STATUS`,f.AMOUNT,f.TID from MERCHANT m "
+					 		+ "inner join MID mi on m.ID=mi.MERCHANT_FK inner join MOTO_TXN_DETAILS f "
+					 		+ "on f.MID=mi.MOTO_MID or f.MID=mi.EZYREC_MID where f.TIME_STAMP between :fromDate and :toDate "
+					 		+ "and f.`STATUS`= :status order by f.TIME_STAMP desc";
+					  sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+						sqlQuery.setString("fromDate", fromDate);
+						sqlQuery.setString("toDate", toDate);
+						sqlQuery.setString("status", status);
+			}
+			
+		}else {
+			 sql="select f.MID,m.BUSINESS_NAME,f.TIME_STAMP,f.`STATUS`,f.AMOUNT,f.TID from MERCHANT m "
+					+ "inner join MID mi on m.ID=mi.MERCHANT_FK inner join MOTO_TXN_DETAILS f on "
+					+ "f.MID=mi.MOTO_MID or f.MID=mi.EZYREC_MID where f.TIME_STAMP between :fromDate and :toDate "
+					+ "order by f.TIME_STAMP desc";
+			 sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+			 sqlQuery.setString("fromDate", fromDate);
+				sqlQuery.setString("toDate", toDate);
+		}
+		
+		
+		
+		logger.info("Query : " + sql);
+		
+		List<Object[]> resultSet = sqlQuery.list();
+		logger.info("resultset size:" + resultSet.size());
+		
+		
+		for (Object[] rec : resultSet) {
+
+			MotoTxnDetails fs = new MotoTxnDetails();
+			
+			if (rec[0] != null) {
+				fs.setMid(rec[0].toString());
+			}
+
+			if(rec[1]!=null) {
+				fs.setName(rec[1].toString());
+			}
+			if(rec[2]!=null) {
+				fs.setTimestamp(rec[2].toString());
+			}
+			if(rec[3]!=null) {
+				fs.setStatus(rec[3].toString());
+			}
+			if(rec[4]!=null) {
+				fs.setAmount(rec[4].toString());
+			}
+			if(rec[5]!=null) {
+				fs.setTid(rec[5].toString());
+			}
+			forSettlementList.add(fs);
+
+		}
+
+		paginationBean.setItemList(forSettlementList);
+	}
+	
+	
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int UpdateRecurringStatus(String status,Long id) {
+		logger.info("MerchantDaoImpl:  UpdateRecurringStatus");
+		String query = "update EzyRecurringPayment c set c.status =:status where id =:id";
+		int rs = sessionFactory.openSession().createQuery(query).setLong("id", id)
+				.setParameter("status", status).executeUpdate();
+		
+		logger.info("Query  "+query);
+		return rs;
+	}
+	
+	
+	
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public void findByUserNames(final String businessName, final PaginationBean<Merchant> paginationBean) {
+		// CHANGE INTERFACE
+		logger.info("MerchantDaoImpl:findByUserNames");
+		Session session = sessionFactory.getCurrentSession();
+		List users = session
+
+		.createQuery("from Merchant where business_name LIKE :business_name")
+				.setParameter("business_name", "%" + businessName + "%")
+				.setMaxResults(paginationBean.getItemsPerPage()).setFirstResult(paginationBean.getStartIndex()).list();
+
+		paginationBean.setItemList(users);
+
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public void updateMerchantStatus(final Long id, final CommonStatus status, final MerchantStatusHistory history) {
+		logger.info("MerchantDaoImpl:updateMerchantStatus");
+		getSessionFactory().save(history);
+
+		//String query = "update " + Merchant.class.getName() + " c set c.status =:status where id =:id";
+		String query = "update Merchant c set c.status =:status where id =:id";
+		int updatedEntities = super.getSessionFactory().createQuery(query).setParameter("status", status)
+				.setLong("id", id).executeUpdate();
+		if (updatedEntities != 1) {
+			throw new RuntimeException(
+					"Rows updated should always be ONE. Please check HQL Query. SQL Trx is rollbacked. updatedEntities:: "
+							+ updatedEntities);
+		}
+		// auto commit
+
+	}
+	@Override
+	public MerchantDetails loadMerchantPoints(Merchant merchant) {
+		
+			logger.info("MerchantDaoImpl:loadMid: "+merchant.getMid().getMid()+" motomid: "+merchant.getMid().getMotoMid()+
+					" ezypassMid: "+merchant.getMid().getEzypassMid()+" ezyrecMid: "+merchant.getMid().getEzyrecMid()
+					+" ezywayMid: "+merchant.getMid().getEzywayMid());
+		
+		Disjunction orExp=Restrictions.disjunction();
+		orExp.add(Restrictions.in("mid",new String[] { merchant.getMid().getMid(),merchant.getMid().getMotoMid(),
+				merchant.getMid().getEzypassMid(),merchant.getMid().getEzyrecMid(),merchant.getMid().getEzywayMid(),
+				merchant.getMid().getUmMid(),merchant.getMid().getUmEzypassMid(),merchant.getMid().getUmEzyrecMid(),
+				merchant.getMid().getUmEzywayMid(),merchant.getMid().getUmMotoMid()}));
+		
+		return (MerchantDetails) getSessionFactory().createCriteria(MerchantDetails.class)
+				.add(orExp).setMaxResults(1).uniqueResult();
+	}
+	@Override
+	public MerchantStatusHistory loadMerchantStatusHistoryID(final Merchant merchant) {
+		logger.info("MerchantDaoImpl:loadMerchantStatusHistoryID");
+		Session session = sessionFactory.getCurrentSession();
+		MerchantStatusHistory history = (MerchantStatusHistory) session
+				.createQuery("from MerchantStatusHistory where merchant=:merchant order by ID desc")
+				.setParameter("merchant", merchant).setMaxResults(1).uniqueResult();
+		return history;
+	}
+
+	@Override
+	public Merchant loadMerchant(final String username) {
+	//	logger.info("MerchantDaoImpl:loadMerchant");
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("username", username))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	/*
+	 * @Override public SettlementUser loadSettlementUser(final String username) {
+	 * // logger.info("MerchantDaoImpl:loadMerchant"); return (SettlementUser)
+	 * getSessionFactory().createCriteria(SettlementUser.class).add(Restrictions.eq(
+	 * "username", username)) .setMaxResults(1).uniqueResult(); }
+	 */
+	
+	
+	@Override
+	public MobiLiteMerchant loadMobiLiteMerchant(final String username) {
+	//	logger.info("MerchantDaoImpl:loadMerchant");
+		return (MobiLiteMerchant) getSessionFactory().createCriteria(MobiLiteMerchant.class).add(Restrictions.eq("username", username))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	
+	
+	@Override
+	public MobiLiteMerchant loadMobiliteMerchant(final String username) {
+	//	logger.info("MerchantDaoImpl:loadMerchant");
+		return (MobiLiteMerchant) getSessionFactory().createCriteria(MobiLiteMerchant.class).add(Restrictions.eq("username", username))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	
+	@Override
+	public KeyManager validatecaptcha(final String captcha2) {
+		String tid = captcha2;
+	
+		/*logger.info("MerchantDaoImpl:validateCaptcha in KeyManager"+captcha);
+		return (KeyManager) getSessionFactory().createCriteria(KeyManager.class).add(Restrictions.eq("tid", captcha2.trim()));
+		Employee emp=  (Employee) session.createCriteria(Employee.class,"a")
+				.createAlias("a.jobs", "j") 
+				.add(Restrictions.eq("id", id))
+				.add(Restrictions.eq("j.active", "1"));*/
+	
+		//logger.info("MerchantDaoImpl:validateCaptcha in KeyManager"+tid);
+		Session session = sessionFactory.getCurrentSession();
+		KeyManager keymanager = (KeyManager) session
+				.createQuery("from KeyManager where tid= :tid")
+				.setParameter("tid", tid).setMaxResults(1).uniqueResult();
+		return keymanager;
+	}
+		
+	@Transactional(readOnly=false)
+	@Override
+	public boolean deleteCaptcha(String captcha2)
+	{
+		String tid=captcha2;
+		boolean status=false;
+		Session session = sessionFactory.getCurrentSession();
+		Query query = session.createQuery("delete from KeyManager where tid = :tid");
+		query.setParameter("tid", tid);
+		//logger.info("execute result deleted: "+query.executeUpdate());
+		int result = query.executeUpdate();
+		if(result==0)
+		{
+			status=true;
+		}
+		else
+		{
+			status=false;
+		}
+		return status;
+	}
+	
+	
+	@Override
+	public Merchant loadmobileMerchant(MID mid) {
+		logger.info("MerchantDaoImpl:loadMerchant: "+mid);
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("mid", mid))
+				.setMaxResults(1).uniqueResult();
+	}
+	@Override
+	public Merchant loadMerchant(MID mid) {
+		//logger.info("MerchantDaoImpl:loadMerchant MID");
+		// TODO Auto-generated method stub
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("mid", mid))
+				.setMaxResults(1).uniqueResult();
+	}
+	@Override
+	public MID loadMerchantmid(String mid) {
+		logger.info("MerchantDaoImpl:loadMerchant MID");
+		// TODO Auto-generated method stub
+		return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.eq("mid", mid))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	@Override
+	public MID loadMerchantMIDDetails(String mid,String midType) {
+		logger.info("MerchantDaoImpl:loadMerchant MID");
+		MID merchantMID=null;
+		if(midType.equals("ezywireMID")) {
+			merchantMID= (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.eq("mid", mid))
+					.setMaxResults(1).uniqueResult();
+		}else if(midType.equals("motoMID")) {
+			merchantMID = (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("ezyrecMid", mid , MatchMode.ANYWHERE))
+			.setMaxResults(1).uniqueResult();
+		}else if(midType.equals("ezyrecMID")) {
+			
+		}else if(midType.equals("ezypassMID")) {
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("ezypassMid", mid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		return merchantMID;
+		
+	}
+	
+	
+	
+	
+	
+	@Override
+	public MID loadMerchantbyMerchant_FK(Long merchant_fk) {
+		logger.info("MerchantDaoImpl:loadMerchant MID");
+		// TODO Auto-generated method stub
+		return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.eq("merchant.id", merchant_fk))
+				.setMaxResults(1).uniqueResult();
+	}
+
+	@Override
+	public MID loadMerchantmotomid(String motomid) {
+		logger.info("MerchantDaoImpl:loadMerchant MID");
+		// TODO Auto-generated method stub
+		return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.eq("motoMid", motomid))
+				.setMaxResults(1).uniqueResult();
+	}
+	/*@Override
+	public MID loadMerchantezypassmid(String ezypassMid) {
+		logger.info("MerchantDaoImpl:loadMerchant MID");
+		// TODO Auto-generated method stub
+		return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.eq("ezypassMid", ezypassMid))
+				.setMaxResults(1).uniqueResult();
+	}*/
+	@Override
+	public Merchant loadMerchantbyid(MID mid) {
+	//	logger.info("MerchantDaoImpl:loadMerchant MID "+mid);
+		
+		// TODO Auto-generated method stub
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("mid", mid))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	@Override
+	public Merchant loadMerchantbymerchantid(Long id) {
+		logger.info("MerchantDaoImpl:loadMerchant merchant id "+id);
+		
+		// TODO Auto-generated method stub
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("id", id))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int changeMerchantPassWord(String Username, String newPwd, String OldPwd) {
+		//logger.info("MerchantDaoImpl:changeMerchantPassWord");
+		String query = "update Merchant c set c.password =:password where userName =:userName";
+		int rs = sessionFactory.openSession().createQuery(query).setParameter("password", newPwd)
+				.setParameter("userName", Username).executeUpdate();
+		
+		//logger.info("Query  "+query);
+		return rs;
+	}
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int changeMobiliteMerchantPassWord(String Username, String newPwd, String OldPwd) {
+		//logger.info("MerchantDaoImpl:changeMerchantPassWord");
+		String query = "update MobiLiteMerchant c set c.password =:password where userName =:userName";
+		int rs = sessionFactory.openSession().createQuery(query).setParameter("password", newPwd)
+				.setParameter("userName", Username).executeUpdate();
+		
+		//logger.info("Query  "+query);
+		return rs;
+	}
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int changeMerchantPassWordByAdmin(String Username, String newPwd) {
+		logger.info("MerchantDaoImpl:changeMerchantPassWord: \n"+Username+" : "+newPwd);
+		String query = "update Merchant c set c.password =:password where userName =:userName";
+		int rs = sessionFactory.openSession().createQuery(query).setParameter("password", newPwd)
+				.setParameter("userName", Username).executeUpdate();
+		return rs;
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public int changeMobileuserPassWordByAdmin(String Username, String newPwd) {
+		logger.info("MerchantDaoImpl:changeMobileuserPassWord: \n"+Username+" : "+newPwd);
+		String query = "update MobileUser c set c.password =:password where userName =:userName";
+		int rs = sessionFactory.openSession().createQuery(query).setParameter("password", newPwd)
+				.setParameter("userName", Username).executeUpdate();
+		return rs;
+	}
+
+	
+	// new changes //
+	@Override
+	public Merchant loadMerchantbyEmail(String email) {
+		logger.info("MerchantDaoImpl:loadMerchantbyEmail");
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("username", email))
+				.setMaxResults(1).uniqueResult();
+	}
+ 
+	@Override
+	@Transactional(readOnly = false)
+	public int updateMIDData(Long m_id,Long merchant_id) {
+		logger.info("MerchantDaoImpl:updateMIDData");
+		//MID mID = new MID();
+		//BigInteger dfg = new BigInteger(id.toString());
+		Session session = sessionFactory.getCurrentSession();
+		/*String sql="insert into MID(MID,MERCHANT_FK) values ('?','?')";*/
+		
+		//String sql= " INSERT INTO MID ( MID , MERCHANT_FK ) VALUES ( '"+ mid +"',"+ dfg +") ";
+		
+		//String sql= "update MID set  merchant_fk ="+merchant_id+"  where id="+m_id;
+		String sql= "update MID set  merchant_fk = :merchant_id where id= :m_id";
+	
+				
+		logger.info(" Query :"+sql);
+		
+		Query insertQuery = session.createQuery(sql);
+		insertQuery.setLong("merchant_id", merchant_id);
+		insertQuery.setLong("m_id", m_id);
+		//Query insertQuery = session.createSQLQuery("insert into MID(MID,MERCHANT_FK) values ('"+mid+"',"+dfg+")");
+		/*insertQuery.setParameter(0, mid);
+		insertQuery.setBigInteger(1, dfg);*/
+		int a= insertQuery.executeUpdate();
+		
+		//int result = insertQuery.executeUpdate();
+		return a;
+		
+	
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Merchant> loadMerchant() {
+		logger.info("MerchantDaoImpl:loadMerchant");
+		return (List<Merchant>) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("status",CommonStatus.ACTIVE)).list();
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Merchant> loadFpxMerchant() {
+		logger.info("MerchantDaoImpl:loadMerchant");
+		ArrayList<Merchant> merchantDetail = new ArrayList<Merchant>();
+		String sql = "select m.BUSINESS_NAME,f.MID,m.ID from MERCHANT m inner join MID mi on mi.MERCHANT_FK = m.ID "
+			  + "inner join FPX_TRANSACTION f on f.MID = mi.MID or  f.MID = mi.MOTO_MID or  f.MID = mi.EZYPASS_MID "
+			  + "or  f.MID = mi.EZYREC_MID or  f.MID = mi.EZYWAY_MID or  f.MID = mi.UM_MID "
+			  + "or  f.MID = mi.UM_MOTO_MID or  f.MID = mi.UM_EZYWAY_MID " 
+			  + "Where m.STATUS = 'ACTIVE' group by f.MID ";
+		
+		
+		logger.info("Query : " + sql);
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+		List<Object[]> resultSet = sqlQuery.list();
+		logger.info("resultset size:" + resultSet.size());
+		for (Object[] rec : resultSet) {
+			
+			Merchant merchantData = new Merchant();	
+			merchantData.setBusinessName(rec[0].toString());
+			merchantData.setReferralId(rec[1].toString());
+			merchantData.setState(rec[2].toString());//merchant id
+			merchantDetail.add(merchantData);
+		}
+		return merchantDetail;
+		
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Merchant> loadMerchantByNOB(String nob) {
+		logger.info("MerchantDaoImpl:loadMerchantByNOB");
+		return (List<Merchant>) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.like("natureOfBusiness",nob,MatchMode.START)).list();
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Merchant> loadMerchantByAdmin() {
+		logger.info("MerchantDaoImpl:loadMerchant");
+		return (List<Merchant>) getSessionFactory().createCriteria(Merchant.class).
+				add(Restrictions.eq("status",CommonStatus.ACTIVE))
+				.add(Restrictions.eq("role",MerchantUserRole.BANK_MERCHANT))
+				.list();
+		
+	}
+
+
+
+	@Override
+	public void listAgentMerchant(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props) {
+		logger.info("MerchantDaoImpl:listAgentMerchant");
+		super.getPaginationItemsByPage(paginationBean, Merchant.class, props,Order.desc("createdDate"));
+		
+	}
+
+	@Override
+	public MID loadMidtoUpdateAudit(String mid) {
+	logger.info("MerchantDaoImpl:loadMid: "+mid);
+		
+		Disjunction orExp=Restrictions.disjunction();
+		orExp.add(Restrictions.eq("mid", mid));
+		orExp.add(Restrictions.eq("motoMid", mid));
+		orExp.add(Restrictions.eq("ezypassMid", mid));
+		orExp.add(Restrictions.eq("ezyrecMid", mid));
+		orExp.add(Restrictions.eq("ezywayMid", mid));
+		orExp.add(Restrictions.eq("umMid", mid));
+		orExp.add(Restrictions.eq("umMotoMid", mid));
+		orExp.add(Restrictions.eq("umEzywayMid", mid));
+		orExp.add(Restrictions.eq("umEzyrecMid", mid));
+		orExp.add(Restrictions.eq("umEzypassMid", mid));
+		
+		return (MID) getSessionFactory().createCriteria(MID.class).add(orExp).setMaxResults(1).uniqueResult();
+	}
+	
+	// new method for mid already exist 24062016
+		@Override
+		public MID loadMid(String mid) {
+			//logger.info("MerchantDaoImpl:loadMid: "+mid);
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("mid", mid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		@Override
+		public MID loadMotoMid(String motomid) {
+			//logger.info("MerchantDaoImpl:loadmotoMid  :"+motomid);
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("motoMid", motomid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		@Override
+		public MID loadEzyPassMid(String ezypassmid) {
+			logger.info("MerchantDaoImpl:loadezypassMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("ezypassMid", ezypassmid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		@Override
+		public MID loadumMotoMid(String umMotoMid) {
+			logger.info("MerchantDaoImpl:loadummotoMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umMotoMid", umMotoMid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		@Override
+		public MID loadumEzywayMid(String umEzywayMid) {
+			logger.info("MerchantDaoImpl:loadumezywayMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umEzywayMid", umEzywayMid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		@Override
+		public MID loadEzywayMid(String ezywaymid) {
+			logger.info("MerchantDaoImpl:loadezywayMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("ezywayMid", ezywaymid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		@Override
+		public MID loadEzyrecMid(String ezyrecMid) {
+			logger.info("MerchantDaoImpl:loadezyrecMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("ezyrecMid", ezyrecMid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		
+		//Umobile
+		
+		@Override
+		public MID loadUMMid(String um_mid) {
+			//logger.info("MerchantDaoImpl:loadMid: "+mid);
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umMid", um_mid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		@Override
+		public MID loadUMMotoMid(String um_motomid) {
+			//logger.info("MerchantDaoImpl:loadmotoMid  :"+motomid);
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umMotoMid", um_motomid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		@Override
+		public MID loadUMEzyPassMid(String um_ezypassmid) {
+			logger.info("MerchantDaoImpl:loadezypassMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umEzypassMid", um_ezypassmid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		@Override
+		public MID loadUMEzywayMid(String um_ezywaymid) {
+			logger.info("MerchantDaoImpl:loadezywayMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umEzywayMid", um_ezywaymid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		@Override
+		public MID loadUMEzyrecMid(String um_ezyrecMid) {
+			logger.info("MerchantDaoImpl:loadezyrecMid");
+			
+			return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("umEzyrecMid", um_ezyrecMid , MatchMode.ANYWHERE))
+					.setMaxResults(1).uniqueResult();
+		}
+		
+		
+		
+		
+	//new method in pending Merchant 24062016
+	@Override
+	public void listMerchantUser1(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props) {
+		logger.info("MerchantDaoImpl:listMerchantUser1");
+		super.getPaginationItemsByPage(paginationBean, Merchant.class, props, Order.desc("id"));
+	}
+	
+	
+	@Override
+	public FileUpload loadFileById(String id) {
+		logger.info("MerchantDaoImpl:loadFileById FileId:"+id);
+		Long lo = new Long(id);
+		return (FileUpload) getSessionFactory().createCriteria(FileUpload.class).add(Restrictions.eq("id", lo))
+				.setMaxResults(1).uniqueResult();
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public FileUpload updateFileById(FileUpload fileUpload) {
+		logger.info("MerchantDaoImpl:updateFileById ");
+		Session session = sessionFactory.getCurrentSession();
+
+		//String sql= "update FileUpload set  merchant_id ="+fileUpload.getMerchantId()+"  where id="+fileUpload.getId();
+		String sql= "update FileUpload set  merchant_id = :merchantId where id= :Id";
+		logger.info(" Query :"+sql);
+		
+		Query insertQuery = session.createQuery(sql);
+		insertQuery.setString("merchantId", fileUpload.getMerchantId());
+		insertQuery.setLong("Id", fileUpload.getId());
+		int a= insertQuery.executeUpdate();
+		
+		return fileUpload;
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<FileUpload> loadFileByMerchantId(String merchId) {
+		logger.info("MerchantDaoImpl:loadFileByMerchantId");
+		return (List<FileUpload>) getSessionFactory().createCriteria(FileUpload.class).add(Restrictions.eq("merchantId", merchId)).list();
+		
+	}
+
+	@Override
+	public Merchant loadMerchantDetails(String username) {
+		logger.info("MerchantDaoImpl:loadMerchant");
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("username", username))
+				.setMaxResults(1).uniqueResult();
+	}
+
+	@Override
+	public void listMerchantSearch(PaginationBean<Merchant> paginationBean, ArrayList<Criterion> props) {
+		// TODO Auto-generated method stub
+		logger.info("check merchant data:");
+		super.getPaginationItemsByPage(paginationBean, Merchant.class, props, Order.desc("activateDate"));
+	}
+	
+	@Override
+	public MID loadMidByMerchant_PK(String id) {
+		logger.info("MerchantDaoImpl:loadMid: "+id);
+		long m_id = Long.parseLong(id);
+		return (MID) getSessionFactory().createCriteria(MID.class).add(Restrictions.like("merchant.id", m_id))
+				.setMaxResults(1).uniqueResult();
+	}
+	
+	@Override
+	public TerminalDetails loadTerminalDetailsByMid(String mid) {
+		logger.info("loadTerminalDetailsByMid "+mid);
+		return (TerminalDetails) getSessionFactory().createCriteria(TerminalDetails.class).add(Restrictions.like("merchantId", mid))
+				.setMaxResults(1).uniqueResult();
+	}
+
+	@Override
+	public MobiLiteTerminal loadMobiliteTerminalDetailsByMid(Long mid) {
+		logger.info("loadTerminalDetailsByMid "+mid);
+		return (MobiLiteTerminal) getSessionFactory().createCriteria(MobiLiteTerminal.class).add(Restrictions.like("merchant.id", mid))
+				.setMaxResults(1).uniqueResult();
+	}
+
+	
+	@Override
+	public List<Merchant> listMerchantSummary(ArrayList<Criterion> props, String date, String date1) {
+		
+		
+		String dat = null;
+		String dat1 = null;
+		String year1 = null;
+		String year2 = null;
+		ArrayList<Merchant> merchantSummary = new ArrayList<Merchant>();
+		
+		//TerminalDetails reader = readerDAO.loadTerminalByDevice(id);
+		String sql = null;
+
+		if(date!= null)
+		{
+
+			dat = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			try {
+				dat = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(dat));
+				logger.info("check activation date1:" + dat);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+		if (date1 == null || date1.equals("")) {
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			dat1 = dateFormat1.format(dt1);
+			logger.info("check activation date2:" + dat1);
+
+		} else {
+
+			dat1 = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			try {
+				dat1 = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(dat1));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+		
+		sql = "select m.ACTIVATE_DATE,m.USERNAME,m.BUSINESS_NAME,m.CONTACT_PERSON_PHONE_NUMBER,t.MID,m.BUSINESS_ADDRESS1 from MERCHANT m  INNER JOIN mid t"
+				+ " on t.MERCHANT_FK = m.MID_FK where m.ACTIVATE_DATE  between :dat and :dat1"
+				+ " order by m.ACTIVATE_DATE desc " ;
+		
+		logger.info("Query : " + sql);
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+		sqlQuery.setString("dat", dat);
+		sqlQuery.setString("dat1", dat1);
+		
+		List<Object[]> resultSet = sqlQuery.list();
+		logger.info("resultset size:" + resultSet.size());
+		for (Object[] rec : resultSet) {
+			
+			Merchant merchantData = new Merchant();
+			
+			//logger.info("activate date from mobile user:" + merchantData.getActivateDate() );
+			String rd = null;
+			try {
+				/*rd = new SimpleDateFormat("dd-MMM-yyyy")
+						.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+								.parse(rec[0].toString()));*/
+				
+				
+				/*Date actDate = merchantData.getActivateDate();
+				
+				DateTime fromDate = new DateTime(actDate);*/
+				merchantData.setActivateDate(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+						.parse(rec[0].toString()));
+				
+				//merchantData.setActivateDate(new Date(rec[0].toString()));
+				
+				logger.info(" activation date from merchant 12233:" + merchantData.getActivateDate());
+				} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+			merchantData.setUsername(rec[1].toString());
+			merchantData.setBusinessName(rec[2].toString());
+			merchantData.setContactPersonPhoneNo(rec[3].toString());
+			merchantData.setFirstName((rec[4].toString()));
+			merchantData.setBusinessAddress1(rec[5].toString());
+			
+			
+			
+			merchantSummary.add(merchantData);
+		}
+		
+		return merchantSummary;
+	}
+
+	@Override
+	public List<Merchant> loadUMMerchant() {
+		logger.info("MerchantDaoImpl:loadMerchant");
+		return (List<Merchant>) getSessionFactory().createCriteria(Merchant.class)
+				.add(Restrictions.eq("status",CommonStatus.ACTIVE))
+				.add(Restrictions.eq("merchantType","U"))
+				.list();
+	
+	}
+
+	
+	
+
+	@Override
+	public String getMerchantCurrentMonthTxnByNOB(StringBuffer midStr , StringBuffer ummidStr) {
+		String totalTxn = null, txnTotalSum="";
+		
+		String umtotalTxn = null;
+		
+		//Double umTxn=0.0, totTxn=0.0, sumtxn=0.0;
+		double umTxn=0.0, totTxn=0.0, sumtxn=0.0;
+		
+		//Double totalSum=0.0;
+		double totalSum=0.0;
+		
+		Calendar calendar = Calendar.getInstance();
+        Date date =  calendar.getTime();
+
+        LocalDateTime now = LocalDateTime.now();
+		int year = now.getYear();
+		long mon = now.getMonthValue();
+		
+		logger.info("check year and mon: "+year+" "+mon);
+		
+		String sql1 = "select count(*),sum(AMOUNT) as TotalAmount from FOR_SETTLEMENT where STATUS in ('A','S') and MONTH(TIME_STAMP) ="+mon
+				+" and MID IN ("+midStr+") and TIME_STAMP like '"+year+"%'";
+		 
+		 
+		 
+		 Query sqlQuery1 = super.getSessionFactory().createSQLQuery(sql1);
+	 
+		 logger.info("Query1 : " + sql1);
+			
+			@SuppressWarnings("unchecked")
+			List<Object[]> resultSet1 = sqlQuery1.list();
+			
+			for (Object[] rec : resultSet1) {
+				//totalTxn = rec[1].toString();
+				int a = Integer.parseInt(rec[0].toString());
+				if(a == 0){
+					totalTxn = "0.00";
+				}else{
+					Double d = new Double(rec[1].toString());
+					d = d / 100;
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					totalTxn = myFormatter.format(d);
+				}
+			}
+			
+			logger.info("totalTxn : " + totalTxn);
+			
+			if((totalTxn!=null) && (!(totalTxn.isEmpty()))) {
+				totalSum=totalSum+Double.valueOf(totalTxn);
+			}
+			logger.info("totalSum : " + totalSum);
+			
+			
+			if(ummidStr!=null) {
+				if(ummidStr.length()!=0) {
+				String sql = "select count(*),sum(F007_TXNAMT) as TotalAmount from UM_ECOM_TXNRESPONSE where STATUS in ('A','C') and MONTH(TIME_STAMP) ="+mon
+						+" and F001_MID IN ("+midStr+") and TIME_STAMP like '"+year+"%'";
+				 
+				 
+				 
+				 Query sqlQuery = super.getSessionFactory().createSQLQuery(sql1);
+			 
+				 logger.info("Query1 : " + sql1);
+					
+					@SuppressWarnings("unchecked")
+					List<Object[]> resultSet = sqlQuery.list();
+					
+					for (Object[] rec : resultSet1) {
+						//totalTxn = rec[1].toString();
+						int a = Integer.parseInt(rec[0].toString());
+						if(a == 0){
+							umtotalTxn = "0.00";
+						}else{
+							Double d = new Double(rec[1].toString());
+							d = d / 100;
+							String pattern = "###0.00";
+							DecimalFormat myFormatter = new DecimalFormat(pattern);
+							umtotalTxn = myFormatter.format(d);
+						}
+					}
+					if((umtotalTxn!=null) && (!(umtotalTxn.isEmpty()))){
+						totalSum=totalSum+Double.parseDouble(umtotalTxn);
+					 logger.info("umTxn : " + totalSum);
+					}
+				}
+			}
+			//sumtxn = totTxn+umTxn;
+			txnTotalSum=String.valueOf(totalSum);
+			logger.info("txnTotalSum : " + txnTotalSum);
+		return txnTotalSum;
+	}
+	
+	
+	@Override
+	public String getMerchantDailyTxnByNOB(StringBuffer midStr,StringBuffer ummidStr) {
+		String totalTxn =null, txnTotalSum="";
+		double totalSum=0.0;
+		String umtotalTxn = null;
+		
+		double umTxn=0.0, totTxn=0.0, sumtxn=0.0;
+		DateTime dateTime = new DateTime();
+		LocalDate lastDate =dateTime.minusDays(1).toLocalDate();
+	    String lastDay = lastDate.toString();
+	    
+		logger.info("check date: "+lastDay);
+
+
+		 
+		 String sql1 = "select count(*),sum(AMOUNT) as TotalAmount from FOR_SETTLEMENT where STATUS in ('A','S') and MID IN ("+midStr+") and TIME_STAMP like '"+lastDay+"%'";
+		 
+		 Query sqlQuery1 = super.getSessionFactory().createSQLQuery(sql1);
+			
+			
+			@SuppressWarnings("unchecked")
+			List<Object[]> resultSet1 = sqlQuery1.list();
+			
+			for (Object[] rec : resultSet1) {
+				//totalTxn = rec[1].toString();
+				int a = Integer.parseInt(rec[0].toString());
+				if(a == 0){
+					totalTxn = "0.00";
+				}else{
+					Double d = new Double(rec[1].toString());
+					d = d / 100;
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					totalTxn = myFormatter.format(d);
+				}
+			}
+			
+			if((totalTxn!=null) && (!(totalTxn.isEmpty()))) {
+				totalSum=totalSum+Double.parseDouble(totalTxn);
+			}
+			
+			if(ummidStr!=null) {
+				if(ummidStr.length()!=0) {
+				String sql = "select count(*),sum(F007_TXNAMT) as TotalAmount from UM_ECOM_TXNRESPONSE where STATUS in ('A','C')"
+						+" and F001_MID IN ("+midStr+") and TIME_STAMP like '"+lastDay+"%'";
+				 
+				 
+				 
+				 Query sqlQuery = super.getSessionFactory().createSQLQuery(sql1);
+			 
+				 logger.info("Query1 : " + sql1);
+					
+					@SuppressWarnings("unchecked")
+					List<Object[]> resultSet = sqlQuery.list();
+					
+					for (Object[] rec : resultSet1) {
+						//totalTxn = rec[1].toString();
+						int a = Integer.parseInt(rec[0].toString());
+						if(a == 0){
+							umtotalTxn = "0.00";
+						}else{
+							Double d = new Double(rec[1].toString());
+							d = d / 100;
+							String pattern = "###0.00";
+							DecimalFormat myFormatter = new DecimalFormat(pattern);
+							umtotalTxn = myFormatter.format(d);
+						}
+					}
+					if((umtotalTxn!=null) && (!(umtotalTxn.isEmpty()))){
+						totalSum=totalSum+Double.parseDouble(umtotalTxn);
+					}
+					
+				}
+			}
+			//sumtxn= totTxn+umTxn;
+			txnTotalSum=String.valueOf(totalSum);
+		
+		return txnTotalSum;
+	}
+	
+	@Override
+	public String getMerchantWeeklyTxnByNOB(StringBuffer midStr,StringBuffer ummidStr) {
+		String totalTxn = null, txnTotalSum="";
+		double totalSum=0.0;
+		String umtotalTxn = null;
+		
+		double umTxn=0.0, totTxn=0.0, sumtxn=0.0;
+		 Calendar c = Calendar.getInstance();
+	     c.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+
+	       DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+	       String from= df.format(c.getTime());
+	        for (int i = 0; i <6; i++) {
+	         c.add(Calendar.DATE, 1);
+	           }
+	       String to= df.format(c.getTime());
+	       
+	       
+		logger.info("check date:from "+from+":to:"+to);
+		
+		logger.info("ummidStr"+ummidStr);
+
+		 
+	/*	 String sql1 ="select  count(*),sum(a.AMOUNT) as TotalAmount from FOR_SETTLEMENT a INNER JOIN MID m on a.MID=m.MID or a.MID=m.MOTO_MID or" 
+				 +" a.MID=m.EZYREC_MID or a.MID=m.EZYWAY_MID or a.MID=m.EZYPASS_MID"
+				 +" INNER JOIN MERCHANT f ON f.MID_FK=m.ID"
+				 +" where a.STATUS IN ('A','S') and f.NATURE_OF_BUSINESS=:nob and a.TIME_STAMP between :fromDate and :toDate order by"
+				 +" a.TIME_STAMP desc limit 1000";*/
+		 
+		 String sql1 = "select count(*),sum(AMOUNT) as TotalAmount from FOR_SETTLEMENT where STATUS in ('A','S') and MID IN ("+midStr+") and TIME_STAMP between :fromDate and :toDate order by"
+					+" TIME_STAMP desc limit 1000";
+		 
+		 Query sqlQuery1 = super.getSessionFactory().createSQLQuery(sql1);
+			sqlQuery1.setString("fromDate", from);
+			sqlQuery1.setString("toDate", to);
+			
+			 logger.info("Query : " + sql1);
+			
+			@SuppressWarnings("unchecked")
+			List<Object[]> resultSet1 = sqlQuery1.list();
+			
+			for (Object[] rec : resultSet1) {
+				//totalTxn = rec[1].toString();
+				int a = Integer.parseInt(rec[0].toString());
+				if(a == 0){
+					totalTxn = "0.00";
+				}else{
+					Double d = new Double(rec[1].toString());
+					d = d / 100;
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					totalTxn = myFormatter.format(d);
+				}
+			}
+			if((totalTxn!=null) && (!(totalTxn.isEmpty()))) {
+				totalSum=totalSum+Double.parseDouble(totalTxn);
+			}
+			
+			
+			if(ummidStr!=null) {
+				if(ummidStr.length()!=0) {
+				String sql = "select count(*),sum(F007_TXNAMT) as TotalAmount from UM_ECOM_TXNRESPONSE where STATUS in ('A','C')"
+						+" and F001_MID IN ("+ummidStr+") and TIME_STAMP between :fromDate and :toDate order by" 
+						+" TIME_STAMP desc limit 1000";
+				 
+				 
+				 
+				 Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+				 sqlQuery.setString("fromDate", from);
+				 sqlQuery.setString("toDate", to);
+				 logger.info("Query1 : " + sql);
+					
+					@SuppressWarnings("unchecked")
+					List<Object[]> resultSet = sqlQuery.list();
+					
+					for (Object[] rec : resultSet1) {
+						//totalTxn = rec[1].toString();
+						int a = Integer.parseInt(rec[0].toString());
+						if(a == 0){
+							umtotalTxn = "0.00";
+						}else{
+							Double d = new Double(rec[1].toString());
+							d = d / 100;
+							String pattern = "###0.00";
+							DecimalFormat myFormatter = new DecimalFormat(pattern);
+							umtotalTxn = myFormatter.format(d);
+						}
+					}
+					if((umtotalTxn!=null) && (!(umtotalTxn.isEmpty()))){
+						totalSum=totalSum+Double.parseDouble(umtotalTxn);
+					}
+				}
+			}
+			//sumtxn = totTxn+umTxn;
+			txnTotalSum=String.valueOf(totalSum);
+		
+		return txnTotalSum;
+	}
+	
+	
+	@Override
+	public List<MID> loadMIDByNOB(List<Long> ids) {
+		
+		logger.info("loadMIDByNOB:  "+ids);
+		
+		
+       
+		/*String query = "Select MID,MOTO_MID,EZYPASS_MID from MID where MERCHANT_FK IN (:ids)";
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(query);
+		sqlQuery.setParameter("ids", ids);*/
+//		
+//		CharSequence[] cs = ids.toArray(new CharSequence[ids.size()]);
+//		
+//		String query ="Select MID,MOTO_MID,EZYPASS_MID from MID WHERE FIND_IN_SET(MERCHANT_FK, @parameter) != 0";
+//		Query sqlQuery = super.getSessionFactory().createSQLQuery(query);
+//		sqlQuery.setParameter("parameter", String.join(",", cs));
+		
+		/*list_id = [1,2,3]*/
+		//String query = "Select MID,MOTO_MID,EZYPASS_MID from MID where MERCHANT_FK in ({})".format(",".join([long(i) for i in ids]));
+		//String sql="Select MID,MOTO_MID,EZYPASS_MID from MID where MERCHANT_FK in ("+StringUtils.join(arr, ',')+")";
+		//Query sqlQuery = super.getSessionFactory().createSQLQuery(query);
+
+		List<MID> mid = new ArrayList<MID>();
+		ArrayList<MID> MIDList = new ArrayList<MID>();
+		String query = "Select * from MID where MERCHANT_FK IN (" + ids.toString().replaceAll("[\\[\\]\\(\\)]", "") + ")";
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(query);
+		logger.info("query "+query);
+		@SuppressWarnings("unchecked")
+		List<Object[]> resultSet = sqlQuery.list();
+		
+		
+		
+		//for (Object[] rec : resultSet) {
+			
+			
+			
+			/*if(rec[0].toString()!=null) {
+				mid.add(rec[0].toString());
+				
+			}
+			if(rec[1].toString()!=null) {
+				mid.add(rec[1].toString());
+				
+			}
+			if(rec[2].toString()!=null) {
+				mid.add(rec[2].toString());
+				
+			}
+			if(rec[3].toString()!=null) {
+				mid.add(rec[3].toString());
+				
+			}
+			if(rec[4].toString()!=null) {
+				mid.add(rec[4].toString());
+				
+			}*/
+			
+			
+			
+		//}
+		logger.info("mid "+mid);
+		
+		return null;
+		
+		//return (List<MID>) getSessionFactory().createCriteria(MID.class).add(Restrictions.eq("merchant",ids)).list();
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Merchant> loadMerchantByAgID(BigInteger id) {
+		logger.info("MerchantDaoImpl:loadMerchant agent id "+id);
+
+		return (List<Merchant>) getSessionFactory().createCriteria(Merchant.class).
+				add(Restrictions.eq("agID",id)).list();
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void listPayLaterMerchants(
+			final PaginationBean<Merchant> paginationBean) {
+		logger.info("Inside   listPayLaterMerchants ");
+		
+		ArrayList<Merchant> fss = new ArrayList<Merchant>();
+		String sql = null;
+		
+		sql = "select DISTINCT m.ACTIVATE_DATE,m.BUSINESS_NAME AS MerchantName ,m.STATUS ,m.CITY, "
+				+ "mi.UM_MOTO_MID,md.AMOUNT "
+				+ "from MERCHANT m INNER JOIN MID mi on m.MID_FK=mi.ID "
+				+ "INNER JOIN MOBIVERSA_MDR md ON md.MID = mi.UM_MOTO_MID "
+				+ "where md.PAY_LATER = 'Yes' and m.STATUS = 'ACTIVE' "
+				+ "order by m.ACTIVATE_DATE desc";
+	
+	
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		Merchant fs = new Merchant();
+		String rd = null;
+		if(rec[0]!=null) {
+				try {
+					rd = new SimpleDateFormat("dd-MMM-yyyy")
+							.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.parse(rec[0].toString()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+
+			fs.setCreatedBy(rd); //activation date
+		}
+		if(rec[1]!=null) {
+			fs.setBusinessName(rec[1].toString());
+		}
+		if(rec[2]!=null) {
+			fs.setState(rec[2].toString()); //status
+		}
+		if(rec[3]!=null) {
+			fs.setCity(rec[3].toString());
+		}else {
+			fs.setCity("");
+		}
+		if(rec[4]!=null) { 
+			fs.setReferralId(rec[4].toString()); //mid
+		}
+		if(rec[5]!=null) {
+			fs.setMdr(rec[5].toString());
+		}
+
+		fss.add(fs);
+	}
+	
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void searchPayLaterMerchants(
+			final PaginationBean<Merchant> paginationBean,String date, String date1) {
+		logger.info("Inside searchPayLaterMerchants : " + date + "     " + date1);
+		String from = null;
+		String to = null;
+		String year1 = null;
+		String year2 = null;
+		
+		ArrayList<Merchant> fss = new ArrayList<Merchant>();
+		String sql = null;
+		
+		if ((date == null || date1 == null)
+				|| (date.equals("") || date1.equals(""))) {
+
+			Date dt = new Date();
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			from = dateFormat.format(dt);
+			String from1=from.substring(0, from.length() - 2);
+			from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+			logger.info("change date format:" + from);
+			
+			Date dt1 = new Date();
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			to = dateFormat1.format(dt1);
+			String to1=to.substring(0, to.length() - 2);
+			to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+			logger.info("date format:" + to);
+
+		} else {
+
+			from = date;
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				from = dateFormat.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(from));
+				logger.info("date format:" + date);
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+			to = date1;
+			SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+			try {
+				to = dateFormat1.format(new SimpleDateFormat("dd/MM/yyyy")
+						.parse(to));
+			} catch (ParseException e) {
+
+				e.printStackTrace();
+			}
+
+		}
+
+		logger.info("checkd date: "+from+" : "+to);
+		
+		sql = "select DISTINCT m.ACTIVATE_DATE,m.BUSINESS_NAME AS MerchantName ,m.STATUS ,m.CITY, "
+				+ "mi.UM_MOTO_MID,md.AMOUNT "
+				+ "from MERCHANT m INNER JOIN MID mi on m.MID_FK=mi.ID "
+				+ "INNER JOIN MOBIVERSA_MDR md ON md.MID = mi.UM_MOTO_MID "
+				+ "where md.PAY_LATER = 'Yes' and m.STATUS = 'ACTIVE' and m.ACTIVATE_DATE between :from and :to  "
+				+ "order by m.ACTIVATE_DATE desc";
+	
+	
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	sqlQuery.setString("from", from);
+	sqlQuery.setString("to", to);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		Merchant fs = new Merchant();
+		String rd = null;
+		if(rec[0]!=null) {
+				try {
+					rd = new SimpleDateFormat("dd-MMM-yyyy")
+							.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.parse(rec[0].toString()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+
+			fs.setCreatedBy(rd); //activation date
+		}
+		if(rec[1]!=null) {
+			fs.setBusinessName(rec[1].toString());
+		}
+		if(rec[2]!=null) {
+			fs.setState(rec[2].toString()); //status
+		}
+		if(rec[3]!=null) {
+			fs.setCity(rec[3].toString());
+		}else {
+			fs.setCity("");
+		}
+		if(rec[4]!=null) { 
+			fs.setReferralId(rec[4].toString()); //mid
+		}
+		if(rec[5]!=null) {
+			fs.setMdr(rec[5].toString());
+		}
+
+		fss.add(fs);
+	}
+	
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void listMerchantDetails(final PaginationBean<Merchant> paginationBean) {
+		logger.info("listMerchantDetails ");
+		String sql = null;
+		ArrayList<Merchant> fss = new ArrayList<Merchant>();
+		
+		sql = "select  m.ACTIVATE_DATE,m.BUSINESS_NAME AS MerchantName,m.STATUS,m.ID,ag.FIRST_NAME "
+				+ "from MERCHANT m INNER JOIN AGENT ag ON ag.ID = m.AGID_FK "				
+				+ "where m.STATUS = 'ACTIVE' order by m.ACTIVATE_DATE desc";
+				
+	
+	
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		Merchant fs = new Merchant();
+		String rd = null;
+		if(rec[0]!=null) {
+				try {
+					rd = new SimpleDateFormat("dd-MMM-yyyy")
+							.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.parse(rec[0].toString()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+
+			fs.setCreatedBy(rd); //activation date
+		}
+		if(rec[1]!=null) {
+			fs.setBusinessName(rec[1].toString());
+		}
+		if(rec[2]!=null) {
+			fs.setState(rec[2].toString()); //status
+		}
+		if(rec[3]!=null) {
+			fs.setApproved(rec[3].toString()); //Id
+		}
+		if(rec[4]!=null) {
+			fs.setOwnerName(rec[4].toString()); 
+		}
+		
+		fss.add(fs);
+	}
+	
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void listMerchantGPVDetails(final PaginationBean<Merchant> paginationBean) {
+		logger.info("listMerchantDetails ");
+		String sql = null;
+		ArrayList<Merchant> fss = new ArrayList<Merchant>();
+		String from = null;
+		String to = null;
+		 Calendar cal = Calendar.getInstance();
+		 cal.add(Calendar.YEAR, 0);
+		 cal.add(Calendar.MONTH, -1);
+		 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMinimum(Calendar.DAY_OF_MONTH));
+		 Date date = cal.getTime(); 
+		 SimpleDateFormat fromFormat = new SimpleDateFormat("yyyy-MM-dd");
+		 from= fromFormat.format(date);
+		 
+		 Calendar cal1 = Calendar.getInstance();
+	     cal1.add(Calendar.YEAR, 0);
+	     cal1.add(Calendar.MONTH, -1);  
+	     cal1.set(Calendar.DAY_OF_MONTH, cal1.getActualMaximum(Calendar.DAY_OF_MONTH));
+	     Date date1 = cal1.getTime(); 
+		 SimpleDateFormat toFormat = new SimpleDateFormat("yyyy-MM-dd");
+		 to= toFormat.format(date1);
+
+		sql = "select  m.ACTIVATE_DATE,t.MERCHANT_NAME,m.STATUS,t.MERCHANT_ID,t.AGENT_NAME, "
+				+ "sum(t.AMOUNT) from TRANSACTION_SUMMARY t "
+				+ "INNER JOIN MERCHANT m ON m.ID = t.MERCHANT_ID "				
+				+ "where m.STATUS = 'ACTIVE' AND t.TXN_DATE BETWEEN :from and :to group by t.MERCHANT_ID order by t.TIME_STAMP desc";
+
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	sqlQuery.setString("from", from);
+	sqlQuery.setString("to", to);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		Merchant fs = new Merchant();
+		String rd = null;
+		if(rec[0]!=null) {
+				try {
+					rd = new SimpleDateFormat("dd-MMM-yyyy")
+							.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.parse(rec[0].toString()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+
+			fs.setCreatedBy(rd); //activation date
+		}
+		
+		logger.info("Activation date : " + fs.getCreatedBy());
+		if(rec[1]!=null) {
+			logger.info("Business name : ");
+			fs.setBusinessName(rec[1].toString());
+		}else {
+			fs.setBusinessName("");
+		}
+		if(rec[2]!=null) {
+			fs.setState(rec[2].toString()); //status
+		}
+		if(rec[3]!=null) {
+			fs.setApproved(rec[3].toString()); //Id
+		}
+		if(rec[4]!=null) {
+			fs.setOwnerName(rec[4].toString()); 
+		}
+		if(rec[5]!=null) {
+			Double d = new Double(rec[5].toString());
+			d = d / 100;
+			String pattern = "###0.00";
+			DecimalFormat myFormatter = new DecimalFormat(pattern);
+			String Txn = myFormatter.format(d);
+			fs.setAutoSettled(Txn);
+		}
+		
+		fss.add(fs);
+	}
+	
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void loadTerminalDetails(StringBuffer midStr,PaginationBean<TerminalDetails> paginationBean) {
+		logger.info("listMerchantDetails ");
+		String sql = null;
+		
+		
+		ArrayList<TerminalDetails> fss = new ArrayList<TerminalDetails>();
+		
+		sql = "SELECT t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID "
+				+ "FROM TERMINAL_DETAILS t WHERE t.MERCHANT_ID IN ("+midStr+")";
+
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		TerminalDetails term = new TerminalDetails();
+		if(rec[0]!=null) {
+				
+			term.setDeviceType(rec[0].toString()); 
+		}
+		if(rec[1]!=null) {
+			term.setTid(rec[1].toString());
+		}
+		if(rec[2]!=null) {
+			term.setConnectType(rec[2].toString()); //activation date
+		}
+		if(rec[3]!=null) {
+			term.setActiveStatus(rec[3].toString()); //suspension date
+		}
+		if(rec[4]!=null) {
+			term.setMerchantId(rec[4].toString());
+		}
+			
+		
+		fss.add(term);
+	}
+	
+
+	
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	@Override
+	public List<String> getProductDetails(StringBuffer midStr) {
+
+		String sql = null;
+		List<String> productType = new ArrayList<String>();
+		productType.add("ALL");
+			
+			sql="SELECT DISTINCT t.DEVICE_TYPE FROM TERMINAL_DETAILS t "
+					+ "WHERE t.DEVICE_TYPE IS NOT NULL AND t.MERCHANT_ID IN ("+midStr+")";
+			
+
+		logger.info("Query : " + sql);
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);		
+		@SuppressWarnings("unchecked")
+		List<String> resultSet = sqlQuery.list();
+		logger.info("Size ---: " + resultSet.size());
+
+		for (String rec : resultSet) {
+
+			if(rec!=null){
+			
+			productType.add(rec);
+			}
+			
+		}
+		return productType;
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void loadCurrentTxnDetails(Merchant merchant, PaginationBean<TerminalDetails> paginationBean,String agentName) {
+		logger.info("listMerchantDetails ");
+		String sql = null;
+		String totalTxn=null;
+		//String mid = merchant.getMid().getMid();
+		
+		List<String> midList = new ArrayList<String>();
+		String mid=null,motoMid=null,ezypassMid=null,ezywayMid=null,
+				ezyrecMid=null,gPayMid=null,umMid=null,umEzyway=null,umEzymoto=null;
+		if(merchant.getMid().getMid()!=null) {
+			mid=merchant.getMid().getMid();
+			midList.add(mid);
+		}else if(merchant.getMid().getMotoMid()!=null) {
+			motoMid=merchant.getMid().getMotoMid();
+			midList.add(motoMid);
+		}else if(merchant.getMid().getEzypassMid()!=null) {
+			ezypassMid=merchant.getMid().getEzypassMid();
+			midList.add(ezypassMid);
+		}else if(merchant.getMid().getEzyrecMid()!=null) {
+			ezyrecMid=merchant.getMid().getEzyrecMid();
+			midList.add(ezyrecMid);
+		}else if(merchant.getMid().getEzywayMid()!=null) {
+			ezywayMid=merchant.getMid().getEzywayMid();
+			midList.add(ezywayMid);
+		}
+		else if(merchant.getMid().getGpayMid()!=null) {
+			gPayMid=merchant.getMid().getGpayMid();
+			midList.add(gPayMid);
+		}
+		else if(merchant.getMid().getUmMid()!=null){
+			umMid=merchant.getMid().getUmMid();
+			midList.add(umMid);
+		}
+		else if(merchant.getMid().getUmEzywayMid()!=null){
+			umEzyway=merchant.getMid().getUmEzywayMid();
+			midList.add(umEzyway);
+		}
+		else if(merchant.getMid().getUmMotoMid()!=null){
+			umEzymoto=merchant.getMid().getUmMotoMid();
+			midList.add(umEzymoto);
+		}
+		
+		StringBuffer midStr = new StringBuffer();
+		int u =0;
+	    for(String strMid : midList) {
+	    	
+	    	if(u == 0) {
+	    		midStr.append("\"");
+	    		midStr.append(strMid);
+	    		midStr.append("\"");
+    			u++;
+	    	}else {		    	
+	    		midStr.append(",\"");
+	    		midStr.append(strMid);
+	    		midStr.append("\"");
+	    	}
+	    }
+	    logger.info("String of MIDs:  "+midStr);
+		
+		ArrayList<TerminalDetails> fss = new ArrayList<TerminalDetails>();
+		String from = null;
+		String to = null;
+		String year1 = null;
+		String year2 = null;
+		Date dt = new Date();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		from = dateFormat.format(dt);
+		String from1=from.substring(0, from.length() - 2);
+		from=from1+String.format("%02d", -1+Integer.valueOf(from.substring(8,10)));
+		logger.info("change date format:" + from);
+		
+		Date dt1 = new Date();
+		SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+		to = dateFormat1.format(dt1);
+		String to1=to.substring(0, to.length() - 2);
+		to=to1+String.format("%02d", 1+Integer.valueOf(to.substring(8,10)));
+		logger.info("date format:" + to);
+		
+		if((merchant.getMerchantType() == null) || (merchant.getMerchantType().equals("P"))) {
+			
+			/*sql = "SELECT count(*),sum(a.AMOUNT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(a.TIME_STAMP) "
+					+ "FROM TERMINAL_DETAILS t INNER JOIN MID m "
+					+ "ON t.MERCHANT_ID = m.MID "
+					+ "INNER JOIN FOR_SETTLEMENT a ON a.MID=m.MID or a.MID=m.MOTO_MID or "
+					+ "a.MID=m.EZYPASS_MID or a.MID=m.EZYWAY_MID or a.MID=m.EZYREC_MID or a.MID=m.UM_MID "
+					+ "WHERE t.MERCHANT_ID IN ("+midStr+") AND a.TIME_STAMP BETWEEN :from AND :to "
+					+ "order by a.TIME_STAMP desc";*/
+			
+			sql ="SELECT count(*),sum(f.AMOUNT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(f.TIME_STAMP),'"+agentName+"' "
+				+" FROM  mobiversa.FOR_SETTLEMENT f , mobiversa.TERMINAL_DETAILS t WHERE "
+				+ " t.MERCHANT_ID= f.MID AND f.MID IN ("+midStr+") AND f.TIME_STAMP BETWEEN "
+				+ ":from AND :to group by f.MID order by f.TIME_STAMP desc ";
+		}
+		
+		else if ((merchant.getMerchantType() != null) || (merchant.getMerchantType().equals("U"))) {
+			
+			/*sql = "SELECT count(*),sum(a.F007_TXNAMT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(a.TIME_STAMP) "
+					+ "FROM TERMINAL_DETAILS t INNER JOIN MID m "
+					+ "ON t.MERCHANT_ID = m.MID "
+					+ "INNER JOIN UM_ECOM_TXNRESPONSE a ON a.F001_MID =m.UM_MOTO_MID or a.F001_MID =m.UM_EZYWAY_MID "
+					+ "WHERE t.MERCHANT_ID IN ("+midStr+") AND a.TIME_STAMP BETWEEN :from AND :to "
+					+ "order by a.TIME_STAMP desc";*/
+			
+			sql ="SELECT count(*),sum(f.F007_TXNAMT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(f.TIME_STAMP),'"+agentName+"' "
+					+ "FROM  mobiversa.UM_ECOM_TXNRESPONSE f , mobiversa.TERMINAL_DETAILS t WHERE "
+					+ " t.MERCHANT_ID= f.F001_MID AND f.F001_MID IN ("+midStr+") AND f.TIME_STAMP BETWEEN "
+					+ ":from AND :to group by f.F001_MID order by f.TIME_STAMP desc ";
+			
+		}
+		
+		
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	sqlQuery.setString("from", from);
+	sqlQuery.setString("to", to);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		logger.info("records in the List : " + rec[0]);
+		logger.info("records String : " + rec[0].toString());
+		TerminalDetails term = new TerminalDetails();
+		
+		int a = Integer.parseInt(rec[0].toString());
+		
+		if(a == 0){
+			totalTxn = "0.00";
+		}else{
+			Double d = new Double(rec[1].toString());
+			d = d / 100;
+			String pattern = "###0.00";
+			DecimalFormat myFormatter = new DecimalFormat(pattern);
+			totalTxn = myFormatter.format(d);
+		}
+		
+		
+		if(rec[2]!=null) {
+				
+			term.setDeviceType(rec[2].toString()); 
+		}
+		if(rec[3]!=null) {
+			term.setTid(rec[3].toString());
+		}
+		if(rec[4]!=null) {
+			term.setConnectType(rec[4].toString()); //activation date
+		}
+		if(rec[5]!=null) {
+			term.setActiveStatus(rec[5].toString()); //suspension date
+		}
+		
+		if((rec[6]!=null) && (totalTxn !=null)) {	
+			term.setMerchantId(rec[6].toString());
+			term.setRemarks(totalTxn);
+		}
+		if(rec[7]!=null) {	
+			term.setKeyStatus(rec[7].toString());
+		}
+		if(rec[8]!=null) {	
+			term.setContactName(rec[8].toString());
+		}
+			
+		
+		fss.add(term);
+	}
+
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void searchTxnDetails(Merchant merchant, PaginationBean<TerminalDetails> paginationBean,
+			String period,String productType,String year) {
+		logger.info("listMerchantDetails ");
+		String sql = null;
+		String totalTxn=null;
+		//String mid = merchant.getMid().getMid();
+		
+		List<String> midList = new ArrayList<String>();
+		String mid=null,motoMid=null,ezypassMid=null,ezywayMid=null,
+				ezyrecMid=null,gPayMid=null,umMid=null,umEzyway=null,umEzymoto=null;
+		if(merchant.getMid().getMid()!=null) {
+			mid=merchant.getMid().getMid();
+			midList.add(mid);
+		}else if(merchant.getMid().getMotoMid()!=null) {
+			motoMid=merchant.getMid().getMotoMid();
+			midList.add(motoMid);
+		}else if(merchant.getMid().getEzypassMid()!=null) {
+			ezypassMid=merchant.getMid().getEzypassMid();
+			midList.add(ezypassMid);
+		}else if(merchant.getMid().getEzyrecMid()!=null) {
+			ezyrecMid=merchant.getMid().getEzyrecMid();
+			midList.add(ezyrecMid);
+		}else if(merchant.getMid().getEzywayMid()!=null) {
+			ezywayMid=merchant.getMid().getEzywayMid();
+			midList.add(ezywayMid);
+		}
+		else if(merchant.getMid().getGpayMid()!=null) {
+			gPayMid=merchant.getMid().getGpayMid();
+			midList.add(gPayMid);
+		}
+		else if(merchant.getMid().getUmMid()!=null){
+			umMid=merchant.getMid().getUmMid();
+			midList.add(umMid);
+		}
+		else if(merchant.getMid().getUmEzywayMid()!=null){
+			umEzyway=merchant.getMid().getUmEzywayMid();
+			midList.add(umEzyway);
+		}
+		else if(merchant.getMid().getUmMotoMid()!=null){
+			umEzymoto=merchant.getMid().getUmMotoMid();
+			midList.add(umEzymoto);
+		}
+		
+		StringBuffer midStr = new StringBuffer();
+		int u =0;
+	    for(String strMid : midList) {
+	    	
+	    	if(u == 0) {
+	    		midStr.append("\"");
+	    		midStr.append(strMid);
+	    		midStr.append("\"");
+    			u++;
+	    	}else {		    	
+	    		midStr.append(",\"");
+	    		midStr.append(strMid);
+	    		midStr.append("\"");
+	    	}
+	    }
+	    logger.info("String of MIDs:  "+midStr);
+		int quarter = 0;
+		if(period.equals("Q1")) {
+			
+			//startDate = year+"-"+"01-01";
+			quarter = 1;
+			
+		}else if(period.equals("Q2")){
+			quarter = 2;
+			
+		}else if(period.equals("Q3")){
+			quarter = 3;
+			
+		}else if(period.equals("Q4")){
+			quarter = 4;
+		}
+		
+		ArrayList<TerminalDetails> fss = new ArrayList<TerminalDetails>();
+		logger.info("quarter:: "+quarter);
+		logger.info("productType:: "+productType);
+		
+		if((merchant.getMerchantType() == null) || (merchant.getMerchantType().equals("P"))) {
+			
+			if(productType.equals("ALL")) {
+				logger.info("productType ALL Txn");
+				/*sql = "SELECT count(*),sum(a.AMOUNT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(a.TIME_STAMP) "
+						+ "FROM TERMINAL_DETAILS t INNER JOIN MID m "
+						+ "ON t.MERCHANT_ID = m.MID "
+						+ "INNER JOIN FOR_SETTLEMENT a ON a.MID=m.MID or a.MID=m.MOTO_MID or "
+						+ "a.MID=m.EZYPASS_MID or a.MID=m.EZYWAY_MID or a.MID=m.EZYREC_MID or a.MID=m.UM_MID "
+						+ "WHERE  QUARTER(a.TIME_STAMP)=:quarter AND YEAR(a.TIME_STAMP) =:year AND "
+						+ "t.MERCHANT_ID IN ("+midStr+") "
+						+ "GROUP BY MONTH(a.TIME_STAMP)";*/
+				
+				sql ="SELECT count(*),sum(f.AMOUNT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(f.TIME_STAMP) "
+						+ "FROM  mobiversa.FOR_SETTLEMENT f , mobiversa.TERMINAL_DETAILS t WHERE "
+						+ "t.MERCHANT_ID= f.MID AND f.MID IN ("+midStr+") AND QUARTER(f.TIME_STAMP)=:quarter AND YEAR(f.TIME_STAMP) =:year "
+						+ "group by f.MID order by f.TIME_STAMP desc ";
+				
+			}else {
+			
+			/*sql = "SELECT count(*),sum(a.AMOUNT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(a.TIME_STAMP) "
+					+ "FROM TERMINAL_DETAILS t INNER JOIN MID m "
+					+ "ON t.MERCHANT_ID = m.MID "
+					+ "INNER JOIN FOR_SETTLEMENT a ON a.MID=m.MID or a.MID=m.MOTO_MID or "
+					+ "a.MID=m.EZYPASS_MID or a.MID=m.EZYWAY_MID or a.MID=m.EZYREC_MID or a.MID=m.UM_MID "
+					+ "WHERE  QUARTER(a.TIME_STAMP)=:quarter AND YEAR(a.TIME_STAMP) =:year AND "
+					+ "t.MERCHANT_ID IN ("+midStr+")  AND  t.DEVICE_TYPE ='"+productType +"' "
+					+ "GROUP BY MONTH(a.TIME_STAMP)";*/
+			
+			sql ="SELECT count(*),sum(f.AMOUNT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(f.TIME_STAMP) "
+					+ "FROM  mobiversa.FOR_SETTLEMENT f , mobiversa.TERMINAL_DETAILS t WHERE "
+					+ "t.MERCHANT_ID= f.MID AND f.MID IN ("+midStr+") AND QUARTER(f.TIME_STAMP)=:quarter AND YEAR(f.TIME_STAMP) =:year "
+					+ "AND  t.DEVICE_TYPE ='"+productType +"' group by f.MID order by f.TIME_STAMP desc ";
+			}
+		}
+		
+		else if ((merchant.getMerchantType() != null) || (merchant.getMerchantType().equals("U"))) {
+			
+			if(productType.equals("ALL")) {
+				logger.info("productType ALL Txn");
+				
+				/*sql = "SELECT count(*),sum(a.F007_TXNAMT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(a.TIME_STAMP) "
+						+ "FROM TERMINAL_DETAILS t INNER JOIN MID m "
+						+ "ON t.MERCHANT_ID = m.MID "
+						+ "INNER JOIN UM_ECOM_TXNRESPONSE a ON a.F001_MID =m.UM_MOTO_MID or a.F001_MID =m.UM_EZYWAY_MID "
+						+ "WHERE  QUARTER(a.TIME_STAMP)=:quarter AND YEAR(a.TIME_STAMP) =:year AND "
+						+ "t.MERCHANT_ID IN ("+midStr+") "
+						+ "GROUP BY MONTH(a.TIME_STAMP)";*/
+				
+				sql ="SELECT count(*),sum(f.F007_TXNAMT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(f.TIME_STAMP) "
+						+ "FROM  mobiversa.UM_ECOM_TXNRESPONSE f , mobiversa.TERMINAL_DETAILS t WHERE "
+						+ " t.MERCHANT_ID= f.F001_MID AND f.F001_MID IN ("+midStr+") AND QUARTER(f.TIME_STAMP)=:quarter AND YEAR(f.TIME_STAMP) =:year "
+						+ "group by f.F001_MID order by f.TIME_STAMP desc ";
+				
+			}else {
+				
+			/*sql = "SELECT count(*),sum(a.F007_TXNAMT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(a.TIME_STAMP) "
+					+ "FROM TERMINAL_DETAILS t INNER JOIN MID m "
+					+ "ON t.MERCHANT_ID = m.MID "
+					+ "INNER JOIN UM_ECOM_TXNRESPONSE a ON a.F001_MID =m.UM_MOTO_MID or a.F001_MID =m.UM_EZYWAY_MID "
+					+ "WHERE  QUARTER(a.TIME_STAMP)=:quarter AND YEAR(a.TIME_STAMP) =:year AND "
+					+ "t.MERCHANT_ID IN ("+midStr+")  AND t.DEVICE_TYPE ='"+productType +"' "
+					+ "GROUP BY MONTH(a.TIME_STAMP)";*/
+			
+			sql ="SELECT count(*),sum(f.F007_TXNAMT),t.DEVICE_TYPE,t.TID,t.ACTIVATED_DATE,t.SUSPENDED_DATE,t.MERCHANT_ID,MONTHNAME(f.TIME_STAMP) "
+					+ "FROM  mobiversa.UM_ECOM_TXNRESPONSE f , mobiversa.TERMINAL_DETAILS t WHERE "
+					+ "t.MERCHANT_ID= f.F001_MID AND f.F001_MID IN ("+midStr+") AND QUARTER(f.TIME_STAMP)=:quarter AND YEAR(f.TIME_STAMP) =:year "
+					+ "AND t.DEVICE_TYPE ='"+productType +"' group by f.F001_MID order by f.TIME_STAMP desc ";
+			}
+		}
+		
+		
+	logger.info("Query : " + sql);
+	Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);
+	sqlQuery.setLong("quarter", quarter);
+	sqlQuery.setString("year", year);
+	@SuppressWarnings("unchecked")
+	List<Object[]> resultSet = sqlQuery.list();
+	logger.info("Number of records in the List : " + resultSet.size());
+	for (Object[] rec : resultSet) {
+		TerminalDetails term = new TerminalDetails();
+		
+		int a = Integer.parseInt(rec[0].toString());
+		
+		if(a == 0){
+			totalTxn = "0.00";
+		}else{
+			Double d = new Double(rec[1].toString());
+			d = d / 100;
+			String pattern = "###0.00";
+			DecimalFormat myFormatter = new DecimalFormat(pattern);
+			totalTxn = myFormatter.format(d);
+		}
+		
+		
+		if(rec[2]!=null) {
+				
+			term.setDeviceType(rec[2].toString()); 
+		}
+		if(rec[3]!=null) {
+			term.setTid(rec[3].toString());
+		}
+		if(rec[4]!=null) {
+			term.setConnectType(rec[4].toString()); //activation date
+		}
+		if(rec[5]!=null) {
+			term.setActiveStatus(rec[5].toString()); //suspension date
+		}
+		if((rec[6]!=null) && (totalTxn !=null)) {	
+			term.setMerchantId(rec[6].toString());
+			term.setRemarks(totalTxn);
+			
+		}
+		if(rec[7]!=null) {	
+			term.setKeyStatus(rec[7].toString());
+		}
+		fss.add(term);
+	}
+
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public void getMerchantGPV(StringBuffer midList,final PaginationBean<Merchant> paginationBean) {
+		logger.info("getMerchantGPV ");
+		String sql = null;
+		ArrayList<Merchant> fss = new ArrayList<Merchant>();
+		String totalTxn = "";
+		Double totalSum=0.0;
+		String totalTxn1 = null,totalTxn2 = null,totalTxn3 = null;
+		
+		sql = "select count(*),sum(a.AMOUNT)  "
+			+"from FOR_SETTLEMENT a where a.MID IN ("+ midList +") "
+			+"a.TIME_STAMP desc";
+		
+		Query sqlQuery1 = super.getSessionFactory().createQuery(sql);
+		@SuppressWarnings("unchecked")
+		List<Object[]> resultSet1 = sqlQuery1.list();
+		
+		for (Object[] rec : resultSet1) {
+			
+			int a = Integer.parseInt(rec[0].toString());
+			if(a == 0){
+				totalTxn1 = "0.00";
+			}else{
+				Double d = new Double(rec[1].toString());
+				d = d / 100;
+				String pattern = "###0.00";
+				DecimalFormat myFormatter = new DecimalFormat(pattern);
+				totalTxn1 = myFormatter.format(d);
+			}
+		}
+		
+		if((totalTxn1!=null) && (!(totalTxn1.isEmpty()))) {
+			totalSum=totalSum+ Double.parseDouble(totalTxn1);
+		}
+			
+		
+		 String sql2 = "select count(*),sum(u.F007_TXNAMT) "
+				+"from UM_ECOM_TXNRESPONSE u where u.F001_MID IN ("+ midList +") "
+				+"u.TIME_STAMP desc";
+				
+		
+	
+		 logger.info("Query2 : " + sql2);
+			Query sqlQuery2 = super.getSessionFactory().createQuery(sql2);
+			
+			@SuppressWarnings("unchecked")
+			List<Object[]> resultSet2 = sqlQuery2.list();
+			
+			for (Object[] rec : resultSet2) {
+				//totalTxn = rec[1].toString();
+				int a = Integer.parseInt(rec[0].toString());
+				if(a == 0){
+					totalTxn2 = "0.00";
+				}else{
+					Double d = new Double(rec[1].toString());
+					d = d / 100;
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					totalTxn2 = myFormatter.format(d);
+				}
+			}
+			
+			if((totalTxn2!=null) && (!(totalTxn2.isEmpty()))) {
+				totalSum=totalSum+Double.parseDouble(totalTxn2);
+			}
+			
+			totalTxn=String.valueOf(totalSum);
+			
+			logger.info("totalTxn : " + totalTxn);
+	
+	paginationBean.setItemList(fss);
+	logger.info("No of Records: "+paginationBean.getItemList().size());
+	
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Merchant validateMerchantEmailId(String emailId) {
+		logger.info("validateMerchantEmailId ");
+		
+		
+		/*sql="SELECT EXISTS(SELECT * from mobiversa.merchant m "
+				+ "WHERE m.EMAIL='"+emailId+"')";*/
+		
+		return (Merchant) getSessionFactory().createCriteria(Merchant.class).add(Restrictions.eq("email", emailId))
+				.setMaxResults(1).uniqueResult();
+		
+	}
+	
+	@Override
+	public List<MerchantGPVData> listMerchantGPVDetailsByAgent(String agentID) {
+
+		String sql = null;
+		int cDate = 0;
+		Date dt = new Date();
+		cDate = dt.getMonth() + 1;
+		System.out.println("cDate: "+cDate);
+		List<Integer> listMonth = getAllMonth(cDate);
+		List<MerchantGPVData> fss = new ArrayList<MerchantGPVData>();
+
+		sql="select MONTH(t.TXN_DATE),t.MERCHANT_NAME,t.MERCHANT_ID,t.AGENT_NAME,t.PRODUCT_TYPE, "  
+				+"sum(t.AMOUNT),t.HOST_TYPE from TRANSACTION_SUMMARY t "  
+				+"INNER JOIN MERCHANT m ON m.ID = t.MERCHANT_ID "  
+				+"INNER JOIN AGENT ag ON ag.ID = m.AGID_FK "  
+				+"WHERE ag.ID = "+ agentID +" AND  t.TXN_DATE between DATE_SUB(now(), INTERVAL 4 MONTH)  AND now() " 
+				+"AND m.STATUS = 'ACTIVE'  group BY t.PRODUCT_TYPE,MONTH(t.TXN_DATE), " 
+				+"t.MERCHANT_ID ORDER BY t.MERCHANT_ID,MONTH(t.TXN_DATE) ";
+	
+		logger.info("Query : " + sql);
+
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);// .addEntity(ForSettlement.class);
+		//sqlQuery.setString("agentID", agentID);
+		@SuppressWarnings("unchecked")
+		List<Object[]> resultSet = sqlQuery.list();
+		logger.info("Number of records in the List : " + resultSet.size());
+		for (Object[] rec : resultSet) {
+			MerchantGPVData fs = new MerchantGPVData();
+			
+			if(rec[0]!=null) {
+					
+
+				fs.setMonthName(rec[0].toString()); //activation date
+			}
+			
+			logger.info("Month : " + fs.getMonthName());
+			if(rec[1]!=null) {
+				logger.info("Business name : ");
+				fs.setMerchantName(rec[1].toString());
+			}else {
+				fs.setMerchantName("");
+			}
+			if(rec[2]!=null) {
+				fs.setMerchantId(rec[2].toString()); //merchant id
+			}
+			if(rec[3]!=null) {
+				fs.setAgentName(rec[3].toString()); //AgentName
+			}
+			/*if(rec[4]!=null) {
+				fs.setPermiseType(rec[4].toString()); // productType
+			}*/
+			if(rec[5]!=null) {
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYMOTO"))) {
+				fs.setIsEzymoto(rec[4].toString()); 
+				Double d = new Double(rec[5].toString());
+				d = d / 100;
+				
+				logger.info("Amount : "+d);
+				String pattern = "#,##0.00";
+				DecimalFormat myFormatter = new DecimalFormat(pattern);
+				String Txn = myFormatter.format(d);
+				logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+				fs.setEzymotoAmt(Txn);
+				}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYWIRE"))) {
+					fs.setIsEzywire(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzywireAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYWAY"))) {
+					fs.setIsEzyway(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzywayAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYLINK"))) {
+					fs.setIsEzylink(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzylinkAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYREC"))) {
+					fs.setIsEzyrec(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzyrecAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYMOTO-VCC"))) {
+					fs.setIsEzymotoVcc(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzymotoVccAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("RECURRING"))) {
+					fs.setIsRecurring(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setRecurringAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("RECPLUS"))) {
+					fs.setIsRecplus(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setRecplusAmt(Txn);
+					}
+				
+				if(rec[6]!=null) {
+					fs.setMerchantType(rec[6].toString()); //AgentName
+				}else {
+					fs.setMerchantType("P");
+				}
+				
+				
+			}
+			
+			fss.add(fs);
+		}
+		return fss;
+ }
+	
+	private static List<Integer> getAllMonth(int month) {
+		System.out.println("month debug... "+month);
+		List<Integer> listMonth = new ArrayList<Integer>();
+		for (int i = 0; i <4 ; i++) {
+			if (month == 0) {
+				System.out.println("debug 0");
+				listMonth.add(12);
+			} else if (month == -1) {
+				System.out.println("debug -1");
+				listMonth.add(11);
+			} else if (month == -2) {
+				System.out.println("debug -2");
+				listMonth.add(10);
+			} else {
+				System.out.println("debug else ");
+				listMonth.add(month);
+			}
+			month--;
+		}
+		return listMonth;
+	}
+	
+	@Override
+	public List<MerchantGPVData> listMerchantGPVDetailsBySuperAgent() {
+
+		String sql = null;
+		int cDate = 0;
+		Date dt = new Date();
+		cDate = dt.getMonth() + 1;
+		
+		System.out.println("cDate: "+cDate);
+		
+		List<Integer> listMonth = getAllMonth(cDate);
+		List<MerchantGPVData> fss = new ArrayList<MerchantGPVData>();
+
+		sql="select MONTH(t.TXN_DATE),t.MERCHANT_NAME,t.MERCHANT_ID,t.AGENT_NAME,t.PRODUCT_TYPE, "  
+				+"sum(t.AMOUNT),t.HOST_TYPE from TRANSACTION_SUMMARY t "  
+				+"INNER JOIN MERCHANT m ON m.ID = t.MERCHANT_ID "  
+				+"INNER JOIN AGENT ag ON ag.ID = m.AGID_FK "  
+				+"WHERE t.TXN_DATE between DATE_SUB(now(), INTERVAL 3 MONTH)  AND now() " 
+				+"AND m.STATUS = 'ACTIVE'  group BY t.PRODUCT_TYPE, " 
+				+"t.MERCHANT_ID,MONTH(t.TXN_DATE) ORDER BY t.MERCHANT_ID,MONTH(t.TXN_DATE) ";
+	
+		logger.info("Query : " + sql);
+
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);// .addEntity(ForSettlement.class);
+		//sqlQuery.setString("agentID", agentID);
+		@SuppressWarnings("unchecked")
+		List<Object[]> resultSet = sqlQuery.list();
+		logger.info("Number of records in the List : " + resultSet.size());
+		for (Object[] rec : resultSet) {
+			MerchantGPVData fs = new MerchantGPVData();
+			
+			if(rec[0]!=null) {
+					
+
+				fs.setMonthName(rec[0].toString()); //activation date
+			}
+			
+			logger.info("Month : " + fs.getMonthName());
+			if(rec[1]!=null) {
+				logger.info("Business name : ");
+				fs.setMerchantName(rec[1].toString());
+			}else {
+				fs.setMerchantName("");
+			}
+			if(rec[2]!=null) {
+				fs.setMerchantId(rec[2].toString()); //merchant id
+			}
+			if(rec[3]!=null) {
+				fs.setAgentName(rec[3].toString()); //AgentName
+			}
+			/*if(rec[4]!=null) {
+				fs.setPermiseType(rec[4].toString()); // productType
+			}*/
+			if(rec[5]!=null) {
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYMOTO"))) {
+				fs.setIsEzymoto(rec[4].toString()); 
+				Double d = new Double(rec[5].toString());
+				d = d / 100;
+				logger.info("Amount : "+d);
+				
+				String pattern = "#,##0.00";
+				DecimalFormat myFormatter = new DecimalFormat(pattern);
+				String Txn = myFormatter.format(d);
+				logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+				fs.setEzymotoAmt(Txn);
+				}
+				//as country
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYWAY"))) {
+					fs.setIsEzyway(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzywayAmt(Txn);
+					}
+				//as currency
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYLINK"))) {
+					fs.setIsEzylink(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzylinkAmt(Txn);
+					}
+				//as dateOfBirth
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYREC"))) {
+					fs.setIsEzyrec(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzyrecAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("RECURRING"))) {
+					fs.setIsRecurring(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "###0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setRecurringAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("RECPLUS"))) {
+					fs.setIsRecplus(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setRecplusAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYMOTO-VCC"))) {
+					fs.setIsEzymotoVcc(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzymotoVccAmt(Txn);
+					}
+				
+				if((rec[4]!=null) && (rec[4].toString().equals("EZYWIRE"))) {
+					fs.setIsEzywire(rec[4].toString()); 
+					Double d = new Double(rec[5].toString());
+					d = d / 100;
+					
+					logger.info("Amount : "+d);
+					String pattern = "#,##0.00";
+					DecimalFormat myFormatter = new DecimalFormat(pattern);
+					String Txn = myFormatter.format(d);
+					logger.info("Txn : "+Txn +"for::"+rec[4].toString());
+					fs.setEzywireAmt(Txn);
+					}
+				
+				if(rec[6]!=null) {
+					fs.setMerchantType(rec[6].toString()); //AgentName
+				}else {
+					fs.setMerchantType("P");
+				}
+				
+				
+								
+			}
+			
+			fss.add(fs);
+		}
+		return fss;
+ }
+	
+	
+	
+	@Override
+	@Transactional(readOnly = false)
+	public void listMerchantUserByMid(final PaginationBean<Merchant> paginationBean) 
+	{
+		logger.info("listMerchantUserByMid::");
+		
+		List<Merchant> fss = new ArrayList<Merchant>();
+		
+		String sql = null;
+		sql=" SELECT m.ACTIVATE_DATE,m.BUSINESS_NAME,m.STATUS,m.MODIFIED_DATE,m.CITY,m.AUTH_3DS, "
+				+ "mi.MID,mi.MOTO_MID,mi.EZYPASS_MID,mi.EZYREC_MID,mi.EZYWAY_MID, "
+				+ "mi.UM_MID,mi.UM_MOTO_MID,mi.UM_EZYWAY_MID,mi.UM_EZYREC_MID,m.ID,m.MERCHANT_TYPE from MERCHANT m "
+				+ "INNER JOIN MID mi ON m.ID = mi.MERCHANT_FK ORDER BY m.ACTIVATE_DATE desc";
+	
+		logger.info("Query : " + sql);
+		
+		
+		Query sqlQuery = super.getSessionFactory().createSQLQuery(sql);// .addEntity(ForSettlement.class);
+		
+		@SuppressWarnings("unchecked")
+		List<Object[]> resultSet = sqlQuery.list();
+		logger.info("Number of records in the List : " + resultSet.size());
+		for (Object[] rec : resultSet) {
+			Merchant fs = new Merchant();
+			MID mi = new MID();
+			
+			String rd = null;
+			if(rec[0]!=null) {
+				try {
+					rd = new SimpleDateFormat("dd-MMM-yyyy")
+							.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.parse(rec[0].toString()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				fs.setCreatedBy(rd);
+			}
+			
+			if(rec[1] != null) {
+				fs.setBusinessName(rec[1].toString());
+			}
+			
+			//status
+			if(rec[2] != null) {
+				fs.setState(rec[2].toString());
+			}
+			
+			String rd1 = null;
+			if(rec[3]!=null) {
+				try {
+					rd1 = new SimpleDateFormat("dd-MMM-yyyy")
+							.format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+									.parse(rec[3].toString()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				fs.setModifiedBy(rd1);
+			}else {
+				fs.setModifiedBy("");
+			}
+			
+			if(rec[4] != null) {
+				fs.setCity(rec[4].toString());
+			}else {
+				fs.setCity("");
+			}
+			
+			if(rec[5] != null) {
+				fs.setAuth3DS(rec[5].toString());
+			}
+			
+			if(rec[6] != null) {
+				mi.setMid(rec[6].toString());
+			}else {
+				mi.setMid("");				
+			}
+			
+			if(rec[7] != null) {
+				
+				
+					mi.setMotoMid(rec[7].toString());
+				
+				
+			}else {
+				mi.setMotoMid("");
+			
+			}
+			
+			if(rec[8] != null) {
+				mi.setEzypassMid(rec[8].toString());
+			}else {
+				mi.setEzypassMid("");				
+			}
+			
+			if(rec[9] != null) {
+				mi.setEzyrecMid(rec[9].toString());
+			}else {
+				mi.setEzyrecMid("");				
+			}
+			
+			if(rec[10] != null) {
+				mi.setEzywayMid(rec[10].toString());
+			}else {
+				mi.setEzywayMid("");				
+			}
+			
+			if(rec[11] != null) {
+				mi.setUmMid(rec[11].toString());
+			}else {
+				mi.setUmMid("");				
+			}
+			
+			if(rec[12] != null) {
+				
+					mi.setUmMotoMid(rec[12].toString());
+				}
+				
+			else {
+				mi.setUmMotoMid("");
+				
+			}
+			
+			if(rec[13] != null) {
+				mi.setUmEzywayMid(rec[13].toString());
+			}else {
+				mi.setUmEzywayMid("");				
+			}
+			
+			if(rec[14] != null) {
+				mi.setUmEzyrecMid(rec[14].toString());
+			}else {
+				mi.setUmEzyrecMid("");				
+			}
+			
+			if(rec[15] != null) {
+				
+				fs.setId(Long.valueOf(rec[15].toString()));
+			}
+			
+			fs.setMid(mi);
+			
+			if(rec[16] != null) {
+				
+				fs.setMerchantType(rec[16].toString());
+			}
+		
+		fss.add(fs);
+			
+		}
+		
+		logger.info("fss : " + fss);
+		paginationBean.setItemList(fss);
+		 	
+
+	}
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int updateTrackDetails( MobiliteTrackDetails det) {
+		logger.info("updateTrackDetails");
+		
+		Session session = sessionFactory.getCurrentSession();
+		
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		String time = timestamp.toString();  
+		
+		String sql= "update UMEcomTxnResponse set  trackNo = :trackNo , courierName = :courierName, sentDate= :sentDate, updatedDate= :time "
+				+ "where mobiLiteTid= :mobiLiteTid";
+	
+				
+		logger.info(" Query :"+sql);
+		
+		Query insertQuery = session.createQuery(sql);
+		insertQuery.setString("trackNo", det.getTrackNumber());
+		insertQuery.setString("courierName", det.getCourierName());
+		insertQuery.setString("sentDate", det.getSentDate());
+		insertQuery.setString("mobiLiteTid", det.getTid());
+		insertQuery.setString("time", time);
+		
+		
+		int a= insertQuery.executeUpdate();
+		
+		
+		return a;
+		
+	
+	}
+	
+	
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int updateStatusDetails( SettlementMDR det) {
+		logger.info("updateStatusDetails");
+		
+		Session session = sessionFactory.getCurrentSession();
+		
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		String time = timestamp.toString();  
+		
+		String sql= "update SettlementMDR set  status = :status "
+				+ "where rrn= :rrn";
+	
+				
+		logger.info(" Query :"+sql);
+		
+		Query insertQuery = session.createQuery(sql);
+		insertQuery.setString("status", det.getStatus());
+		insertQuery.setString("rrn", det.getRrn());
+		
+		
+		
+		int a= insertQuery.executeUpdate();
+		
+		
+		return a;
+		
+	
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = false)
+	public int updateEzylinkssTrackDetails( MobiliteTrackDetails det) {
+		logger.info("updateEzylinkssTrackDetails");
+		
+		Session session = sessionFactory.getCurrentSession();
+		
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		String time = timestamp.toString();  
+		
+		String sql= "update UMEcomTxnResponse set  trackNo = :trackNo , courierName = :courierName, sentDate= :sentDate, updatedDate= :time "
+				+ "where f263_MRN = :mrn";
+	
+				
+		logger.info(" Query :"+sql);
+		
+		Query insertQuery = session.createQuery(sql);
+		insertQuery.setString("trackNo", det.getTrackNumber());
+		insertQuery.setString("courierName", det.getCourierName());
+		insertQuery.setString("sentDate", det.getSentDate());
+		insertQuery.setString("mrn", det.getMrn());
+		insertQuery.setString("time", time);
+		
+		
+		int a= insertQuery.executeUpdate();
+		
+		
+		return a;
+		
+	
+	}
+	
+	
+	
+
+
+}

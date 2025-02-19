@@ -1,0 +1,160 @@
+body {
+    font-size: 14px;
+}
+.loginSec {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-position: right top;
+    background: rgba(255,255,255,1);
+}
+.loginSec::before {
+    content: "";
+   /*  background: url(../images/login-bg.jpg); */
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-size: cover;
+}
+.loginBox {
+    background: #fff;
+    padding: 60px 54px 44px;
+    border-radius: 12px;
+    margin-top: 80px;
+    max-width: 500px;
+}
+.btnLogin {
+    background-color: #005EA6;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 14px;
+    padding-block: 13px 20px 12px;
+}
+.btnLogin:hover, .btnLogin:focus, .btnLogin.active, .btnLogin:active {
+    background-color: #0d7dd3;
+}
+.link {
+    color: #005EA6;
+}
+.iconInputText {
+    position: relative;
+}
+.loginSec input.form-control {
+    padding-left: 16px;
+    border: 2px solid #005BAA;
+    border-radius: 4px;
+    height: 54px;
+    background: none;
+}
+.loginSec input.form-control:focus,
+.loginSec input.form-control:valid {
+    background: #fff;
+}
+.loginSec .form-group label {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #fff;
+    padding: 2px 8px;
+    color: #005BAA;
+}
+.captcha {
+    height: 54px;
+    background-color: #E0E0E0;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    display: flex;
+    font-size: 24px;
+    color: rgb(0 91 170 / 0.5);
+    font-weight: 600;
+    margin-right: 10px;
+}
+.refreshIc a img {
+    height: 54px;
+    width: 54px;
+}
+.form-control:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+.infoLbl {
+    color:#005BAA;
+    font-size: 12px;
+}
+.logoRight {
+    position: absolute;
+    right: 0;
+    top: 16px;
+}
+.logFooter {
+    position: absolute;
+    right: 15px;
+    left: 15px;
+    bottom: 10px;
+    color: #fff;
+}
+.logFooter a {
+    color: #fff;
+}
+.logFooter hr {
+    border-width: 3px;
+    border-color: rgba(255,255,255, 0.45);
+}
+
+@media screen and (max-width: 560px) {
+    .loginSec {
+        position: fixed;
+        background-size: auto;
+        background-position: 60% 64%;
+        background-repeat: no-repeat;
+    }
+    .logoRight {
+        position: absolute;
+        right: auto;
+        top: 0;
+    }
+}
+@media screen and (min-width: 767px) and (max-width: 1024px) {
+    .loginSec {
+        background-size: cover;
+        width: 100%;
+        height: 100%;
+        background-position: center top;
+    }
+    .loginBox {
+        margin-top: 410px;
+        min-height: 460px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+@media screen and (max-width: 1440px) {
+    .loginBox {
+        padding: 40px 40px 20px;
+        max-width: 440px;
+    }
+    .orDivider {
+        margin-bottom: 12px;
+        height: 12px;
+        margin-top: -12px;
+    }
+    .fbLoginBtn .btn {
+        padding: 11px 20px;
+        margin: 0;
+    }
+}
+@media screen and (min-width: 1024px) {
+    /* .loginSec .loginBox {
+        transform: translateX(140px);
+    } */
+}
+@media screen and (min-width: 1600px) {
+    .logoRight {
+        top: 16px;
+    }
+    .loginBox {
+        margin-top: 160px;
+    }
+}
