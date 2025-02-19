@@ -1,17 +1,23 @@
 package com.mobiversa.payment.controller;
 
+import static com.mobiversa.payment.util.AuthenticationProcessUtil.getCurrentUserAuthentication;
+import static com.mobiversa.payment.util.AuthenticationProcessUtil.isUserAuthenticatedForPayoutIpnTrigger;
+
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -24,9 +30,12 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -1843,4 +1852,53 @@ public class PayoutUserController extends BaseController {
 		return TEMPLATE_PAYOUTUSER;
 	}
 
-}
+
+	@RequestMapping(value = "/triggerIPNForCS" , method = RequestMethod.POST ,  consumes = "application/json")
+	public @ResponseBody ResponseEntity<String> triggerIPNForCS(@RequestBody Map<String, String> requestBody) throws IOException {
+		
+		logger.error("IPN trigger init time : "+ LocalTime.now());
+		String invoiceIdProof = requestBody.get("invoiceIdProof");
+		
+		//static method call
+		String currentUserAuthentication = getCurrentUserAuthentication();
+		
+		if(invoiceIdProof.trim().isEmpty() || Objects.isNull(invoiceIdProof))
+			return new ResponseEntity("Invalid query data" , HttpStatus.BAD_REQUEST);
+		
+		if(isUserAuthenticatedForPayoutIpnTrigger()) {
+			logger.info("IPN trigger intialized for invoice id : " + invoiceIdProof);
+			logger.info("IPN retriggered by authorized user : " + currentUserAuthentication);
+
+			return new ResponseEntity(transactionService.triggerIpnUsingProcessorAPI(invoiceIdProof),HttpStatus.OK);
+		}else {
+			logger.info("IPN retrigger initialzed by " + currentUserAuthentication);
+			return new ResponseEntity("Unauthenticated user" , HttpStatus.UNAUTHORIZED);
+		}
+	}
+
+	@RequestMapping(value = "/getIpnTriggerCountMsg" , method = RequestMethod.POST , consumes = "application/json")
+	public @ResponseBody ResponseEntity<String> getIpnTriggerCountMessage(@RequestBody Map<String, String> requestBody) {
+		
+		String invoiceIdProof = requestBody.get("invoiceIdProof");
+		//static method call
+		String currentUserAuthentication = getCurrentUserAuthentication();
+		
+		if(invoiceIdProof == null)
+			return new ResponseEntity("Invoice Id is Null" ,HttpStatus.BAD_REQUEST);
+		
+		if(isUserAuthenticatedForPayoutIpnTrigger()) {
+			logger.info("IPN trigger count validation for invoice id : " + invoiceIdProof);
+			logger.info("IPN retriggered by authorized user : " + currentUserAuthentication);
+			return  new ResponseEntity(transactionService.getIpnTriggerMessage(invoiceIdProof), HttpStatus.OK);
+		}else {
+			logger.info("IPN retrigger count checking API initialized by " + currentUserAuthentication);
+			
+			return new ResponseEntity("Unauthenticated user" , HttpStatus.UNAUTHORIZED);
+		}
+				
+	}
+
+	
+
+
+	}

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import static com.mobiversa.payment.service.AgniService.refreshCache;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -287,7 +288,8 @@ public class EditMDRDetailsController extends BaseController {
 //					subMerchantList = this.editMDRDetailDao.loadSubMerchantByID(listOfSubMerchantIds);
 //				}
 //			}
-
+			logger.info("Cache refresh after UPDATE MDR using AGNI API");
+			refreshCache();
 			updated = true;
 
 		} catch (Exception e) {
@@ -591,6 +593,9 @@ public class EditMDRDetailsController extends BaseController {
 //					subMerchantList = this.editMDRDetailDao.loadSubMerchantByID(listOfSubMerchantIds);
 //				}
 //			}
+
+			logger.info("Cache refresh after UPDATING SUBMERCHANT MDR using AGNI API");
+			refreshCache();
 			updated = true;
 		} catch (Exception e) {
 

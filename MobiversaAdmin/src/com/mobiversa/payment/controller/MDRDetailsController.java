@@ -1,6 +1,8 @@
 
 package com.mobiversa.payment.controller;
 
+import static com.mobiversa.payment.service.AgniService.refreshCache;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -336,6 +338,7 @@ public class MDRDetailsController extends BaseController {
 
 	}
 
+	@SuppressWarnings("nls")
 	@RequestMapping(value = { "/addMDRDetailsConfirm" }, method = RequestMethod.POST)
 	public String addMDRDetailsConfirm(@ModelAttribute("mobileUser") final RegMobileUser regMobileUser,
 			final Model model, final java.security.Principal principal, final HttpServletRequest request) {
@@ -386,7 +389,8 @@ public class MDRDetailsController extends BaseController {
 			if (auditTrail.getUsername() != null) {
 				logger.info("MDR for :" + auditTrail.getUsername() + " Successfully Added by Admin: "
 						+ auditTrail.getModifiedBy());
-
+				logger.info("Cache refresh after ADD MDR using AGNI API");
+				refreshCache();
 			}
 		}
 

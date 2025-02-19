@@ -7,11 +7,11 @@
 <%@ page language="java" import="java.util.*"%>
 <%@ page import="java.util.ResourceBundle"%>
 <%
-	ResourceBundle resource = ResourceBundle.getBundle("config");
-	String actionimg = resource.getString("NEWACTION");
-	String voidimg = resource.getString("NEWVOID");
-	String refundimg = resource.getString("NEWREFUND");
-	String eyeimg = resource.getString("NEWEYE");
+ResourceBundle resource = ResourceBundle.getBundle("config");
+String actionimg = resource.getString("NEWACTION");
+String voidimg = resource.getString("NEWVOID");
+String refundimg = resource.getString("NEWREFUND");
+String eyeimg = resource.getString("NEWEYE");
 %>
 
 <html lang="en-US">
@@ -35,13 +35,16 @@
 	src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script
 	src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-	
-	 <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
 
 </head>
 
@@ -529,12 +532,226 @@ img.refund_icon_6 {
 	font-family: 'Poppins', sans-serif;
 	text-align: center;
 }
+
+.modal-overlay-p {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	display: none; /* Hidden by default */
+	z-index: 999; /* Ensure it's above other elements */
+}
+
+.modal-p {
+	overflow: hidden;
+	z-index: 1000;
+	background: white;
+	width: 80%; /* Default width for responsiveness */
+	max-width: 500px; /* Ensures it doesn't get too wide */
+	min-width: 300px; /* Prevents it from becoming too small */
+	border-radius: 15px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	text-align: center;
+	font-family: "Poppins";
+	position: fixed;
+	display: none; /* Hidden by default */
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.modal-header-p {
+	font-size: 16px;
+	font-weight: 500;
+	color: #005baa;
+	margin: 13px 0;
+}
+
+.modal-divider-p {
+	width: 100%;
+	height: 1px;
+	background-color: #f0ad4e;
+	margin: 5px 0;
+}
+
+.modal-icon-p {
+	height: 50px;
+	font-size: 30px;
+	color: #0056b3;
+	margin-top: 5px;
+}
+
+.modal-content-p {
+	font-size: 14px;
+	color: #656565;
+	margin: 5px 0;
+}
+
+.modal-footer-p {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+	padding: 15px 0px;
+	background: #EFF8FF;
+}
+
+.btn-p {
+	padding: 10px 10px;
+	border-radius: 25px;
+	border: 1px solid #0056b3;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	width: 90px;
+	text-align: center;
+}
+
+.btn-cancel-p {
+	background: transparent;
+	color: #0056b3;
+}
+
+.btn-cancel-p:active, .btn-cancel-p:focus {
+	background: white !important;
+	color: #0056b3 !important;
+	border-color: #0056b3 !important;
+	outline: none; /* Removes focus outline */
+}
+
+.btn-send-p {
+	background: #0056b3;
+	color: white;
+}
+
+.btn-send-p:active, .btn-send-p:focus {
+	background: #0056b3 !important;
+	color: white !important;
+	outline: none; /* Removes focus outline */
+}
+
+.btn-p:hover {
+	opacity: 0.8;
+}
+
+.btn-close-p {
+	background: #0056b3;
+	color: white;
+	padding: 10px 20px;
+	border-radius: 25px;
+	border: none;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	width: 120px;
+	text-align: center;
+}
+
+.btn-close-p:hover {
+	opacity: 0.8;
+}
+
+.btn-close-p:active, .btn-close-p:focus {
+	text-transform: none;
+}
+
+.open-modal-btn-p {
+	background: #0056b3;
+	color: white;
+	padding: 10px 20px;
+	border-radius: 25px;
+	border: none;
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: 500;
+}
+
+.open-modal-btn-p:hover {
+	opacity: 0.8;
+}
 </style>
 
 
 <script lang="JavaScript">
 
+function showAlert(event, invoiceIdProof) {
 
+	event.preventDefault();	
+	const requestUrl = '${pageContext.request.contextPath}/payoutDataUser/getIpnTriggerCountMsg';
+	const requestBody = { invoiceIdProof: invoiceIdProof };
+	fetch(requestUrl, {
+	    method: 'POST',  
+	    headers: {
+	        'Content-Type': 'application/json'  
+	    },
+	    body: JSON.stringify(requestBody)  // Send the data as JSON in the body
+		}).then(response => response.text())
+        .then(data => {
+        	document.getElementById("modalOverlay").style.display = "block";
+            if (data.includes("reduce")) {
+            	document.getElementById("message").innerText  = data;
+            	document.getElementById("confirmationModal").style.display = "block";
+            	document.getElementById("invoiceIdProof").value  = invoiceIdProof;
+
+            } else {
+            	document.getElementById("warningMessage").innerText  = data;
+            	
+            	document.getElementById("warningNotificationModal").style.display = "block";
+            }
+        })
+        .catch(error => console.error("Error:", error));
+}
+function closeConfirmatioModal() {
+	document.getElementById("modalOverlay").style.display = "none";
+    document.getElementById("confirmationModal").style.display = "none";
+}
+
+function sendIPN() {
+
+	let invoiceIdProof = document.getElementById("invoiceIdProof").value;
+	document.getElementById("confirmationModal").style.display = "none";
+    const requestUrl = '${pageContext.request.contextPath}/payoutDataUser/triggerIPNForCS';
+
+    const requestBody = { invoiceIdProof: invoiceIdProof };
+    fetch(requestUrl, {
+	    method: 'POST',  
+	    headers: {
+	        'Content-Type': 'application/json'  
+	    },
+	    body: JSON.stringify(requestBody)  
+		})
+        .then(response => response.text())
+        .then(data => {
+        	document.getElementById("modalOverlay").style.display = "block";
+            if (data.includes("successfully")) {
+
+            	document.getElementById("successNotificationModal").style.display = "block";
+            	document.getElementById("successMessage").innerText  = data;
+            	
+
+            } else {
+            	document.getElementById("failedMessage").innerText  = data;
+            	
+            	document.getElementById("failedNotificationModal").style.display = "block";
+
+            }
+        })
+        .catch(error => console.error("Error:", error));
+}
+function closeFailedNotificationModal() {
+	document.getElementById("modalOverlay").style.display = "none";
+    document.getElementById("failedNotificationModal").style.display = "none";
+}
+function closeWarningNotificationModal() {
+	document.getElementById("modalOverlay").style.display = "none";
+    document.getElementById("warningNotificationModal").style.display = "none";
+}
+function closeSuccessNotificationModal() {
+	document.getElementById("modalOverlay").style.display = "none";
+
+    document.getElementById("successNotificationModal").style.display = "none";
+}
 
 	function loadSelectData() {
     		$("#overlay").show();
@@ -662,7 +879,7 @@ function loadSelectData2() {
 	    var e = document.getElementById("from").value;
 	    var e1 = document.getElementById("to").value;
 	    var e2 = document.getElementById("export1").value;
-	    
+
 
 	    var fromDate = new Date(e);
 	    var toDate = new Date(e1);
@@ -758,12 +975,74 @@ function loadSelectData2() {
 
 
 
-	
-	
+
+
 </script>
 <body class="">
 	<div class="container-fluid">
 		<div class="row">
+			<!-- confirmation pop up body -->
+			<div class="modal-overlay-p" id="modalOverlay"></div>
+			<div class="modal-p" id="confirmationModal">
+				<div class="modal-header-p">Confirmation</div>
+				<div class="modal-divider-p"></div>
+				<div class="modal-icon-p">
+					<img
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/confirmation.svg" />
+				</div>
+				<div class="modal-content-p" id="message"></div>
+				<input type="hidden" id="invoiceIdProof">
+				<div class="modal-footer-p">
+					<button class="btn-p btn-cancel-p"
+						onclick="closeConfirmatioModal()">cancel</button>
+					<button class="btn-p btn-send-p" onclick="sendIPN()">Send
+						IPN</button>
+				</div>
+			</div>
+
+			<!--success notification pop up body -->
+			<div class="modal-p" id="successNotificationModal">
+				<div class="modal-header-p">Notification</div>
+				<div class="modal-divider-p"></div>
+				<div class="modal-icon-p" id="successIcon">
+					<img style="width: 50px; height: 50px;"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/paid.svg" />
+				</div>
+				<div class="modal-content-p" id="successMessage"></div>
+				<div class="modal-footer-p">
+					<button class="btn-close-p"
+						onclick="closeSuccessNotificationModal()">Close</button>
+				</div>
+			</div>
+			<!--failed notification pop up body -->
+			<div class="modal-p" id="failedNotificationModal">
+				<div class="modal-header-p">Notification</div>
+				<div class="modal-divider-p"></div>
+				<div class="modal-icon-p" id="failedIcon">
+					<img style="margin-top: 8px !important;"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/Cancel 2.svg" />
+				</div>
+				<div class="modal-content-p" id="failedMessage"></div>
+				<div class="modal-footer-p">
+					<button class="btn-close-p"
+						onclick="closeFailedNotificationModal()">Close</button>
+				</div>
+			</div>
+
+			<!--warning notification pop up body -->
+			<div class="modal-p" id="warningNotificationModal">
+				<div class="modal-header-p">Warning</div>
+				<div class="modal-divider-p"></div>
+				<div class="modal-icon-p" id="failedIcon">
+					<img style="margin-top: 8px !important;"
+						src="${pageContext.request.contextPath}/resourcesNew1/assets/warning.svg" />
+				</div>
+				<div class="modal-content-p" id="warningMessage"></div>
+				<div class="modal-footer-p">
+					<button class="btn-close-p"
+						onclick="closeWarningNotificationModal()">Close</button>
+				</div>
+			</div>
 
 
 
@@ -846,7 +1125,8 @@ function loadSelectData2() {
 							</div>
 
 							<div class="input-field col s12 m3 l3">
-								<div class="button-class" style="float: left !important;display: flex !important;">
+								<div class="button-class"
+									style="float: left !important; display: flex !important;">
 
 									<input type="hidden" name="date1" id="dateval1"> <input
 										type="hidden" name="date2" id="dateval2">
@@ -936,7 +1216,7 @@ function loadSelectData2() {
 			<div class="col s12">
 
 				<div class="card border-radius">
-					<div class="card-content padding-card">
+					<div style="padding: 24px 50px;" class="card-content padding-card">
 
 						<div class="table-responsive m-b-20 m-t-15">
 							<table class="table table-striped table-bordered">
@@ -949,12 +1229,12 @@ function loadSelectData2() {
 										<th style="font-size: 14px">Bank Name</th>
 										<th style="font-size: 14px">Amount(RM)</th>
 										<th style="font-size: 14px">Status</th>
-										<th style="text-align: center; font-size: 14px">
-											Reason</th>
+										<th style="text-align: center; font-size: 14px">Reason</th>
 										<th style="font-size: 14px">Host Transaction ID</th>
 										<th style="font-size: 14px; text-align: center">Sales
 											Slip</th>
-										<th></th>
+										<th style="font-size: 14px">Details</th>
+										<th style="font-size: 14px">Send IPN</th>
 									</tr>
 								</thead>
 
@@ -971,7 +1251,8 @@ function loadSelectData2() {
 
 
 											<td style="text-align: left; font-size: 14px">${dto.payoutdate}
-											<td style="text-align: left; font-size: 14px">${dto.createdby}</td>
+
+												<td style="text-align: left; font-size: 14px">${dto.createdby}</td>
 											<td style="text-align: left; font-size: 14px">${dto.invoiceidproof}</td>
 											<td style="text-align: left; font-size: 14px">${dto.payoutId}</td>
 											<td style="text-align: left; font-size: 14px">${dto.payeebankname}</td>
@@ -1058,8 +1339,8 @@ function loadSelectData2() {
 													</a>
 
 												</c:if></td>
-												
-											  <td style="text-align: left; font-size: 14px">${dto.curlecRefNo}</td>	
+
+											<td style="text-align: left; font-size: 14px">${dto.curlecRefNo}</td>
 
 
 
@@ -1119,19 +1400,24 @@ function loadSelectData2() {
 															src="${pageContext.request.contextPath}/resourcesNew1/assets/more.svg" />
 													</div>
 											</a></td>
+
+
+											<c:if test="${not empty dto.invoiceidproof}">
+												<td><a href="#"
+													onclick="showAlert(event ,'${dto.invoiceidproof}')"> <img
+														class="w24"
+														src="${pageContext.request.contextPath}/resourcesNew1/assets/send.svg" />
+												</a></td>
+											</c:if>
 										</tr>
+
 									</c:forEach>
 
 
 
 
 
-									<td colspan="8"
-										style="text-align: center; border-bottom: solid; border-bottom-color: white !important">
-										<div id="no-data">
-											<p></p>
-										</div>
-									</td>
+
 
 
 
@@ -1152,16 +1438,6 @@ function loadSelectData2() {
 	</div>
 	</div>
 
-
-
-
-	<!-- mobi loading logo -->
-	<div id="overlay" id="loading-gif">
-		<div id="overlay_text">
-			<img class="img-fluid"
-				src="${pageContext.request.contextPath}/resourcesNew1/assets/loader.gif">
-		</div>
-	</div>
 
 
 	<div id="overlay-popup"></div>
@@ -1253,13 +1529,14 @@ function loadSelectData2() {
 					<img
 						src="${pageContext.request.contextPath}/resourcesNew1/assets/mail_box1.svg"
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; width="45px !important;">
-					<div style="width: 100%; display: flex; align-items: left;">
-						<p
-							style="margin-bottom: 1px; color: #586570; letter-spacing: 0.27px;">Please
+				<div style="width: 100%; display: flex; align-items: left;">
+													<p
+														style="margin-bottom: 1px; color: #586570; letter-spacing: 0.27px;">Please
 							enter your email to receive the CSV file.</p>
 					</div>
 
-				</div>
+				
+											</div>
 
 
 				<div style="padding: 0 10%; width: 100% !important;">
@@ -1432,7 +1709,7 @@ function loadSelectData2() {
 		</div>
 	</div> --%>
 
-<!-- New Payslip design payout -->
+	<!-- New Payslip design payout -->
 
 	<div id="xPay_slip-modal-id" class="slip-modal-class">
 		<section class="payout-slip-main-container poppins-regular"
@@ -1477,12 +1754,10 @@ function loadSelectData2() {
 							MYR <span class="poppins-semibold amount-value"
 								id="new_slip_amount"></span>
 						</p>
-							<p class="time-stamp poppins-semibold" id="">
-								 <span class="poppins-semibold amount-value"
-										id="paidDate"></span>
-										 <span class="poppins-semibold amount-value"
-										id="paidTime"></span>
-								</p>
+						<p class="time-stamp poppins-semibold" id="">
+							<span class="poppins-semibold amount-value" id="paidDate"></span>
+							<span class="poppins-semibold amount-value" id="paidTime"></span>
+						</p>
 						<hr class="horizontal-default">
 					</div>
 				</div>
@@ -1491,47 +1766,52 @@ function loadSelectData2() {
 					<table>
 						<tr class="no_border_bottom">
 							<th class="poppins-regular xpay_slip_whiteSpace">From</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
 								style="text-transform: uppercase;" id="new_slip_merchant"></td>
 						</tr>
 						<tr class="no_border_bottom">
-							<th class="poppins-regular xpay_slip_whiteSpace">To
-								</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
+							<th class="poppins-regular xpay_slip_whiteSpace">To</th>
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
 								id="new_slip_recipient"></td>
 						</tr>
-						
-						 <tr class="no_border_bottom">
-							<th class="poppins-regular xpay_slip_whiteSpace">Reference 
+
+						<tr class="no_border_bottom">
+							<th class="poppins-regular xpay_slip_whiteSpace">Reference
 								No</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
 								id="new_slip_payoutId"></td>
 						</tr>
-					   <tr class="no_border_bottom">
-							<th class="poppins-regular xpay_slip_whiteSpace">Transaction 
+						<tr class="no_border_bottom">
+							<th class="poppins-regular xpay_slip_whiteSpace">Transaction
 								ID</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
 								id="invoice-id"></td>
 						</tr>
 
 						<tr class="no_border_bottom">
 							<th class="poppins-regular xpay_slip_whiteSpace">Payment
 								Type</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
 								id="new_slip_paymentType"></td>
 						</tr>
-				
+
 						<tr class="no_border_bottom">
 							<th class="poppins-regular xpay_slip_whiteSpace">Payment
 								Method</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak">Payout</td>
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak">Payout</td>
 						</tr>
 
 
 						<tr class="no_border_bottom">
-							<th class="poppins-regular xpay_slip_whiteSpace">Remarks
-								</th>
-							<td class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
+							<th class="poppins-regular xpay_slip_whiteSpace">Remarks</th>
+							<td
+								class="rightSide_color_code_slip poppins-medium xpay_slip_wordBreak"
 								id="new_slip_paymentReference"></td>
 						</tr>
 					</table>
@@ -1545,10 +1825,11 @@ function loadSelectData2() {
 				<hr class="horizontal-default">
 				<div class="notes-section">
 					<strong>Note</strong>
-					<p class="notes" style= "font-size: 11px !important">
-							This receipt is computer generated and no signature is required.
-							For support, contact  <a href="mailto:csmobi@gomobi.io" style="color: #005BAA; text-decoration: underline; ">csmobi@gomobi.io</a>
-						</p>
+					<p class="notes" style="font-size: 11px !important">
+						This receipt is computer generated and no signature is required.
+						For support, contact <a href="mailto:csmobi@gomobi.io"
+							style="color: #005BAA; text-decoration: underline;">csmobi@gomobi.io</a>
+					</p>
 				</div>
 			</div>
 		</section>
@@ -1770,9 +2051,35 @@ function loadSelectData2() {
 		font-size: 1rem;
 	}
 }
+
+.popup-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.popup-content {
+	background: white;
+	padding: 20px;
+	border-radius: 10px;
+	text-align: center;
+}
+
+.popup-content button {
+	margin: 10px;
+	padding: 10px 20px;
+	border: none;
+	cursor: pointer;
+}
 </style>
 
-<!-- New Payslip design payout End -->
+	<!-- New Payslip design payout End -->
 
 	<div id="payoutDetailsId" class="payoutDetailsClass">
 		<div class="payoutDetailsClass-content"
@@ -2084,7 +2391,7 @@ function loadSelectData2() {
 
 								statuschange();
 
-								//�alert("Sucess");
+								//ï¿½alert("Sucess");
 							}
 						},
 						error : function(jqXHR, textStatus, errorThrown) {
@@ -2237,6 +2544,9 @@ function loadSelectData2() {
 			// Set the sanitized value back to the input field
 			//searchInput.value = sanitizedValue;
 		}
+		
+		
+		
 
 
 		// payout Sales Slip - End
@@ -3307,7 +3617,8 @@ function loadSelectData2() {
 </script>
 
 
-<script>
+	<script>
+
     function downloadPayoutSlip() {
         var modalContent = document.getElementById('xPay_slip-modal-id');
         // var hidingElements = document.getElementById('hiding_elements_div');
@@ -3362,9 +3673,9 @@ function loadSelectData2() {
         });
     }</script>
 
-<style>
+	<style>
 .rightSide_color_code_slip {
-	color : #2D2D2D;
+	color: #2D2D2D;
 }
 </style>
 
